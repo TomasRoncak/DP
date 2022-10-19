@@ -1,10 +1,9 @@
+from re import X
 import matplotlib.pyplot as plt 
 import pandas as pd
 import datetime
 import csv
 import os
-
-from dateutil.relativedelta import relativedelta
 
 
 def get_relevant_protocols(dataset):
@@ -36,73 +35,67 @@ def create_csv(data, columns, window_length, protocol=None):
     with open(path, 'a') as statistics_csv_file:
         writer = csv.writer(statistics_csv_file)
         if not exists:
-            writer.writerow([x + '_sum' if x not in ['Stime', 'Ltime', 'num_connections', 'time'] else x for x in columns])
+            writer.writerow([x + '_sum' for x in columns])
         writer.writerow(data)
 
 
 #scitanie vsetkych podstatnych vlastnosti do jednej hodnoty pre dany window a ulozit ich ako riadok s casom do .csv
-def calculate_statistics(window, start_time, end_time, window_length, protocol=None): 
-    columns = window.columns.values.tolist()
-    columns.extend(['time', 'num_connections'])
-    data = [start_time, end_time] 
-    
+def calculate_statistics(window, window_length, protocol=None): 
+    window = window.fillna(0)
+
+    data = [] 
     for column in window:
-        if column not in ['Ltime', 'Stime']:
+        if column != 'time':
             data.append(window[column].astype(int).sum())
+    data.append(window[column].iloc[0])
+    data.append(len(window))  #num of connections
 
-    date = datetime.datetime.now() - datetime.timedelta(seconds=int(window['Stime'].mean()))
-    new_date = date + relativedelta(years=38, weeks=1) - relativedelta(months=7)
+    columns = window.columns.values.tolist()
+    columns.append('connections')
 
-    data.append(new_date)
-    data.append(len(window))
-
-    create_csv(data, columns, window_length, protocol)
+    create_csv(data, columns, window_length.total_seconds(), protocol)
 
 
 def moving_window(data, window_length, protocol=None):   
-    VARIABLES_TO_CALCULATE_ON = ['Stime', 'Ltime','sbytes', 'dbytes', 'sloss', 'dloss', 'Sjit', \
-                                 'Djit', 'tcprtt', 'Spkts', 'Dpkts', 'Sload', 'Dload', 'Label']
-    dataset_end_time = data['Ltime'].max()  #toky trvajuce dlhsie ako window_length sa neuvazuju
-    start_time = data['Stime'].min()  
+    VARIABLES_NOT_TO_CALCULATE_ON = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
+                                     'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
+    
+    data['time'] = pd.to_datetime(data['Stime'], unit='s')
 
-    while (start_time < dataset_end_time):
-        end_time = start_time + window_length
-        window = data[(data['Stime'] >= start_time) & (data['Ltime'] <= end_time)]
-        
-        if not window[VARIABLES_TO_CALCULATE_ON].empty:
-            calculate_statistics(window[VARIABLES_TO_CALCULATE_ON], start_time, end_time, window_length, protocol)
-        start_time = end_time
+    #data['time'].agg(['min', 'max'])
+    start_time = data['time'].min()
+    end_time = data['time'].max()
+    window_length = datetime.timedelta(seconds=window_length)
+
+    data.drop(columns=VARIABLES_NOT_TO_CALCULATE_ON, inplace=True)
+
+    while (start_time < end_time):
+        windowed_time = start_time + window_length
+        window = data[(data['time'] >= start_time) & (data['time'] <= windowed_time)]
+
+        if not window.empty:
+            calculate_statistics(window, window_length, protocol) 
+        start_time = windowed_time
 
 
 def plot_time_series(data, window_size, protocol):    
     PATH = 'dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol)
-    plot_list = [['sbytes_sum', 'dbytes_sum'], ['Spkts_sum', 'Dpkts_sum'], \
-                 ['Sload_sum', 'Dload_sum'], ['Sjit_sum', 'Djit_sum'], \
-                 ['sloss_sum', 'dloss_sum']]
 
-    for x in plot_list:
+    for i in range(0, len(data.columns), 2):
+        if data.columns[i+1] == 'time_sum':
+            break
         fig, axes = plt.subplots(nrows=1, ncols=2)
-        pd.DataFrame(data, columns=['time', x[0]]).plot(x ='time', y=x[0], ax=axes[0], rot=90, figsize=(15, 5))
-        pd.DataFrame(data, columns=['time', x[1]]).plot(x ='time', y=x[1], ax=axes[1], rot=90, figsize=(15, 5))
-        if not os.path.exists(PATH + x[0] + " & " + x[1]):
+        pd.DataFrame(data, columns=['time_sum', data.columns[i]]).plot(x='time_sum', y=data.columns[i], ax=axes[0], rot=90, figsize=(15, 5))
+        if i + 1 <= len(data.columns):
+            pd.DataFrame(data, columns=['time_sum', data.columns[i+1]]).plot(x='time_sum', y=data.columns[i+1], ax=axes[1], rot=90, figsize=(15, 5))
+        if not os.path.exists(PATH + data.columns[i] + " & " + data.columns[i + 1]):
             plt.tight_layout()
-            plt.savefig(PATH + x[0] + " & " + x[1])
+            plt.savefig(PATH + data.columns[i] + " & " + data.columns[i + 1])
+    
+    pd.DataFrame(data, columns=['time_sum', 'connections_sum']).plot(x='time_sum', y='connections_sum', rot=90, figsize=(15, 5))
+    plt.tight_layout()
+    plt.savefig(PATH + 'connections_sum')
 
-    fig, axes = plt.subplots(nrows=1, ncols=2)
-    pd.DataFrame(data, columns=['time','num_connections']).plot(x ='time', y='num_connections', rot=90, figsize=(15, 5))
-    if not os.path.exists(PATH + 'num_connections'):
-        plt.tight_layout()
-        plt.savefig(PATH + 'num_connections')
-
-    pd.DataFrame(data, columns=['time','Label_sum']).plot(x ='time', y='Label_sum', rot=90, figsize=(15, 5))
-    if not os.path.exists(PATH + 'Label_sum'):
-        plt.tight_layout()
-        plt.savefig(PATH + 'Label_sum')
-
-        pd.DataFrame(data, columns=['time','tcprtt_sum']).plot(x ='time', y='tcprtt_sum', rot=90, figsize=(15, 5))
-    if not os.path.exists(PATH + 'tcprtt_sum'):
-        plt.tight_layout()
-        plt.savefig(PATH + 'tcprtt_sum')
 
 def save_time_series_plots(window_size):
     protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'pop3', 'smtp', 'ssh']
@@ -110,9 +103,10 @@ def save_time_series_plots(window_size):
         data = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/statistics_wsize_{0}.csv'.format(window_size, protocol))
         plot_time_series(data, window_size, protocol)
 
+
 def process_dataset(window_size):
-    dataset = pd.concat(map(pd.read_csv, ['dataset_preprocessing/dataset/UNSW-NB15_1.csv', 'dataset_preprocessing/dataset/UNSW-NB15_2.csv', 
-                                          'dataset_preprocessing/dataset/UNSW-NB15_3.csv', 'dataset_preprocessing/dataset/UNSW-NB15_4.csv']), ignore_index=True)
+    dataset = pd.concat(map(pd.read_csv, ['dataset_preprocessing/original_dataset/UNSW-NB15_1.csv', 'dataset_preprocessing/original_dataset/UNSW-NB15_2.csv', 
+                                          'dataset_preprocessing/original_dataset/UNSW-NB15_3.csv', 'dataset_preprocessing/original_dataset/UNSW-NB15_4.csv']), ignore_index=True)
     relevant_protocols = get_relevant_protocols(dataset)
 
     for protocol in relevant_protocols:
