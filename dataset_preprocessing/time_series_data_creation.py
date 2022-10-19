@@ -104,6 +104,11 @@ def plot_time_series(data, window_size, protocol):
         plt.tight_layout()
         plt.savefig(PATH + 'tcprtt_sum')
 
+def save_time_series_plots(window_size):
+    protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'pop3', 'smtp', 'ssh']
+    for protocol in protocols:
+        data = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/statistics_wsize_{0}.csv'.format(window_size, protocol))
+        plot_time_series(data, window_size, protocol)
 
 def process_dataset(window_size):
     dataset = pd.concat(map(pd.read_csv, ['dataset_preprocessing/dataset/UNSW-NB15_1.csv', 'dataset_preprocessing/dataset/UNSW-NB15_2.csv', 
@@ -114,12 +119,3 @@ def process_dataset(window_size):
         matching_rows = dataset.loc[dataset['service'] == protocol]
         moving_window(matching_rows, window_size, protocol)
     moving_window(dataset, window_size)
-
-
-window_size = 500
-#process_dataset(window_size)
-
-protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'pop3', 'smtp', 'ssh']
-for protocol in protocols:
-    data = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/statistics_wsize_{0}.csv'.format(window_size, protocol))
-    plot_time_series(data, window_size, protocol)
