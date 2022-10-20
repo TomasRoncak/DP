@@ -26,9 +26,9 @@ def create_csv(data, columns, window_length, protocol=None):
     if protocol is None:
         if not os.path.exists(PATH + '/{0}/all'.format(window_length)):
             os.makedirs(PATH + '/{0}/all'.format(window_length))
-        path = PATH + '/{0}/all/statistics_wsize_{0}.csv'.format(window_length)
+        path = PATH + '/{0}/all/all_time_series.csv'.format(window_length)
     else:
-        path = PATH + '/{1}/{0}/statistics_wsize_{1}.csv'.format(protocol, window_length)
+        path = PATH + '/{0}/{1}/{1}_time_series.csv'.format(window_length, protocol)
 
     exists = os.path.exists(path)
     with open(path, 'a') as statistics_csv_file:
@@ -38,7 +38,6 @@ def create_csv(data, columns, window_length, protocol=None):
         writer.writerow(data)
 
 
-#scitanie vsetkych podstatnych vlastnosti do jednej hodnoty pre dany window a ulozit ich ako riadok s casom do .csv
 def calculate_statistics(window, window_length, protocol=None): 
     window = window.fillna(0)
 
@@ -78,7 +77,10 @@ def moving_window(data, window_length, protocol=None):
 
 
 def plot_time_series(data, window_size, protocol):    
-    PATH = 'dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol)
+    PATH = 'dataset_preprocessing/processed_dataset/{0}/{1}/graphs/'.format(window_size, protocol)
+
+    if not os.path.exists(PATH):
+        os.makedirs(PATH)
 
     for i in range(0, len(data.columns), 2):
         if data.columns[i+1] == 'time_sum':
@@ -99,7 +101,7 @@ def plot_time_series(data, window_size, protocol):
 def save_time_series_plots(window_size):
     protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'pop3', 'smtp', 'ssh']
     for protocol in protocols:
-        data = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/statistics_wsize_{0}.csv'.format(window_size, protocol))
+        data = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/{1}_time_series.csv'.format(window_size, protocol))
         plot_time_series(data, window_size, protocol)
 
 
