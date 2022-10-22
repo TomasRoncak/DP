@@ -1,5 +1,6 @@
-from time_series_data_creation import process_dataset, save_time_series_plots
+from window_data_creation import process_dataset, save_time_series_plots
 from feature_selection import perform_feature_selection
+from time_series_generator import generate_time_series
 
 window_size = 350.0
 
