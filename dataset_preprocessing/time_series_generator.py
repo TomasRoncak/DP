@@ -7,7 +7,7 @@ def normalize_data(df):
     return scaler.fit_transform(df)
 
 
-def divide_data(df, percent):
+def split_dataset(df, percent):
     train_size = int(len(df) * percent)
     train, test = df[0:train_size], df[train_size:len(df)]
     return train, test
@@ -36,5 +36,5 @@ def create_time_series_data_generator(train, test):
 
 def generate_time_series(df):
     normalize_data(df)
-    train, test = divide_data(df, 0.8)
+    train, test = split_dataset(df, 0.8)
     return create_time_series_data_generator(train, test)

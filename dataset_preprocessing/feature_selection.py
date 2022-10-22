@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.preprocessing import MinMaxScaler
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.diagnostic import acorr_ljungbox
-from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 
 
 def remove_nonunique_columns(df, print_steps):
@@ -103,30 +101,3 @@ def perform_feature_selection(window_size, print_steps=True):
         if print_steps:
             print(protocol, ', '.join(chosen_cols[protocol].values))
     return chosen_cols
-    
-
-def create_time_series_data_generator(df):
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    data_trans = scaler.fit_transform(df)
-
-    train_size = int(len(data_trans) * 0.80)
-    train, test = data_trans[0:train_size], data_trans[train_size:len(data_trans)]
-
-    n_input = 3
-    train_data_gen = TimeseriesGenerator(train, 
-                                        train,
-                                        length=n_input, 
-                                        sampling_rate=1,
-                                        stride=1,
-                                        batch_size=1
-                                        )
-
-    test_data_gen = TimeseriesGenerator(test, 
-                                        test,
-                                        length=n_input, 
-                                        sampling_rate=1,
-                                        stride=1,
-                                        batch_size=1
-                                        )
-
-    return train_data_gen, test_data_gen
