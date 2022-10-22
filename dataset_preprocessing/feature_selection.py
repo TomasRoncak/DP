@@ -102,7 +102,7 @@ def perform_feature_selection(window_size, print_steps=True):
         chosen_cols[protocol] = select_features(protocol, window_size, print_steps)
         if print_steps:
             print(protocol, ', '.join(chosen_cols[protocol].values))
-    return 
+    return chosen_cols
     
 
 def create_time_series_data_generator(df):
@@ -128,5 +128,5 @@ def create_time_series_data_generator(df):
                                         stride=1,
                                         batch_size=1
                                         )
-                                        
+
     return train_data_gen, test_data_gen
