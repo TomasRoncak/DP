@@ -93,9 +93,12 @@ def plot_time_series(data, window_size, protocol):
             plt.tight_layout()
             plt.savefig(PATH + data.columns[i] + " & " + data.columns[i + 1])
     
-    pd.DataFrame(data, columns=['time_sum', 'connections_sum']).plot(x='time_sum', y='connections_sum', rot=90, figsize=(15, 5))
+    fig, axes = plt.subplots(nrows=1, ncols=2)
+    pd.DataFrame(data, columns=['time_sum', 'connections_sum']).plot(x='time_sum', y='connections_sum', ax=axes[0], rot=90, figsize=(15, 5))
+    pd.DataFrame(data, columns=['time_sum', 'Label_sum']).plot(x='time_sum', y='Label_sum', ax=axes[1], rot=90, figsize=(15, 5))
     plt.tight_layout()
-    plt.savefig(PATH + 'connections_sum')
+    if not os.path.exists(PATH + 'connections_sum & Label_sum'):
+        plt.savefig(PATH + 'connections_sum & Label_sum')
 
 
 def save_time_series_plots(window_size):
