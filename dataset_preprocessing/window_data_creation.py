@@ -5,6 +5,7 @@ import csv
 
 from os import path, makedirs, stat
 
+BASE_PATH = 'dataset_preprocessing/processed_dataset/'
 
 def get_relevant_protocols(dataset):
     relevant_protocols = []
@@ -18,14 +19,13 @@ def get_relevant_protocols(dataset):
 
 
 def create_csv(data, columns, window_length, include_attacks, protocol):
-    PATH = 'dataset_preprocessing/processed_dataset'
     FILE_NAME = 'windowed_dataset.csv' if include_attacks else 'windowed_dataset_no_attacks.csv'
-    CSV_PATH = PATH + '/{0}/{1}/'.format(window_length, protocol) + FILE_NAME
+    CSV_PATH = BASE_PATH + '/{0}/{1}/'.format(window_length, protocol) + FILE_NAME
 
-    if not path.exists(PATH + '/{0}/'.format(window_length)):   
-        makedirs(PATH + '/{0}/'.format(window_length))                          # create file <window_size>
-    elif not path.exists(PATH + '/{0}/{1}'.format(window_length, protocol)):    
-        makedirs(PATH + '/{0}/{1}'.format(window_length, protocol))             # create file <protocol>
+    if not path.exists(BASE_PATH + '/{0}/'.format(window_length)):   
+        makedirs(BASE_PATH + '/{0}/'.format(window_length))                          # create file <window_size>
+    elif not path.exists(BASE_PATH + '/{0}/{1}'.format(window_length, protocol)):    
+        makedirs(BASE_PATH + '/{0}/{1}'.format(window_length, protocol))             # create file <protocol>
     
     with open(CSV_PATH, 'a') as csv_file:                                       # create or append to file windowed_dataset.csv
         writer = csv.writer(csv_file)
@@ -70,36 +70,29 @@ def moving_window(data, window_length, include_attacks, protocol):
         start_time = windowed_time
 
 
-def plot_time_series(data, window_size, protocol):    
-    PATH = 'dataset_preprocessing/processed_dataset/{0}/{1}/graphs/'.format(window_size, protocol)
+def plot_time_series(data, window_size, protocol, include_attacks): 
+    FILENAME = 'plots' if include_attacks else 'plots_no_attacks'
+    PATH = BASE_PATH + '{0}/{1}/{2}/'.format(window_size, protocol, FILENAME)
 
     if not path.exists(PATH):
         makedirs(PATH)
 
-    for i in range(0, len(data.columns), 2):
-        if data.columns[i+1] == 'time_sum':
-            break
-        fig, axes = plt.subplots(nrows=1, ncols=2)
-        pd.DataFrame(data, columns=['time_sum', data.columns[i]]).plot(x='time_sum', y=data.columns[i], ax=axes[0], rot=90, figsize=(15, 5))
-        if i + 1 <= len(data.columns):
-            pd.DataFrame(data, columns=['time_sum', data.columns[i+1]]).plot(x='time_sum', y=data.columns[i+1], ax=axes[1], rot=90, figsize=(15, 5))
-        if not path.exists(PATH + data.columns[i] + " & " + data.columns[i + 1]):
+    for column in data.columns:
+        if column == 'time':
+            continue
+        pd.DataFrame(data, columns=['time', column]).plot(x='time', y=column, rot=90, figsize=(15, 5))
+        if not path.exists(PATH + column):
             plt.tight_layout()
-            plt.savefig(PATH + data.columns[i] + " & " + data.columns[i + 1])
-    
-    fig, axes = plt.subplots(nrows=1, ncols=2)
-    pd.DataFrame(data, columns=['time_sum', 'connections_sum']).plot(x='time_sum', y='connections_sum', ax=axes[0], rot=90, figsize=(15, 5))
-    pd.DataFrame(data, columns=['time_sum', 'Label_sum']).plot(x='time_sum', y='Label_sum', ax=axes[1], rot=90, figsize=(15, 5))
-    plt.tight_layout()
-    if not path.exists(PATH + 'connections_sum & Label_sum'):
-        plt.savefig(PATH + 'connections_sum & Label_sum')
+            plt.savefig(PATH + column)
 
 
-def save_time_series_plots(window_size):
+def save_time_series_plots(window_size, include_attacks):
+    FILE_NAME = 'windowed_dataset.csv' if include_attacks else 'windowed_dataset_no_attacks.csv'
     protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'pop3', 'smtp', 'ssh']
+    
     for protocol in protocols:
-        data = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/{1}_time_series.csv'.format(window_size, protocol))
-        plot_time_series(data, window_size, protocol)
+        data = pd.read_csv(BASE_PATH + '{0}/{1}/{2}'.format(window_size, protocol, FILE_NAME))
+        plot_time_series(data, window_size, protocol, include_attacks)
 
 
 def process_dataset(window_size, include_attacks):
