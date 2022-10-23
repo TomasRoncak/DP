@@ -39,12 +39,13 @@ def remove_similar_columns(df, print_steps):
 def adfueller_test(df, print_steps):
     failed_columns = []
     for col in df.columns:
-        dftest = adfuller(df[col], autolag='AIC')
-        if (dftest[1] > 0.05):
-            failed_columns.append(col)
-            #print(col, dftest[1])
-        #if (dftest[1] < 0.05):
-        #    print(col)
+        if len(df[col]) > 1:
+            dftest = adfuller(df[col], autolag='AIC')
+            if (dftest[1] > 0.05):
+                failed_columns.append(col)
+                #print(col, dftest[1])
+            #if (dftest[1] < 0.05):
+            #    print(col)
     if print_steps:
         print("removed {0} features by adfueller test:".format(len(failed_columns)), ', '.join(failed_columns), end='\n\n')
     df.drop(columns=failed_columns, inplace=True)
@@ -53,9 +54,10 @@ def adfueller_test(df, print_steps):
 def randomness_test(df, print_steps):
     to_remove = []
     for col in df.columns:
-        res = acorr_ljungbox(df[col], lags=[3, 6, 24], return_df=True)
-        if all(p > 0.05 for p in res.lb_pvalue): 
-            to_remove.append(col)
+        if len(df[col]) > 1:
+            res = acorr_ljungbox(df[col], lags=[3, 6, 24], return_df=True)
+            if all(p > 0.05 for p in res.lb_pvalue): 
+                to_remove.append(col)
     if print_steps:
         print("removed {0} features by randomness test:".format(len(to_remove)), ' '.join(to_remove), end='\n\n')
     df.drop(columns=to_remove, inplace=True)
