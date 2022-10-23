@@ -20,12 +20,12 @@ def get_relevant_protocols(dataset):
 
 def create_csv(data, columns, window_length, include_attacks, protocol):
     FILE_NAME = 'windowed_dataset.csv' if include_attacks else 'windowed_dataset_no_attacks.csv'
-    CSV_PATH = BASE_PATH + '/{0}/{1}/'.format(window_length, protocol) + FILE_NAME
+    CSV_PATH = BASE_PATH + '{0}/{1}/'.format(window_length, protocol) + FILE_NAME
 
-    if not path.exists(BASE_PATH + '/{0}/'.format(window_length)):   
-        makedirs(BASE_PATH + '/{0}/'.format(window_length))                          # create file <window_size>
-    elif not path.exists(BASE_PATH + '/{0}/{1}'.format(window_length, protocol)):    
-        makedirs(BASE_PATH + '/{0}/{1}'.format(window_length, protocol))             # create file <protocol>
+    if not path.exists(BASE_PATH + '{0}/'.format(window_length)):   
+        makedirs(BASE_PATH + '{0}/'.format(window_length))                          # create file <window_size>
+    if not path.exists(BASE_PATH + '{0}/{1}'.format(window_length, protocol)):    
+        makedirs(BASE_PATH + '{0}/{1}'.format(window_length, protocol))             # create file <protocol>
     
     with open(CSV_PATH, 'a') as csv_file:                                       # create or append to file windowed_dataset.csv
         writer = csv.writer(csv_file)
@@ -105,4 +105,6 @@ def process_dataset(window_size, include_attacks):
         if not include_attacks:
             matching_data = matching_data.loc[matching_data['Label'] == 0]
         moving_window(matching_data, window_size, include_attacks, protocol)
+    
+    dataset = dataset if include_attacks else dataset.loc[dataset['Label'] == 0]
     moving_window(dataset, window_size, include_attacks, 'all')
