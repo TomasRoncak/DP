@@ -75,9 +75,11 @@ def peak_value_cutoff(df):
     df.clip(lower=df.quantile(0), upper=df.quantile(1-percent), axis=1, inplace=True)
 
 
-def select_features(protocol, window_size, print_steps):
-    df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/{1}_time_series.csv'.format(window_size, protocol))
-    df.drop(columns=['time_sum', 'Label_sum'], inplace=True)
+def select_features(protocol, window_size, print_steps, include_attacks):
+    FILE_NAME = 'windowed_dataset.csv' if include_attacks else 'windowed_dataset_no_attacks.csv'
+    
+    df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + FILE_NAME)
+    df.drop(columns=['time', 'Label_sum'], inplace=True)
 
     remove_nonunique_columns(df, print_steps)
     remove_similar_columns(df, print_steps)
@@ -89,7 +91,7 @@ def select_features(protocol, window_size, print_steps):
     return df.columns
 
 
-def perform_feature_selection(window_size, print_steps=True):
+def perform_feature_selection(window_size, print_steps, include_attacks):
     protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'pop3', 'smtp', 'ssh']
     chosen_cols = {}
 
@@ -97,7 +99,7 @@ def perform_feature_selection(window_size, print_steps=True):
         if print_steps:
             print("---------------------------------------------------------")
             print("Protocol:", protocol, "\n")
-        chosen_cols[protocol] = select_features(protocol, window_size, print_steps)
+        chosen_cols[protocol] = select_features(protocol, window_size, print_steps, include_attacks)
         if print_steps:
             print(protocol, ', '.join(chosen_cols[protocol].values))
     return chosen_cols
