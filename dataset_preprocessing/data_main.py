@@ -4,10 +4,10 @@ from time_series_generator import generate_time_series
 
 window_size = 350.0
 
-#process_dataset(window_size)
+process_dataset(window_size, include_attacks=False)
 #save_time_series_plots(window_size)
-chosen_cols = perform_feature_selection(window_size, False)
+#chosen_cols = perform_feature_selection(window_size, False)
 
-print("------------------------------------------------------------------------------------------------------------------")
-for key in chosen_cols:
-    print(key, ' -> ', ', '.join(chosen_cols[key].values))
+#print("------------------------------------------------------------------------------------------------------------------")
+#for key in chosen_cols:
+#    print(key, ' -> ', ', '.join(chosen_cols[key].values))
