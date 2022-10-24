@@ -1,3 +1,4 @@
+import csv
 import pandas as pd
 import numpy as np
 
@@ -101,7 +102,7 @@ def select_features(protocol, window_size, print_steps, include_attacks):
 
 
 def perform_feature_selection(window_size, print_steps, include_attacks):
-    protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh'] #pop3 was removed(no attacks)
+    protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
     chosen_cols = {}
 
     for protocol in protocols:
@@ -111,4 +112,10 @@ def perform_feature_selection(window_size, print_steps, include_attacks):
         chosen_cols[protocol] = select_features(protocol, window_size, print_steps, include_attacks)
         if print_steps:
             print(protocol, ', '.join(chosen_cols[protocol].values))
-    return chosen_cols
+
+    with open('chosen_columns.csv', 'w') as f:
+        write = csv.writer(f)
+        for key in chosen_cols:
+            cols = list(chosen_cols[key].values)
+            cols.insert(0, key)
+            write.writerow(cols)

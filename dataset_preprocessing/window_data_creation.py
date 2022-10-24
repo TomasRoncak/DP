@@ -28,7 +28,7 @@ def create_csv(data, columns, window_length, include_attacks, protocol):
     if not path.exists(BASE_PATH + '{0}/{1}'.format(window_length, protocol)):    
         makedirs(BASE_PATH + '{0}/{1}'.format(window_length, protocol))             # create file <protocol>
     
-    with open(CSV_PATH, 'a') as csv_file:                                       # create or append to file windowed_dataset.csv
+    with open(CSV_PATH, 'a') as csv_file:                                           # create or append to file windowed_dataset.csv
         writer = csv.writer(csv_file)
         if stat(CSV_PATH).st_size == 0:
             writer.writerow([x + '_sum' if x != 'time' else x for x in columns])
@@ -77,6 +77,7 @@ def clean_data(data):
 
     data.drop(columns=VARIABLES_NOT_TO_CALCULATE_ON, inplace=True)
 
+
 def plot_time_series(data, window_size, protocol, include_attacks): 
     FILENAME = 'plots' if include_attacks else 'plots_no_attacks'
     PATH = BASE_PATH + '{0}/{1}/{2}/'.format(window_size, protocol, FILENAME)
@@ -102,7 +103,7 @@ def save_time_series_plots(window_size, include_attacks):
         plot_time_series(data, window_size, protocol, include_attacks)
 
 
-def process_dataset(window_size, include_attacks):
+def preprocess_dataset(window_size, include_attacks, save_plots):
     dataset = pd.concat(map(pd.read_csv, ['dataset_preprocessing/original_dataset/UNSW-NB15_1.csv', 'dataset_preprocessing/original_dataset/UNSW-NB15_2.csv', 
                                           'dataset_preprocessing/original_dataset/UNSW-NB15_3.csv', 'dataset_preprocessing/original_dataset/UNSW-NB15_4.csv']), ignore_index=True)
     relevant_protocols = get_relevant_protocols(dataset)
@@ -117,3 +118,6 @@ def process_dataset(window_size, include_attacks):
     dataset = dataset if include_attacks else dataset.loc[dataset['Label'] == 0]
     clean_data(dataset)
     moving_window(dataset, window_size, include_attacks, 'all')
+
+    if save_plots:
+        save_time_series_plots(window_size)
