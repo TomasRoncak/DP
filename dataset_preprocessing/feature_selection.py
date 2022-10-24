@@ -19,16 +19,19 @@ def remove_nonunique_columns(df, print_steps):
     df.drop(columns=to_remove, inplace=True)
 
 
-def remove_similar_columns(df, print_steps):
-    max_similarity = 0.99
+def remove_similar_columns(df, df_att, print_steps):
+    max_similarity = 0.98
 
     sim_cols = set()
     for i in range(df.shape[1]):
         col = df.iloc[:, i]
         for j in range(i + 1, df.shape[1]):
             otherCol = df.iloc[:, j]
+            other_col_att = df_att.iloc[:, j]
             cs = cosine_similarity(col.values.reshape(1, -1), otherCol.values.reshape(1, -1))
-            if cs > max_similarity:
+            cs_att = cosine_similarity(otherCol.values.reshape(1, -1), other_col_att.values.reshape(1, -1))
+            if cs > max_similarity and cs_att > max_similarity:
+                #print('\t', cs, df.columns[i], '\t', df.columns[j])
                 sim_cols.add(df.columns.values[j])
 
     if print_steps:    
@@ -79,22 +82,26 @@ def peak_value_cutoff(df):
 
 def select_features(protocol, window_size, print_steps, include_attacks):
     FILE_NAME = 'windowed_dataset.csv' if include_attacks else 'windowed_dataset_no_attacks.csv'
+    OTHER_FILE_NAME = 'windowed_dataset.csv' if not include_attacks else 'windowed_dataset_no_attacks.csv'
     
     df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + FILE_NAME)
+    df_other = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + OTHER_FILE_NAME)
+    
     df.drop(columns=['time', 'Label_sum'], inplace=True)
+    df_other.drop(columns=['time', 'Label_sum'], inplace=True)
 
+    remove_similar_columns(df, df_other, print_steps)
+    peak_value_cutoff(df)
     remove_nonunique_columns(df, print_steps)
-    remove_similar_columns(df, print_steps)
     adfueller_test(df, print_steps)
     randomness_test(df, print_steps)
-    remove_colinearity(df, print_steps)
-    peak_value_cutoff(df)
+    #remove_colinearity(df, print_steps)
 
     return df.columns
 
 
 def perform_feature_selection(window_size, print_steps, include_attacks):
-    protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'pop3', 'smtp', 'ssh']
+    protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh'] #pop3 was removed(no attacks)
     chosen_cols = {}
 
     for protocol in protocols:

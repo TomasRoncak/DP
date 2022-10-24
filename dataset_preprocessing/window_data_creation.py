@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt 
 import pandas as pd
+import numpy as np
 import datetime
 import csv
 
@@ -51,10 +52,6 @@ def calculate_statistics(window, window_length, include_attacks, protocol):
 
 
 def moving_window(data, window_length, include_attacks, protocol):   
-    VARIABLES_NOT_TO_CALCULATE_ON = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
-                                     'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
-    data['time'] = pd.to_datetime(data['Stime'], unit='s')
-    data.drop(columns=VARIABLES_NOT_TO_CALCULATE_ON, inplace=True)
     window_length = datetime.timedelta(seconds=window_length)
     
     agg = data['time'].agg(['min', 'max'])
@@ -69,6 +66,16 @@ def moving_window(data, window_length, include_attacks, protocol):
             calculate_statistics(window, window_length, include_attacks, protocol) 
         start_time = windowed_time
 
+
+def clean_data(data):
+    VARIABLES_NOT_TO_CALCULATE_ON = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
+                                     'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
+    data['time'] = pd.to_datetime(data['Stime'], unit='s')
+    data['tc_flw_http_mthd'].fillna(value = data.tc_flw_http_mthd.mean(), inplace = True)
+    data['is_ftp_login'].fillna(value = data.is_ftp_login.mean(), inplace = True)
+    data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
+
+    data.drop(columns=VARIABLES_NOT_TO_CALCULATE_ON, inplace=True)
 
 def plot_time_series(data, window_size, protocol, include_attacks): 
     FILENAME = 'plots' if include_attacks else 'plots_no_attacks'
@@ -104,7 +111,9 @@ def process_dataset(window_size, include_attacks):
         matching_data = dataset.loc[dataset['service'] == protocol]
         if not include_attacks:
             matching_data = matching_data.loc[matching_data['Label'] == 0]
+        clean_data(matching_data)
         moving_window(matching_data, window_size, include_attacks, protocol)
     
     dataset = dataset if include_attacks else dataset.loc[dataset['Label'] == 0]
+    clean_data(dataset)
     moving_window(dataset, window_size, include_attacks, 'all')
