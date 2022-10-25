@@ -1,13 +1,11 @@
 import csv
 import pandas as pd
-import numpy as np
+import seaborn as sns
 
+from matplotlib import pyplot
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.diagnostic import acorr_ljungbox
-
-from matplotlib import pyplot
-import seaborn as sns
 
 
 def remove_nonunique_columns(df, print_steps):
@@ -94,7 +92,6 @@ def remove_colinearity(df, protocol, labels, print_steps):
     svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt=".2f", cmap="YlGnBu")
     figure = svm.get_figure()
     figure.savefig('dataset_preprocessing/processed_dataset/correlations/correlations_{0}.png'.format(protocol), dpi=400)
-
 
 
 def peak_value_cutoff(df):
