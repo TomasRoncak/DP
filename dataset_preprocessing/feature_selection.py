@@ -6,6 +6,9 @@ from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.diagnostic import acorr_ljungbox
 
+from matplotlib import pyplot
+import seaborn as sns
+
 
 def remove_nonunique_columns(df, print_steps):
     percent = 2
@@ -20,23 +23,20 @@ def remove_nonunique_columns(df, print_steps):
     df.drop(columns=to_remove, inplace=True)
 
 
-def remove_similar_columns(df, df_att, print_steps):
+def remove_unaffected_columns(df, df_att, print_steps):
     max_similarity = 0.98
 
     sim_cols = set()
-    for i in range(df.shape[1]):
-        col = df.iloc[:, i]
-        for j in range(i + 1, df.shape[1]):
-            otherCol = df.iloc[:, j]
-            other_col_att = df_att.iloc[:, j]
-            cs = cosine_similarity(col.values.reshape(1, -1), otherCol.values.reshape(1, -1))
-            cs_att = cosine_similarity(otherCol.values.reshape(1, -1), other_col_att.values.reshape(1, -1))
-            if cs > max_similarity and cs_att > max_similarity:
-                #print('\t', cs, df.columns[i], '\t', df.columns[j])
-                sim_cols.add(df.columns.values[j])
-
+    for j in range(df.shape[1]):
+        column = df.iloc[:, j]
+        parallel_column = df_att[column._name]
+        cs_att = cosine_similarity(column.values.reshape(1, -1), parallel_column.values.reshape(1, -1))
+        if cs_att > max_similarity or parallel_column.values.size == len(parallel_column.values[parallel_column.values == 0]): #column contains only zeroes:
+            sim_cols.add(df.columns.values[j])
+    
     if print_steps:    
-        print('removed {0} features by cosine similarity:'.format(len(sim_cols)), ', '.join(sim_cols), end='\n\n')
+        print('removed {0} features by cosine similarity (unaffected columns):'\
+            .format(len(sim_cols)), ', '.join(sim_cols), end='\n\n')
     df.drop(columns=sim_cols, inplace=True)
 
 
@@ -67,13 +67,34 @@ def randomness_test(df, print_steps):
     df.drop(columns=to_remove, inplace=True)
 
 
-def remove_colinearity(df, print_steps):
-    corr_matrix = df.corr().abs()
-    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    to_remove = [column for column in upper.columns if any(upper[column] > 0.95)]
+def remove_colinearity(df, protocol, labels, print_steps):
+    if df.empty:
+        return
+
+    corr_with_label = df.corrwith(labels).sort_values().to_dict()
+    corr_matrix = df.corr()
+    res = corr_matrix.unstack().drop_duplicates()
+    res = res[(res>0.95) & (res<1)].to_dict()
+
+    to_delete = set()
+    correlating_cols = list(res.keys())
+    for columns in correlating_cols:
+        if corr_with_label[columns[0]] in to_delete or corr_with_label[columns[1]] in to_delete:
+            continue
+        if corr_with_label[columns[0]] > corr_with_label[columns[1]]:
+            to_delete.add(columns[1])
+        else:
+            to_delete.add(columns[0])
+
     if print_steps:
-        print("removed {0} features by colinearity:".format(len(to_remove)), ', '.join(to_remove), end='\n\n')
-    df.drop(to_remove, axis=1, inplace=True)
+        print("removed {0} features by colinearity test:".format(len(to_delete)), ' '.join(to_delete), end='\n\n')
+    df.drop(columns=to_delete, inplace=True)
+
+    fig, ax = pyplot.subplots(figsize=(8, 6))
+    svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt=".2f", cmap="YlGnBu")
+    figure = svm.get_figure()
+    figure.savefig('dataset_preprocessing/processed_dataset/correlations/correlations_{0}.png'.format(protocol), dpi=400)
+
 
 
 def peak_value_cutoff(df):
@@ -88,15 +109,16 @@ def select_features(protocol, window_size, print_steps, include_attacks):
     df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + FILE_NAME)
     df_other = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + OTHER_FILE_NAME)
     
+    labels = df['Label_sum'].copy()
     df.drop(columns=['time', 'Label_sum'], inplace=True)
     df_other.drop(columns=['time', 'Label_sum'], inplace=True)
 
-    remove_similar_columns(df, df_other, print_steps)
-    peak_value_cutoff(df)
     remove_nonunique_columns(df, print_steps)
+    remove_unaffected_columns(df, df_other, print_steps)
+    peak_value_cutoff(df)
     adfueller_test(df, print_steps)
     randomness_test(df, print_steps)
-    #remove_colinearity(df, print_steps)
+    remove_colinearity(df, protocol, labels, print_steps)
 
     return df.columns
 

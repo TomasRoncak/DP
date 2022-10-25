@@ -5,4 +5,5 @@ from time_series_generator import generate_time_series
 window_size = 180.0
 
 #preprocess_dataset(window_size, include_attacks=True, save_plots=True)
-perform_feature_selection(window_size, print_steps=False, include_attacks=False)
+
+perform_feature_selection(window_size, print_steps=True, include_attacks=True)
