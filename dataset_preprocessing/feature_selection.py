@@ -109,7 +109,8 @@ def select_features(protocol, window_size, print_steps, include_attacks):
     df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + FILE_NAME)
     df_other = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + OTHER_FILE_NAME)
     
-    labels = df['Label_sum'].copy()
+    labels = df['Label_sum'].copy() if include_attacks else df_other['Label_sum'].copy()
+
     df.drop(columns=['time', 'Label_sum'], inplace=True)
     df_other.drop(columns=['time', 'Label_sum'], inplace=True)
 
