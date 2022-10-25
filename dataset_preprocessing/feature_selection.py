@@ -136,7 +136,7 @@ def perform_feature_selection(window_size, print_steps, include_attacks):
         if print_steps:
             print(protocol, ', '.join(chosen_cols[protocol].values))
 
-    with open('chosen_columns.csv', 'w') as f:
+    with open('dataset_preprocessing/selected_features.csv', 'w') as f:
         write = csv.writer(f)
         for key in chosen_cols:
             cols = list(chosen_cols[key].values)

@@ -5,4 +5,4 @@ original_dataset
 processed_dataset
 dataset_preprocessing/feature_selection.ipynb
 dataset_preprocessing/data-synthesize.ipynb
-chosen_columns.csv
+selected_features.csv
