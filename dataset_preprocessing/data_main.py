@@ -12,6 +12,7 @@ clean and create time series dataset out of flow-based network capture dataset
 """
 
 #preprocess_dataset(window_size, include_attacks=True, save_plots=True)
+#preprocess_dataset(window_size, include_attacks=False, save_plots=True)
 
 """
 perform feature selection on created time series dataset (nonunique, randomness, colinearity, adfueller, peak cutoff)
@@ -19,7 +20,7 @@ perform feature selection on created time series dataset (nonunique, randomness,
 :param print_steps: boolean telling if steps should be described in more detail
 """
 
-#perform_feature_selection(window_size, print_steps=True)
+perform_feature_selection(window_size, print_steps=True)
 
 """
 creates dataset suitable for training according to extracted features (on data without attacks)

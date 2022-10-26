@@ -120,4 +120,4 @@ def preprocess_dataset(window_size, include_attacks, save_plots):
     moving_window(dataset, window_size, include_attacks, 'all')
 
     if save_plots:
-        save_time_series_plots(window_size)
+        save_time_series_plots(window_size, include_attacks)
