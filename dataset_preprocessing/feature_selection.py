@@ -1,4 +1,5 @@
 import csv
+import json
 import pandas as pd
 import seaborn as sns
 
@@ -118,7 +119,7 @@ def select_features(protocol, window_size, print_steps, include_attacks):
     randomness_test(df, print_steps)
     remove_colinearity(df, protocol, labels, print_steps)
 
-    return df.columns
+    return list(df.columns)
 
 
 def perform_feature_selection(window_size, print_steps, include_attacks):
@@ -133,9 +134,10 @@ def perform_feature_selection(window_size, print_steps, include_attacks):
         if print_steps:
             print(protocol, ', '.join(chosen_cols[protocol].values))
 
-    with open('dataset_preprocessing/selected_features.csv', 'w') as f:
-        write = csv.writer(f)
-        for key in chosen_cols:
-            cols = list(chosen_cols[key].values)
-            cols.insert(0, key)
-            write.writerow(cols)
+    delete = [key for key in chosen_cols if chosen_cols[key] == []]
+    for key in delete:
+        del chosen_cols[key]
+
+    with open('dataset_preprocessing/selected_features.json', 'w') as f:
+        f.write(json.dumps(chosen_cols))
+            
