@@ -22,13 +22,13 @@ def remove_nonunique_columns(df, print_steps):
     df.drop(columns=to_remove, inplace=True)
 
 
-def remove_unaffected_columns(df, df_att, print_steps):
+def remove_unaffected_columns(df, df_no_attacks, print_steps):
     max_similarity = 0.98
 
     sim_cols = set()
     for j in range(df.shape[1]):
         column = df.iloc[:, j]
-        parallel_column = df_att[column._name]
+        parallel_column = df_no_attacks[column._name]
         cs_att = cosine_similarity(column.values.reshape(1, -1), parallel_column.values.reshape(1, -1))
         if cs_att > max_similarity or parallel_column.values.size == len(parallel_column.values[parallel_column.values == 0]): #column contains only zeroes:
             sim_cols.add(df.columns.values[j])
@@ -100,20 +100,17 @@ def peak_value_cutoff(df):
     df.clip(lower=df.quantile(0), upper=df.quantile(1-percent), axis=1, inplace=True)
 
 
-def select_features(protocol, window_size, print_steps, include_attacks):
-    FILE_NAME = 'windowed_dataset.csv' if include_attacks else 'windowed_dataset_no_attacks.csv'
-    OTHER_FILE_NAME = 'windowed_dataset.csv' if not include_attacks else 'windowed_dataset_no_attacks.csv'
-    
-    df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + FILE_NAME)
-    df_other = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + OTHER_FILE_NAME)
-    
-    labels = df['Label_sum'].copy() if include_attacks else df_other['Label_sum'].copy()
+def select_features(protocol, window_size, print_steps):
+    df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + 'windowed_dataset.csv' )
+    df_no_attacks = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + 'windowed_dataset_no_attacks.csv')
+
+    labels = df_no_attacks['Label_sum'].copy()
 
     df.drop(columns=['time', 'Label_sum'], inplace=True)
-    df_other.drop(columns=['time', 'Label_sum'], inplace=True)
+    df_no_attacks.drop(columns=['time', 'Label_sum'], inplace=True)
 
     remove_nonunique_columns(df, print_steps)
-    remove_unaffected_columns(df, df_other, print_steps)
+    remove_unaffected_columns(df, df_no_attacks, print_steps)
     peak_value_cutoff(df)
     adfueller_test(df, print_steps)
     randomness_test(df, print_steps)
@@ -122,7 +119,7 @@ def select_features(protocol, window_size, print_steps, include_attacks):
     return list(df.columns)
 
 
-def perform_feature_selection(window_size, print_steps, include_attacks):
+def perform_feature_selection(window_size, print_steps):
     protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
     chosen_cols = {}
 
@@ -130,9 +127,9 @@ def perform_feature_selection(window_size, print_steps, include_attacks):
         if print_steps:
             print("---------------------------------------------------------")
             print("Protocol:", protocol, "\n")
-        chosen_cols[protocol] = select_features(protocol, window_size, print_steps, include_attacks)
+        chosen_cols[protocol] = select_features(protocol, window_size, print_steps)
         if print_steps:
-            print(protocol, ', '.join(chosen_cols[protocol].values))
+            print(protocol, ', '.join(chosen_cols[protocol]))
 
     delete = [key for key in chosen_cols if chosen_cols[key] == []]
     for key in delete:

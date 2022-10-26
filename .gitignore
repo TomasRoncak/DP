@@ -2,7 +2,7 @@
 __pycache__
 venv
 original_dataset
-processed_dataset
 dataset_preprocessing/feature_selection.ipynb
 dataset_preprocessing/data-synthesize.ipynb
-selected_features.json
+plots
+plots_no_attacks

@@ -17,10 +17,9 @@ clean and create time series dataset out of flow-based network capture dataset
 perform feature selection on created time series dataset (nonunique, randomness, colinearity, adfueller, peak cutoff)
 
 :param print_steps : boolean telling if steps should be described in more detail
-:param include_attacks: boolean telling if dataset should contain network attacks
 """
 
-perform_feature_selection(window_size, print_steps=False, include_attacks=False)
+#perform_feature_selection(window_size, print_steps=True)
 
 import json
 import csv
