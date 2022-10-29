@@ -1,9 +1,10 @@
-import csv
 import json
 import pandas as pd
 import seaborn as sns
+import constants as const
 
 from matplotlib import pyplot
+from os import path, makedirs
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -66,7 +67,7 @@ def randomness_test(df, print_steps):
     df.drop(columns=to_remove, inplace=True)
 
 
-def remove_colinearity(df, protocol, labels, print_steps):
+def remove_colinearity(df, protocol, labels, window_size, print_steps):
     if df.empty:
         return
 
@@ -89,10 +90,13 @@ def remove_colinearity(df, protocol, labels, print_steps):
         print("removed {0} features by colinearity test:".format(len(to_delete)), ' '.join(to_delete), end='\n\n')
     df.drop(columns=to_delete, inplace=True)
 
+    if not path.exists(const.CORELLATIONS_FILE_PATH.format(window_size)):
+        makedirs(const.CORELLATIONS_FILE_PATH.format(window_size))
+
     fig, ax = pyplot.subplots(figsize=(8, 6))
     svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt=".2f", cmap="YlGnBu")
     figure = svm.get_figure()
-    figure.savefig('dataset_preprocessing/processed_dataset/correlations/correlations_{0}.png'.format(protocol), dpi=400)
+    figure.savefig(const.CORELLATIONS_PNG_FILE.format(window_size, protocol), dpi=400)
 
 
 def peak_value_cutoff(df):
@@ -101,8 +105,8 @@ def peak_value_cutoff(df):
 
 
 def select_features(protocol, window_size, print_steps):
-    df = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + 'windowed_dataset.csv' )
-    df_no_attacks = pd.read_csv('dataset_preprocessing/processed_dataset/{0}/{1}/'.format(window_size, protocol) + 'windowed_dataset_no_attacks.csv')
+    df = pd.read_csv(const.FULL_WINDOWED_ATTACK_DATA_FILE.format(window_size, protocol))
+    df_no_attacks = pd.read_csv(const.FULL_WINDOWED_DATA_FILE.format(window_size, protocol))
 
     labels = df_no_attacks['Label_sum'].copy()
 
@@ -114,16 +118,15 @@ def select_features(protocol, window_size, print_steps):
     peak_value_cutoff(df)
     adfueller_test(df, print_steps)
     randomness_test(df, print_steps)
-    remove_colinearity(df, protocol, labels, print_steps)
+    remove_colinearity(df, protocol, labels, window_size, print_steps)
 
     return list(df.columns)
 
 
-def perform_feature_selection(window_size, print_steps):
-    protocols = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
+def perform_build_features(window_size, print_steps):
     chosen_cols = {}
 
-    for protocol in protocols:
+    for protocol in const.PROTOCOLS:
         if print_steps:
             print("---------------------------------------------------------")
             print("Protocol:", protocol, "\n")
@@ -135,6 +138,6 @@ def perform_feature_selection(window_size, print_steps):
     for key in delete:
         del chosen_cols[key]
 
-    with open('dataset_preprocessing/selected_features.json', 'w') as f:
+    with open(const.FULL_SELECTED_FEATURES_FILE.format(window_size), 'w') as f:
         f.write(json.dumps(chosen_cols))
             

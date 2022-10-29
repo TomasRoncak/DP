@@ -1,9 +1,9 @@
 .DS_Store
 __pycache__
+.vscode
 venv
-original_dataset
-dataset_preprocessing/feature_selection.ipynb
-dataset_preprocessing/data-synthesize.ipynb
+original
+notebooks
 plots
 plots_no_attacks
 correlations

@@ -1,9 +1,9 @@
+import json
+import pandas as pd
+import constants as const
+
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from sklearn.preprocessing import MinMaxScaler
-
-import json
-import csv
-import pandas as pd
 
 def normalize_data(df):
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -44,14 +44,13 @@ def generate_time_series(df):
 
 
 def create_extracted_dataset(window_size):
-    features = json.load(open('dataset_preprocessing/selected_features.json'))
+    features = json.load(open(const.FULL_SELECTED_FEATURES_FILE.format(window_size)))
     data = pd.DataFrame()
 
     for feature in features:
-        FILE_PATH = 'dataset_preprocessing/processed_dataset/{0}/{1}/windowed_dataset_no_attacks.csv'.format(window_size, feature)
-        df = pd.read_csv(FILE_PATH, usecols = features[feature])
+        df = pd.read_csv(const.FULL_WINDOWED_DATA_FILE.format(window_size, feature), usecols = features[feature])
         df.columns = df.columns.str.replace('_sum', '_{0}'.format(feature))
         data = pd.concat([data, df], axis=1)
         data = data.dropna()
 
-    data.to_csv('dataset_preprocessing/processed_dataset/{0}/extracted_dataset.csv'.format(window_size), index=False)
+    data.to_csv(const.FULL_EXTRACTED_DATA_FILE.format(window_size), index=False)

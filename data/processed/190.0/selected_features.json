@@ -1,0 +1,7 @@
+{
+  "all": ["sbytes_sum", "Sjit_sum", "ct_state_ttl_sum", "ct_dst_src_ltm_sum"],
+  "dns": ["ct_dst_src_ltm_sum"],
+  "ftp": ["dttl_sum", "Dintpkt_sum"],
+  "http": ["sbytes_sum", "sloss_sum", "Dintpkt_sum"],
+  "smtp": ["Djit_sum"]
+}
