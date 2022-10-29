@@ -1,8 +1,8 @@
 import json
 import pandas as pd
 import constants as const
+import tensorflow as tf
 
-from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from sklearn.preprocessing import MinMaxScaler
 
 def normalize_data(df):
@@ -18,21 +18,22 @@ def split_dataset(df, percent):
 
 def create_time_series_data_generator(train, test):
     n_input = 3
-    train_data_gen = TimeseriesGenerator(train, 
-                                        train,
-                                        length=n_input, 
-                                        sampling_rate=1,
-                                        stride=1,
-                                        batch_size=1
-                                        )
+    
+    train_data_gen = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, 
+                                                                        train,
+                                                                        length=n_input, 
+                                                                        sampling_rate=1,
+                                                                        stride=1,
+                                                                        batch_size=1
+                                                                        )
 
-    test_data_gen = TimeseriesGenerator(test, 
-                                        test,
-                                        length=n_input, 
-                                        sampling_rate=1,
-                                        stride=1,
-                                        batch_size=1
-                                        )
+    test_data_gen = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, 
+                                                                        test,
+                                                                        length=n_input, 
+                                                                        sampling_rate=1,
+                                                                        stride=1,
+                                                                        batch_size=1
+                                                                        )
 
     return train_data_gen, test_data_gen
 
