@@ -16,8 +16,9 @@ FULL_EXTRACTED_DATA_FILE = BASE_PATH + '{0}/extracted_dataset.csv'
 FULL_WINDOWED_ATTACK_DATA_FILE = BASE_PATH + '{0}/{1}/windowed_dataset.csv'
 FULL_WINDOWED_DATA_FILE = BASE_PATH + '{0}/{1}/windowed_dataset_no_attacks.csv'
 
-
 CORELLATIONS_FILE_PATH = BASE_PATH + '{0}/correlations/'
 CORELLATIONS_PNG_FILE = CORELLATIONS_FILE_PATH + '{1}_matrix.png'
+
+EXTRACTED_DATASET_PATH = BASE_PATH + '{0}/extracted_dataset.csv'
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)

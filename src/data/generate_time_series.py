@@ -16,9 +16,7 @@ def split_dataset(df, percent):
     return train, test
 
 
-def create_time_series_data_generator(train, test):
-    n_input = 3
-    
+def create_time_series_data_generator(train, test, n_input):
     train_data_gen = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, 
                                                                         train,
                                                                         length=n_input, 
@@ -38,10 +36,11 @@ def create_time_series_data_generator(train, test):
     return train_data_gen, test_data_gen
 
 
-def generate_time_series(df):
+def generate_time_series(window_size, n_input):
+    df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size))
     normalize_data(df)
     train, test = split_dataset(df, 0.8)
-    return create_time_series_data_generator(train, test)
+    return create_time_series_data_generator(train, test, n_input)
 
 
 def create_extracted_dataset(window_size):
