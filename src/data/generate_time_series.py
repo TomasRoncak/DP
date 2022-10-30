@@ -9,12 +9,12 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 def normalize_data(df):
     scaler = MinMaxScaler(feature_range=(0, 1))
-    scaler.fit_transform(df)
+    return scaler.fit_transform(df)
 
 
 def scale_data(df):
     scaler = StandardScaler()
-    scaler.fit_transform(df)
+    return scaler.fit_transform(df)
 
 
 def split_dataset(df, percent):
@@ -43,9 +43,8 @@ def create_time_series_data_generator(train, test, n_input):
 
 def generate_time_series(window_size, n_input):
     df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size)).to_numpy()
-
-    normalize_data(df)
-    scale_data(df)
+    df = normalize_data(df)
+    df = scale_data(df)
     
     train, test = split_dataset(df, 0.8)
     return create_time_series_data_generator(train, test, n_input)
