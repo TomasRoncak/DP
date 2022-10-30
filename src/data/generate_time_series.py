@@ -1,9 +1,11 @@
 import json
 import pandas as pd
-import constants as const
 import tensorflow as tf
+import sys
+sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
+import constants as const
 
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 def normalize_data(df):
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -33,11 +35,12 @@ def create_time_series_data_generator(train, test, n_input):
                                                                         batch_size=1
                                                                         )
 
-    return train_data_gen, test_data_gen
+    return train_data_gen, test_data_gen, train.shape[1]
 
 
 def generate_time_series(window_size, n_input):
     df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size))
+    df = df.to_numpy()
     normalize_data(df)
     train, test = split_dataset(df, 0.8)
     return create_time_series_data_generator(train, test, n_input)
