@@ -22,3 +22,5 @@ CORELLATIONS_PNG_FILE = CORELLATIONS_FILE_PATH + '{1}_matrix.png'
 EXTRACTED_DATASET_PATH = BASE_PATH + '{0}/extracted_dataset.csv'
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
+
+SAVE_MODEL_PATH = 'models/model.h5'
