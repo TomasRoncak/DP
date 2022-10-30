@@ -1,4 +1,5 @@
 import sys
+import wandb
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 
@@ -8,7 +9,7 @@ from keras.layers import Dense, Conv1D, Conv2D, Flatten, MaxPooling1D, MaxPoolin
 from keras.callbacks import EarlyStopping
 
 window_size = 180.0
-n_steps = 3
+n_steps = 2
 train_ts_generator, test_ts_generator, n_features = generate_time_series(window_size, n_steps)
 
 model = Sequential()
@@ -17,17 +18,20 @@ model.add(MaxPooling2D(pool_size=2))
 model.add(Conv2D(filters=96, padding='same', kernel_size=2, activation='relu'))
 model.add(Flatten())
 model.add(Dense(50, activation='relu'))
-model.add(Dense(1))
+model.add(Dense(n_features))
 
 model.compile(optimizer='adam', loss='mse')
 
+run = wandb.init(project="dp", entity="tomasroncak")
+
 earlystops = EarlyStopping(monitor='loss', patience=10, verbose=1)
+wandb_callback = wandb.keras.WandbCallback()
 
 model.fit(
     train_ts_generator, 
-    shuffle=False, 
-    #steps_per_epoch=1, 
     epochs=200, 
     verbose=2, 
-    callbacks=[earlystops]
+    callbacks=[earlystops, wandb_callback]
 )
+
+run.finish()
