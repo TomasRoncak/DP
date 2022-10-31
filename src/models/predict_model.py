@@ -81,10 +81,10 @@ for i in range(conf.n_featues):
 
     # plot baseline and predictions
     plt.rcParams["figure.figsize"] = (12,3)
-    plt.plot(data_column, label ='Train data')
-    plt.plot(reality_column, label ='Test data') 
-    plt.plot(predict_column, label ='Prediction') 
+    plt.plot(data_column, label ='Train & Test data', color="#017b92")
+    plt.plot(reality_column, color="#017b92") 
+    plt.plot(predict_column, label ='Prediction', color="#f97306") 
     plt.title(extracted_features[i])
     plt.legend()
-    plt.savefig('models/plots/{0}'.format(extracted_features[i]), dpi=400)
+    plt.savefig('models/prediction_plots/{0}'.format(extracted_features[i]), dpi=400)
     plt.close()
