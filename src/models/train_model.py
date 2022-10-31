@@ -12,7 +12,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Conv1D, Conv2D, Flatten, MaxPooling1D, MaxPooling2D
 from keras.callbacks import EarlyStopping
 
-train_ts_generator, test_ts_generator, n_features = generate_time_series(conf.window_size, conf.n_steps)
+train_ts_generator, n_features, _ = generate_time_series(conf.window_size, conf.n_steps)
 
 model = Sequential()
 model.add(Conv2D(filters=64, padding='same', kernel_size=2, activation='relu', input_shape=(conf.n_steps, n_features, 1)))

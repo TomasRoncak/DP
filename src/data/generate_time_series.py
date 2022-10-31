@@ -7,14 +7,15 @@ import constants as const
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
+minmax_scaler = MinMaxScaler(feature_range=(0, 1))
+stand_scaler = StandardScaler()
+
 def normalize_data(df):
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    return scaler.fit_transform(df)
+    return minmax_scaler.fit_transform(df)
 
 
 def scale_data(df):
-    scaler = StandardScaler()
-    return scaler.fit_transform(df)
+    return stand_scaler.fit_transform(df)
 
 
 def split_dataset(df, percent):
@@ -23,31 +24,24 @@ def split_dataset(df, percent):
     return train, test
 
 
-def create_time_series_data_generator(train, test, n_input):
-    train_data_gen = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, 
-                                                                        train,
-                                                                        length=n_input, 
-                                                                        batch_size=1
-                                                                        )
-
-    test_data_gen = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, 
-                                                                        test,
-                                                                        length=n_input, 
-                                                                        sampling_rate=1,
-                                                                        stride=1,
-                                                                        batch_size=1
-                                                                        )
-
-    return train_data_gen, test_data_gen, train.shape[1]
+def ts_data_generator(data, n_input):
+    return tf.keras.preprocessing.sequence.TimeseriesGenerator(data, 
+                                                               data,
+                                                               length=n_input, 
+                                                               batch_size=1
+                                                               )
 
 
-def generate_time_series(window_size, n_input):
-    df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size)).to_numpy()
+def generate_time_series(window_size, n_input, get_train=True):
+    df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size))
+    features = df.columns
+    df = df.to_numpy()
     df = normalize_data(df)
     df = scale_data(df)
     
     train, test = split_dataset(df, 0.8)
-    return create_time_series_data_generator(train, test, n_input)
+    data = train if get_train else test
+    return ts_data_generator(data, n_input), data.shape[1], list(features)
 
 
 def create_extracted_dataset(window_size):
