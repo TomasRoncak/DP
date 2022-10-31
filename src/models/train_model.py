@@ -68,13 +68,3 @@ def train(
     makedirs(const.MODEL_PREDICTIONS_PATH.format(i))
     model.save(const.SAVE_MODEL_PATH.format(i))
     run.finish()
-
-train(
-    "CNN",
-    conf.window_size, 
-    conf.n_steps, 
-    conf.learning_rate, 
-    conf.optimizer, 
-    conf.patience, 
-    conf.epochs
-)

@@ -1,5 +1,7 @@
 from data.create_windowed_data import preprocess_dataset
 from data.generate_time_series import generate_time_series, create_extracted_dataset
+from models.train_model import train
+from models.predict_model import predict
 from features.build_features import perform_build_features
 
 import config as conf
@@ -28,3 +30,22 @@ creates dataset suitable for training according to extracted features (on data w
 :param window_size: number telling which dataset to use according to window size
 """
 #create_extracted_dataset(conf.window_size)
+
+
+train(
+    "CNN",
+    conf.window_size, 
+    conf.n_steps, 
+    conf.learning_rate, 
+    conf.optimizer, 
+    conf.patience, 
+    conf.epochs
+)
+
+predict(
+    model_number=2,
+    conf.window_size,
+    conf.n_steps,
+    conf.n_featues,
+    save_plots=True
+)
