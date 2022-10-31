@@ -23,4 +23,6 @@ EXTRACTED_DATASET_PATH = BASE_PATH + '{0}/extracted_dataset.csv'
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 
-SAVE_MODEL_PATH = 'models/model.h5'
+MODEL_PATH = 'models/model_{0}/'
+MODEL_PREDICTIONS_PATH = 'models/model_{0}/predictions'
+SAVE_MODEL_PATH = 'models/model_{0}/model.h5'

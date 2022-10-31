@@ -3,3 +3,5 @@ n_steps = 2
 patience = 10
 epochs = 200
 n_featues = 10
+learning_rate = 0.001
+optimizer = 'adam'

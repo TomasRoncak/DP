@@ -26,7 +26,8 @@ def get_y_from_generator(gen):
     print(y.shape)
     return y
 
-model = load_model(const.SAVE_MODEL_PATH)
+model_number = 1
+model = load_model(const.SAVE_MODEL_PATH.format(model_number))
 
 #print(model.summary())
 
@@ -86,5 +87,5 @@ for i in range(conf.n_featues):
     plt.plot(predict_column, label ='Prediction', color="#f97306") 
     plt.title(extracted_features[i])
     plt.legend()
-    plt.savefig('models/prediction_plots/{0}'.format(extracted_features[i]), dpi=400)
+    plt.savefig('models/model_{0}/predictions/{1}'.format(model_number, extracted_features[i]), dpi=400)
     plt.close()
