@@ -33,19 +33,23 @@ creates dataset suitable for training according to extracted features (on data w
 
 
 train(
-    "CNN",
+    conf.model_name,
     conf.window_size, 
     conf.n_steps, 
     conf.learning_rate, 
     conf.optimizer, 
     conf.patience, 
-    conf.epochs
+    conf.epochs,
+    conf.dropout_rate,
+    conf.blocks
 )
 
+
 predict(
-    model_number=2,
+    conf.model_name,
     conf.window_size,
     conf.n_steps,
     conf.n_featues,
+    model_number=4,
     save_plots=True
 )

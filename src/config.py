@@ -1,7 +1,10 @@
 window_size = 180.0
 n_steps = 2
 patience = 10
-epochs = 200
+epochs = 300
 n_featues = 10
 learning_rate = 0.001
+dropout_rate = 0.3
+blocks = 12
 optimizer = 'adam'
+model_name = 'GRU'

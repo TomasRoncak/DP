@@ -26,13 +26,14 @@ def get_y_from_generator(gen):
     return y
 
 def predict(
-    model_number,
+    model_name,
     window_size,
     n_steps,
     n_featues,
+    model_number,
     save_plots
 ):
-    model = load_model(const.SAVE_MODEL_PATH.format(model_number))
+    model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 
     train_ts_generator, n_features, extracted_features = generate_time_series(window_size, n_steps, get_train=True)
     test_ts_generator, n_features, _ = generate_time_series(window_size, n_steps, get_train=False)
