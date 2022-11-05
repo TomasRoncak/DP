@@ -51,7 +51,7 @@ def predict(
     metrics(model, test_ts_generator, train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features)
 
     if save_plots:
-        save_plots(train_real, test_real, test_predict, n_featues, extracted_features, model_number)
+        save_model_plots(train_real, test_real, test_predict, n_featues, extracted_features, model_number)
        
 
 def metrics(model, test_ts_generator, train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features):
@@ -70,7 +70,7 @@ def metrics(model, test_ts_generator, train_real, test_real, train_predict, test
             f.write('RMSE test score:  %.2f\n\n' % rmse_test_score)
 
 
-def save_plots(train_y, y, y_hat, n_featues, extracted_features, model_number):
+def save_model_plots(train_y, y, y_hat, n_featues, extracted_features, model_number):
     begin = len(train_y)                  # beginning is where train data ends
     end = begin + len(y_hat)              # end is where predicted data ends
 

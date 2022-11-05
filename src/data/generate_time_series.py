@@ -6,6 +6,7 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 import constants as const
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from statsmodels.tsa.seasonal import STL
 
 minmax_scaler = MinMaxScaler(feature_range=(0, 1))
 stand_scaler = StandardScaler()
@@ -32,9 +33,17 @@ def ts_data_generator(data, n_input):
                                                                )
 
 
-def generate_time_series(window_size, n_input, get_train=True):
+def generate_time_series(window_size, n_input, get_train=True, stl_decompose=False):
     df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size))
     features = df.columns
+
+    if stl_decompose:
+        df_trend = pd.DataFrame()
+        for feature in features:
+            result = STL(df[feature], period=6, robust = True).fit()
+            df_trend[feature] = result.trend.values.tolist()
+        df = df_trend
+        
     df = df.to_numpy()
     df = normalize_data(df)
     df = scale_data(df)
