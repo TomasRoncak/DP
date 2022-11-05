@@ -31,7 +31,7 @@ creates dataset suitable for training according to extracted features (on data w
 """
 #create_extracted_dataset(conf.window_size)
 
-
+"""
 train(
     conf.model_name,
     conf.window_size, 
@@ -43,6 +43,7 @@ train(
     conf.dropout_rate,
     conf.blocks
 )
+"""
 
 
 predict(
@@ -50,6 +51,6 @@ predict(
     conf.window_size,
     conf.n_steps,
     conf.n_featues,
-    model_number=4,
-    save_plots=True
+    model_number=1,
+    save_plots=False
 )

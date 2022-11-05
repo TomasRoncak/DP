@@ -1,0 +1,52 @@
+Score on test set: 80.48%
+
+ct_state_ttl_all
+MAPE test score:  1.71
+RMSE train score: 55.15
+RMSE test score:  274.82
+
+ct_dst_src_ltm_all
+MAPE test score:  0.62
+RMSE train score: 4180.65
+RMSE test score:  32957.58
+
+ct_dst_src_ltm_dns
+MAPE test score:  2.59
+RMSE train score: 3905.57
+RMSE test score:  35445.85
+
+sttl_ftp
+MAPE test score:  0.49
+RMSE train score: 574.17
+RMSE test score:  2622.93
+
+Dintpkt_ftp
+MAPE test score:  1.10
+RMSE train score: 937.80
+RMSE test score:  2663.34
+
+sbytes_http
+MAPE test score:  0.21
+RMSE train score: 102996.95
+RMSE test score:  461938.98
+
+sloss_http
+MAPE test score:  0.13
+RMSE train score: 60.26
+RMSE test score:  240.14
+
+Dintpkt_http
+MAPE test score:  0.26
+RMSE train score: 2444.52
+RMSE test score:  13715.58
+
+dttl_smtp
+MAPE test score:  0.14
+RMSE train score: 225.98
+RMSE test score:  846.26
+
+Djit_smtp
+MAPE test score:  0.42
+RMSE train score: 696.80
+RMSE test score:  1520.25
+

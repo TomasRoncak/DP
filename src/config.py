@@ -7,4 +7,4 @@ learning_rate = 0.001
 dropout_rate = 0.3
 blocks = 12
 optimizer = 'adam'
-model_name = 'GRU'
+model_name = 'CNN'

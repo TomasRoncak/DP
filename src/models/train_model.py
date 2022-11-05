@@ -5,7 +5,6 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 import constants as const
-import config as conf
 
 from generate_time_series import generate_time_series
 from os import path, makedirs
@@ -13,6 +12,15 @@ from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 from keras.optimizers import SGD, RMSprop, Adam, Adagrad
 from keras.layers import Dense, Conv1D, Conv2D, LSTM, GRU, Flatten, MaxPooling1D, MaxPooling2D, Dropout
+
+def save_model(model, model_name):
+    i = 1
+    while path.exists(const.MODEL_PATH.format(i)):
+        i += 1
+    makedirs(const.MODEL_PATH.format(i))
+    makedirs(const.MODEL_PREDICTIONS_PATH.format(i))
+    model.save(const.SAVE_MODEL_PATH.format(i, model_name))
+
 
 def get_optimizer(learning_rate, optimizer, momentum = 0):
     switcher = {
@@ -23,6 +31,7 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
         'adagrad': Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07, name="Adagrad")
     }
     return switcher.get(optimizer)
+
 
 def train(
     model_name,
@@ -52,7 +61,6 @@ def train(
         model.add(GRU(blocks, input_shape=(n_steps, n_features)))
     model.add(Dense(n_features))
     
-
     optimizer_fn = get_optimizer(learning_rate=learning_rate, optimizer=optimizer)
     model.compile(optimizer=optimizer_fn, loss='mse')
 
@@ -68,10 +76,5 @@ def train(
         callbacks=[earlystop_callback, wandb_callback]
     )
 
-    i = 1
-    while path.exists(const.MODEL_PATH.format(i)):
-        i += 1
-    makedirs(const.MODEL_PATH.format(i))
-    makedirs(const.MODEL_PREDICTIONS_PATH.format(i))
-    model.save(const.SAVE_MODEL_PATH.format(i, model_name))
+    save_model(model, model_name)
     run.finish()
