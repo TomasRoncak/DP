@@ -8,3 +8,4 @@ dropout_rate = 0.3
 blocks = 12
 optimizer = 'adam'
 model_name = 'CNN'
+stl_decomposition = True

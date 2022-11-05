@@ -32,11 +32,12 @@ def predict(
     window_size,
     n_steps,
     n_featues,
+    stl_decompose,
     model_number,
     save_plots
 ):
-    train_ts_generator, _, extracted_features = generate_time_series(window_size, n_steps, get_train=True)
-    test_ts_generator, _, _ = generate_time_series(window_size, n_steps, get_train=False)
+    train_ts_generator, _, extracted_features = generate_time_series(window_size, n_steps, get_train=True, stl_decompose=stl_decompose)
+    test_ts_generator, _, _ = generate_time_series(window_size, n_steps, get_train=False, stl_decompose=stl_decompose)
 
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 

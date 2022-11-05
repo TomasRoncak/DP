@@ -42,16 +42,17 @@ def train(
     patience,
     epochs,
     dropout,
-    blocks
+    blocks,
+    stl_decompose
 ):
 
-    train_ts_generator, n_features, _ = generate_time_series(window_size, n_steps)
+    train_ts_generator, n_features, _ = generate_time_series(window_size, n_steps, stl_decompose=stl_decompose)
 
     model = Sequential()
     if model_name == 'CNN':
         model.add(Conv2D(filters=64, padding='same', kernel_size=2, activation='relu', input_shape=(n_steps, n_features, 1)))
         model.add(MaxPooling2D(pool_size=2))
-        model.add(Conv2D(filters=96, padding='same', kernel_size=2, activation='relu'))
+        #model.add(Conv2D(filters=96, padding='same', kernel_size=2, activation='relu'))
         #model.add(Dropout(dropout)),
         model.add(Flatten())
         model.add(Dense(50, activation='relu'))
