@@ -41,32 +41,33 @@ def predict(
 
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 
-    train_real = inverse_transform(get_y_from_generator(train_ts_generator))
+    train_real = get_y_from_generator(train_ts_generator)
     train_predict = model.predict(train_ts_generator)
-    train_predict = inverse_transform(train_predict)
 
-    test_real = inverse_transform(get_y_from_generator(test_ts_generator))
+    test_real = get_y_from_generator(test_ts_generator)
     test_predict = model.predict(test_ts_generator)
-    test_predict = inverse_transform(test_predict)
 
-    metrics(model, test_ts_generator, train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features)
+    metrics(train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features)
 
     if save_plots:
-        save_model_plots(train_real, test_real, test_predict, n_featues, extracted_features, model_number)
+        train_real_inversed = inverse_transform(train_real)
+        test_real_inversed = inverse_transform(test_real)
+        test_predict_inversed = inverse_transform(test_predict)
+
+        save_model_plots(train_real_inversed, test_real_inversed, test_predict_inversed, n_featues, extracted_features, model_number)
        
 
-def metrics(model, test_ts_generator, train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features):
-    with open(const.MODEL_PATH.format(model_number) + 'metrics.txt', 'w') as f:
-        score = model.evaluate(test_ts_generator, verbose=0)
-        f.write('Score on test set: {:0.2f}%\n\n'.format(float(score)*100))
-
+def metrics(train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features):
+    with open(const.MODEL_METRICS_PATH.format(model_number), 'w') as f:
         for i in range(n_featues):
             mape_score = mean_absolute_percentage_error(test_real[:,i], test_predict[:,i])
+            mse_test_score = mean_squared_error(test_real[:, i], test_predict[:,i])
             rmse_train_score = math.sqrt(mean_squared_error(train_real[:,i], train_predict[:,i]))   # [first_row:last_row,column_0] - all rows in column i
-            rmse_test_score = math.sqrt(mean_squared_error(test_real[:, i], test_predict[:,i]))
+            rmse_test_score = math.sqrt(mse_test_score)
 
             f.write(extracted_features[i] + '\n')
             f.write('MAPE test score:  %.2f\n' % mape_score)
+            f.write('MSE test score:   %.2f\n' % mse_test_score)
             f.write('RMSE train score: %.2f\n' % rmse_train_score)
             f.write('RMSE test score:  %.2f\n\n' % rmse_test_score)
 
