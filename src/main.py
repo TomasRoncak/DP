@@ -51,6 +51,6 @@ predict(
     conf.n_steps,
     conf.n_featues,
     conf.stl_decomposition,
-    model_number=7,
+    model_number=2,
     save_plots=True
 )
