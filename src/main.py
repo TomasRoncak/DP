@@ -31,6 +31,21 @@ creates dataset suitable for training according to extracted features (on data w
 """
 #create_extracted_dataset(conf.window_size)
 
+"""
+performs training on a specified neural network and saves trained model 
+
+:param model_name: string specifying type of neural network (cnn, ltsm, ...)
+:param window_size: integer specifying the type of dataset to be used according to size of window
+:param n_steps: integer specifying number of previous steps to be used for future prediction
+:param learning_rate: integer specifying the speed of learning (speed of gradient descent)
+:param optimizer: string specifying type of optimizer
+:param patience: integer specifying dropout patience
+:param epochs: integer specifying number of epochs to be trained
+:param dropout_rate: integer specifying the probability of neurons dropout
+:param blocks: number of blocks to be used in sequential neural networks
+:param stl_decomposition: boolean specifying if STL decomposition should be applied on dataset
+"""
+
 train(
     conf.model_name,
     conf.window_size, 
@@ -44,13 +59,22 @@ train(
     conf.stl_decomposition
 )
 
+"""
+loads saved model, performs prediction on test data calculates metrics and optionaly saves prediction plots
+
+:param model_name: string specifying type of neural network (cnn, ltsm, ...)
+:param window_size: integer specifying the type of dataset to be used according to size of window
+:param n_steps: integer specifying number of previous steps to be used for future prediction
+:param stl_decomposition: boolean specifying if STL decomposition should be applied on dataset
+:param model_number: integer specifying the number of model on which to predict
+:param save_plots: boolean specifying if prediction plots should be saved
+"""
 
 predict(
     conf.model_name,
     conf.window_size,
     conf.n_steps,
-    conf.n_featues,
     conf.stl_decomposition,
-    model_number=2,
+    model_number=4,
     save_plots=True
 )

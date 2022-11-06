@@ -11,15 +11,14 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 from generate_time_series import generate_time_series, minmax_scaler, stand_scaler
 
-import config as conf
 import constants as const
 
-def get_y_from_generator(gen):
+def get_y_from_generator(gen, n_features):
     y = None
     for i in range(len(gen)):
         batch_y = gen[i][1]
         y = batch_y if y is None else np.append(y, batch_y)
-    return y.reshape((-1, conf.n_featues))
+    return y.reshape((-1, n_features))
 
 
 def inverse_transform(predict):
@@ -31,7 +30,6 @@ def predict(
     model_name,
     window_size,
     n_steps,
-    n_featues,
     stl_decompose,
     model_number,
     save_plots
@@ -41,25 +39,25 @@ def predict(
 
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 
-    train_real = get_y_from_generator(train_ts_generator)
+    train_real = get_y_from_generator(train_ts_generator, len(extracted_features))
     train_predict = model.predict(train_ts_generator)
 
-    test_real = get_y_from_generator(test_ts_generator)
+    test_real = get_y_from_generator(test_ts_generator, len(extracted_features))
     test_predict = model.predict(test_ts_generator)
 
-    metrics(train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features)
+    metrics(train_real, test_real, train_predict, test_predict, model_number, extracted_features)
 
     if save_plots:
         train_real_inversed = inverse_transform(train_real)
         test_real_inversed = inverse_transform(test_real)
         test_predict_inversed = inverse_transform(test_predict)
 
-        save_model_plots(train_real_inversed, test_real_inversed, test_predict_inversed, n_featues, extracted_features, model_number)
+        save_model_plots(train_real_inversed, test_real_inversed, test_predict_inversed, extracted_features, model_number)
        
 
-def metrics(train_real, test_real, train_predict, test_predict, model_number, n_featues, extracted_features):
+def metrics(train_real, test_real, train_predict, test_predict, model_number, extracted_features):
     with open(const.MODEL_METRICS_PATH.format(model_number), 'w') as f:
-        for i in range(n_featues):
+        for i in range(len(extracted_features)):
             mape_score = mean_absolute_percentage_error(test_real[:,i], test_predict[:,i])
             mse_test_score = mean_squared_error(test_real[:, i], test_predict[:,i])
             rmse_train_score = math.sqrt(mean_squared_error(train_real[:,i], train_predict[:,i]))   # [first_row:last_row,column_0] - all rows in column i
@@ -72,12 +70,13 @@ def metrics(train_real, test_real, train_predict, test_predict, model_number, n_
             f.write('RMSE test score:  %.2f\n\n' % rmse_test_score)
 
 
-def save_model_plots(train_y, y, y_hat, n_featues, extracted_features, model_number):
+def save_model_plots(train_y, y, y_hat, extracted_features, model_number):
+    n_features = len(extracted_features)
     begin = len(train_y)                  # beginning is where train data ends
     end = begin + len(y_hat)              # end is where predicted data ends
 
     data = np.append(train_y, y)          # whole dataset
-    data = data.reshape(-1, n_featues)
+    data = data.reshape(-1, n_features)
 
     y_plot = np.empty_like(data)          # create empty np array with shape like given array
     y_plot[:, :] = np.nan                 # fill it with nan
@@ -87,7 +86,7 @@ def save_model_plots(train_y, y, y_hat, n_featues, extracted_features, model_num
     y_hat_plot[:, :] = np.nan             # first : stands for first and the second : for the second dimension
     y_hat_plot[begin:end, :] = y_hat      # insert predicted values
 
-    for i in range(n_featues): 
+    for i in range(n_features): 
         train_column = [item[i] for item in data]
         reality_column = [item[i] for item in y_plot]
         predict_column = [item[i] for item in y_hat_plot]
