@@ -9,8 +9,9 @@ import config as conf
 """
 clean and create time series dataset out of flow-based network capture dataset
 
-:param include_attacks: boolean telling if dataset should contain network attacks
-:param save_plots: boolean telling if plots of protocol features should be created and saved
+:param window_size: integer specifying the length of sliding window to be used
+:param include_attacks: boolean specifying if dataset should contain network attacks
+:param save_plots: boolean specifying if protocol feature plots should saved
 """
 
 #preprocess_dataset(conf.window_size, include_attacks=True, save_plots=True)
@@ -19,7 +20,8 @@ clean and create time series dataset out of flow-based network capture dataset
 """
 perform feature selection on created time series dataset (nonunique, randomness, colinearity, adfueller, peak cutoff)
 
-:param print_steps: boolean telling if steps should be described in more detail
+:param window_size: integer specifying the length of sliding window to be used
+:param print_steps: boolean specifying if selection steps should be described in more detail
 """
 
 #perform_build_features(conf.window_size, print_steps=True)
@@ -27,7 +29,7 @@ perform feature selection on created time series dataset (nonunique, randomness,
 """
 creates dataset suitable for training according to extracted features (on data without attacks)
 
-:param window_size: number telling which dataset to use according to window size
+:param window_size: number specifying which dataset to use according to window size
 """
 #create_extracted_dataset(conf.window_size)
 
