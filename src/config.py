@@ -1,4 +1,4 @@
-window_size = 180.0
+window_size = 180
 n_steps = 2
 patience = 10
 epochs = 300
@@ -7,4 +7,5 @@ dropout_rate = 0.3
 blocks = 12
 optimizer = 'adam'
 model_name = 'CNN'
-stl_decomposition = True
+stl_decomposition = False
+use_real_data = True

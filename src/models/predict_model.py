@@ -31,11 +31,12 @@ def predict(
     window_size,
     n_steps,
     stl_decompose,
+    use_real_data,
     model_number,
     save_plots
 ):
-    train_ts_generator, _, extracted_features = generate_time_series(window_size, n_steps, get_train=True, stl_decompose=stl_decompose)
-    test_ts_generator, _, _ = generate_time_series(window_size, n_steps, get_train=False, stl_decompose=stl_decompose)
+    train_ts_generator, _, extracted_features = generate_time_series(window_size, n_steps, get_train=True, stl_decompose=stl_decompose, use_real_data=use_real_data)
+    test_ts_generator, _, _ = generate_time_series(window_size, n_steps, get_train=False, stl_decompose=stl_decompose, use_real_data=use_real_data)
 
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 

@@ -20,6 +20,7 @@ CORELLATIONS_FILE_PATH = BASE_PATH + '{0}/correlations/'
 CORELLATIONS_PNG_FILE = CORELLATIONS_FILE_PATH + '{1}_matrix.png'
 
 EXTRACTED_DATASET_PATH = BASE_PATH + '{0}/extracted_dataset.csv'
+REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 

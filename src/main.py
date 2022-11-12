@@ -58,7 +58,8 @@ train(
     conf.epochs,
     conf.dropout_rate,
     conf.blocks,
-    conf.stl_decomposition
+    conf.stl_decomposition,
+    conf.use_real_data
 )
 
 """
@@ -77,6 +78,7 @@ predict(
     conf.window_size,
     conf.n_steps,
     conf.stl_decomposition,
-    model_number=4,
+    conf.use_real_data,
+    model_number=6,
     save_plots=True
 )

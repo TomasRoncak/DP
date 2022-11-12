@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import tensorflow as tf
 import sys
+
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 import constants as const
 
@@ -33,8 +34,14 @@ def ts_data_generator(data, n_input):
                                                                )
 
 
-def generate_time_series(window_size, n_input, get_train=True, stl_decompose=False):
-    df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size))
+def generate_time_series(window_size, n_input, get_train=True, stl_decompose=False, use_real_data=False):
+    if use_real_data:
+        df = pd.read_csv(const.REAL_DATASET, sep='\t')
+        df = df[['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']]
+        df.dropna(inplace=True)
+    else:
+        df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size))
+
     features = df.columns
 
     if stl_decompose:
