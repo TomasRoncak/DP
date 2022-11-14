@@ -40,7 +40,7 @@ def generate_time_series(window_size, n_input, get_train=True, stl_decompose=Fal
         df = df[['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']]
         df.dropna(inplace=True)
     else:
-        df = pd.read_csv(const.EXTRACTED_DATASET_PATH.format(window_size))
+        df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
 
     features = df.columns
 
@@ -60,14 +60,15 @@ def generate_time_series(window_size, n_input, get_train=True, stl_decompose=Fal
     return ts_data_generator(data, n_input), data.shape[1], list(features)
 
 
-def create_extracted_dataset(window_size):
-    features = json.load(open(const.FULL_SELECTED_FEATURES_FILE.format(window_size)))
+def create_extracted_dataset(window_size, with_attacks):
+    protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
     data = pd.DataFrame()
 
-    for feature in features:
-        df = pd.read_csv(const.FULL_WINDOWED_DATA_FILE.format(window_size, feature), usecols = features[feature])
-        df.columns = df.columns.str.replace('_sum', '_{0}'.format(feature))
-        data = pd.concat([data, df], axis=1)
-        data = data.dropna()
-
-    data.to_csv(const.FULL_EXTRACTED_DATA_FILE.format(window_size), index=False)
+    for protocol in protocol_features:   # loop through protocols and their set of features
+        PROTOCOL_DATASET_PATH = const.TS_ATTACK_DATASET if with_attacks else const.TS_BENIGN_DATASET
+        protocol_data = pd.read_csv(PROTOCOL_DATASET_PATH.format(window_size, protocol), usecols = protocol_features[protocol])
+        protocol_data.columns = protocol_data.columns.str.replace('_sum', '_{0}'.format(protocol))
+        data = pd.concat([data, protocol_data], axis=1)
+    
+    DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
+    data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)

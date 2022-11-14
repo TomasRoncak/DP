@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import datetime
 import csv
 import constants as const
@@ -8,9 +8,8 @@ import constants as const
 from os import path, makedirs, stat
 
 def get_relevant_protocols(dataset):
-    relevant_protocols = []
+    relevant_protocols = ['all']
     services = dataset.service.unique()
-    #protocols = dataset.proto.unique()
 
     for protocol in services:
         if dataset['service'][dataset['service'] == protocol].count() > 1000:
@@ -19,50 +18,91 @@ def get_relevant_protocols(dataset):
 
 
 def create_csv(data, columns, window_length, include_attacks, protocol):
-    CSV_PATH = const.FULL_WINDOWED_ATTACK_DATA_FILE.format(window_length, protocol) if include_attacks else const.FULL_WINDOWED_DATA_FILE.format(window_length, protocol)
+    WINDOW_FOLDER = const.PROCESSED_DATASET_PATH + '{0}/'.format(window_length)
+    PROCESSED_DATA_PATH = const.TS_ATTACK_DATASET.format(window_length, protocol) if include_attacks \
+        else const.TS_BENIGN_DATASET.format(window_length, protocol)
 
-    if not path.exists(const.BASE_PATH + '{0}/'.format(window_length)):   
-        makedirs(const.BASE_PATH + '{0}/'.format(window_length))                          # create file <window_size>
-    if not path.exists(const.BASE_PATH + '{0}/{1}'.format(window_length, protocol)):    
-        makedirs(const.BASE_PATH + '{0}/{1}'.format(window_length, protocol))             # create file <protocol>
+    if not path.exists(WINDOW_FOLDER):   
+        makedirs(WINDOW_FOLDER)                         # create folder <window_size>
+    if not path.exists(WINDOW_FOLDER + protocol):    
+        makedirs(WINDOW_FOLDER + protocol)              # create folder <window_size>/<protocol>
     
-    with open(CSV_PATH, 'a') as csv_file:                                                 # create or append to file windowed_dataset.csv
+    with open(PROCESSED_DATA_PATH, 'a') as csv_file:                                                  
         writer = csv.writer(csv_file)
-        if stat(CSV_PATH).st_size == 0:
+        if stat(PROCESSED_DATA_PATH).st_size == 0:      # if folder is empty, insert column names first
             writer.writerow([x + '_sum' if x != 'time' else x for x in columns])
         writer.writerow(data)
 
 
-def calculate_statistics(window, window_length, include_attacks, protocol): 
-    window = window.fillna(0)
+def compute_window_statistics(data, window_length, include_attacks, protocol):    
+    # data is content of one sliding window (x rows)
+    # calculate statistics across columns or if time, take first time (one row)
+    data_row_stats = [data[column].sum() if column != 'time' else data[column].iloc[0] for column in data]  
+    data_row_stats.append(len(data))  # number of connections
 
-    data = [] 
-    for column in window:
-        if column != 'time':
-            data.append(window[column].astype(int).sum())
-    data.append(window[column].iloc[0])
-    data.append(len(window))  # number of connections
+    column_names = data.columns.values.tolist()
+    column_names.append('connections')
 
-    columns = window.columns.values.tolist()
-    columns.append('connections')
-
-    create_csv(data, columns, window_length.total_seconds(), include_attacks, protocol)
+    create_csv(data_row_stats, column_names, window_length.total_seconds(), include_attacks, protocol)
 
 
-def moving_window(data, window_length, include_attacks, protocol):   
+def perform_sliding_window(data, window_length, include_attacks, protocol):   
     window_length = datetime.timedelta(seconds=window_length)
+    start_time, end_time = data['time'].agg(['min', 'max'])[['min', 'max']]
+    print(start_time, end_time)
+
+    while start_time < end_time:
+        sliding_window = data[(data['time'] >= start_time) & (data['time'] <= start_time + window_length)]
+        if not sliding_window.empty:
+            compute_window_statistics(sliding_window, window_length, include_attacks, protocol) 
+        start_time += window_length
+
+
+def preprocess_dataset(window_size, include_attacks, save_plots):
+    dataset = pd.concat(map(pd.read_csv, [const.RAW_DATASET_PATH + 'UNSW-NB15_1.csv', 
+                                          const.RAW_DATASET_PATH + 'UNSW-NB15_2.csv', 
+                                          const.RAW_DATASET_PATH + 'UNSW-NB15_3.csv', 
+                                          const.RAW_DATASET_PATH + 'UNSW-NB15_4.csv']), ignore_index=True)
+    relevant_protocols = get_relevant_protocols(dataset)
+    relevant_protocols = ['all']
+    dataset = clean_data(dataset)
+
+    for protocol in relevant_protocols:
+        data = dataset.copy()
+        if protocol != 'all':
+            data = data.loc[data['service'] == protocol]
+        if not include_attacks:
+            data = data.loc[data['Label'] == 0]
+
+        data.drop(columns=const.UNUSED_FEATURES, inplace=True)
+        perform_sliding_window(data, window_size, include_attacks, protocol)
     
-    agg = data['time'].agg(['min', 'max'])
-    start_time = agg['min']
-    end_time = agg['max']
+    #if save_plots:
+    #    save_ts_plots(window_size, include_attacks)
 
-    while (start_time < end_time):
-        windowed_time = start_time + window_length
-        window = data[(data['time'] >= start_time) & (data['time'] <= windowed_time)]
 
-        if not window.empty:
-            calculate_statistics(window, window_length, include_attacks, protocol) 
-        start_time = windowed_time
+def save_ts_plots(window_size, include_attacks): 
+    for protocol in const.PROTOCOLS:
+        if include_attacks:
+            DATASET_FILE_NAME = const.TS_ATTACK_DATASET.format(window_size, protocol) 
+            PLOTS_PATH = const.ATTACKS_PLOTS_PATH.format(window_size, protocol)
+        else:
+            DATASET_FILE_NAME = const.TS_BENIGN_DATASET.format(window_size, protocol)
+            PLOTS_PATH = const.BENIGN_PLOTS_PATH.format(window_size, protocol)
+
+        if not path.exists(PLOTS_PATH):
+            makedirs(PLOTS_PATH)
+
+        data = pd.read_csv(DATASET_FILE_NAME)
+
+        for feature in data.columns:
+            if feature == 'time' or (data[feature] == 0).all():   # if column contains only zeroes
+                continue
+            if not path.exists(PLOTS_PATH + feature):
+                pd.DataFrame(data, columns=['time', feature]).plot(x='time', y=feature, rot=90, figsize=(15, 5))
+                plt.tight_layout()
+                plt.savefig(PLOTS_PATH + feature)
+                plt.close()
 
 
 def clean_data(data):
@@ -70,48 +110,6 @@ def clean_data(data):
     data['tc_flw_http_mthd'].fillna(value = data.tc_flw_http_mthd.mean(), inplace = True)
     data['is_ftp_login'].fillna(value = data.is_ftp_login.mean(), inplace = True)
     data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
+    data = data.fillna(0)
 
-    data.drop(columns=const.UNUSED_FEATURES, inplace=True)
-
-
-def plot_time_series(data, window_size, protocol, include_attacks): 
-    PLOT_PATH = const.PLOTS_PATH.format(window_size, protocol, 'plots/') if include_attacks else const.PLOTS_PATH.format(window_size, protocol, 'plots_no_attacks/')
-
-    if not path.exists(PLOT_PATH):
-        makedirs(PLOT_PATH)
-
-    for column in data.columns:
-        if column == 'time':
-            continue
-        pd.DataFrame(data, columns=['time', column]).plot(x='time', y=column, rot=90, figsize=(15, 5))
-        if not path.exists(PLOT_PATH + column):
-            plt.tight_layout()
-            plt.savefig(PLOT_PATH + column)
-
-
-def save_time_series_plots(window_size, include_attacks):
-    for protocol in const.PROTOCOLS:
-        FILE_NAME = const.FULL_WINDOWED_ATTACK_DATA_FILE.format(window_size, protocol) if include_attacks \
-               else const.FULL_WINDOWED_DATA_FILE.format(window_size, protocol)
-        data = pd.read_csv(FILE_NAME)
-        plot_time_series(data, window_size, protocol, include_attacks)
-
-
-def preprocess_dataset(window_size, include_attacks, save_plots):
-    dataset = pd.concat(map(pd.read_csv, [const.DATASET_PATH + 'UNSW-NB15_1.csv', const.DATASET_PATH + 'UNSW-NB15_2.csv', 
-                                          const.DATASET_PATH + 'UNSW-NB15_3.csv', const.DATASET_PATH + 'UNSW-NB15_4.csv']), ignore_index=True)
-    relevant_protocols = get_relevant_protocols(dataset)
-
-    for protocol in relevant_protocols:
-        matching_data = dataset.loc[dataset['service'] == protocol]
-        if not include_attacks:
-            matching_data = matching_data.loc[matching_data['Label'] == 0]
-        clean_data(matching_data)
-        moving_window(matching_data, window_size, include_attacks, protocol)
-    
-    dataset = dataset if include_attacks else dataset.loc[dataset['Label'] == 0]
-    clean_data(dataset)
-    moving_window(dataset, window_size, include_attacks, 'all')
-
-    if save_plots:
-        save_time_series_plots(window_size, include_attacks)
+    return data

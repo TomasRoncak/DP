@@ -1,30 +1,39 @@
-DATASET_PATH = 'data/original/'
-BASE_PATH = 'data/processed/'
-PLOTS_PATH = BASE_PATH + '/{0}/{1}/{2}'
+## BASE PATHS ##
+RAW_DATASET_PATH = 'data/original/'
+PROCESSED_DATASET_PATH = 'data/processed/'
 
-EXTRACTED_DATA_FILE = 'extracted_dataset.csv'
-SELECTED_FEATURES_FILE = 'selected_features.json'
-WINDOWED_ATTACK_DATA_FILE = 'windowed_dataset.csv'
-WINDOWED_DATA_FILE = 'windowed_dataset_no_attacks.csv'
+## FILENAMES ##
+SELECTED_FEATURES_FILENAME = 'selected_features.json'
+EXTRACTED_BENIGN_DATA_FILENAME = 'extracted_benign_dataset.csv'
+EXTRACTED_ATTACK_DATA_FILENAME = 'extracted_attacks_dataset.csv'
+ATTACKS_FILENAME = 'attacks_dataset.csv'
+BENIGN_FILENAME = 'benign_dataset.csv'
 
-UNUSED_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
-                   'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
+## PROCESSED DATASETS GROUPED PER PROTOCOL ##
+TS_ATTACK_DATASET = PROCESSED_DATASET_PATH + '{0}/{1}/' + ATTACKS_FILENAME
+TS_BENIGN_DATASET = PROCESSED_DATASET_PATH + '{0}/{1}/' + BENIGN_FILENAME
 
-FULL_SELECTED_FEATURES_FILE = BASE_PATH + '{0}/selected_features.json'
-FULL_EXTRACTED_DATA_FILE = BASE_PATH + '{0}/extracted_dataset.csv'
+## PLOTS PER PROTOCOL FILENAME ##
+BENIGN_PLOTS_PATH = PROCESSED_DATASET_PATH + '/{0}/{1}/benign_plots/'
+ATTACKS_PLOTS_PATH = PROCESSED_DATASET_PATH + '/{0}/{1}/attacks_plots/'
 
-FULL_WINDOWED_ATTACK_DATA_FILE = BASE_PATH + '{0}/{1}/windowed_dataset.csv'
-FULL_WINDOWED_DATA_FILE = BASE_PATH + '{0}/{1}/windowed_dataset_no_attacks.csv'
+## EXTRACTED CSV DATASET PATH ##
+EXTRACTED_BENIGN_DATASET_PATH = PROCESSED_DATASET_PATH + '{0}/' + EXTRACTED_BENIGN_DATA_FILENAME
+EXTRACTED_ATTACK_DATASET_PATH = PROCESSED_DATASET_PATH + '{0}/' + EXTRACTED_ATTACK_DATA_FILENAME
 
-CORELLATIONS_FILE_PATH = BASE_PATH + '{0}/correlations/'
-CORELLATIONS_PNG_FILE = CORELLATIONS_FILE_PATH + '{1}_matrix.png'
-
-EXTRACTED_DATASET_PATH = BASE_PATH + '{0}/extracted_dataset.csv'
-REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
-
-PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
-
+## TRAINED MODEL PATHS ##
 MODEL_PATH = 'models/model_{0}/'
 MODEL_METRICS_PATH = MODEL_PATH + 'metrics.txt'
 MODEL_PREDICTIONS_PATH = 'models/model_{0}/predictions/'
 SAVE_MODEL_PATH = 'models/model_{0}/model_{1}.h5'
+
+## OTHERS ##
+UNUSED_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
+                   'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
+PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
+REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
+
+CORELLATIONS_FILE_PATH = PROCESSED_DATASET_PATH + '{0}/correlations/'
+CORELLATIONS_PNG_FILE = CORELLATIONS_FILE_PATH + '{1}_matrix.png'
+
+SELECTED_FEATURES_JSON = PROCESSED_DATASET_PATH + '{0}/' + SELECTED_FEATURES_FILENAME

@@ -23,21 +23,21 @@ def remove_nonunique_columns(df, print_steps):
     df.drop(columns=to_remove, inplace=True)
 
 
-def remove_unaffected_columns(df, df_no_attacks, print_steps):
+def remove_unaffected_columns(df_attacks, df_benign, print_steps):
     max_similarity = 0.98
 
     sim_cols = set()
-    for j in range(df.shape[1]):
-        column = df.iloc[:, j]
-        parallel_column = df_no_attacks[column._name]
+    for j in range(df_attacks.shape[1]):
+        column = df_attacks.iloc[:, j]
+        parallel_column = df_benign[column._name]
         cs_att = cosine_similarity(column.values.reshape(1, -1), parallel_column.values.reshape(1, -1))
         if cs_att > max_similarity or parallel_column.values.size == len(parallel_column.values[parallel_column.values == 0]): #column contains only zeroes:
-            sim_cols.add(df.columns.values[j])
+            sim_cols.add(df_attacks.columns.values[j])
     
     if print_steps:    
         print('removed {0} features by cosine similarity (unaffected columns):'\
             .format(len(sim_cols)), ', '.join(sim_cols), end='\n\n')
-    df.drop(columns=sim_cols, inplace=True)
+    df_attacks.drop(columns=sim_cols, inplace=True)
 
 
 def adfueller_test(df, print_steps):
@@ -105,22 +105,22 @@ def peak_value_cutoff(df):
 
 
 def select_features(protocol, window_size, print_steps):
-    df = pd.read_csv(const.FULL_WINDOWED_ATTACK_DATA_FILE.format(window_size, protocol))
-    df_no_attacks = pd.read_csv(const.FULL_WINDOWED_DATA_FILE.format(window_size, protocol))
+    df_attack = pd.read_csv(const.TS_ATTACK_DATASET.format(window_size, protocol))
+    df_benign = pd.read_csv(const.TS_BENIGN_DATASET.format(window_size, protocol))
 
-    labels = df_no_attacks['Label_sum'].copy()
+    labels = df_benign['Label_sum'].copy()
 
-    df.drop(columns=['time', 'Label_sum'], inplace=True)
-    df_no_attacks.drop(columns=['time', 'Label_sum'], inplace=True)
+    df_attack.drop(columns=['time', 'Label_sum'], inplace=True)
+    df_benign.drop(columns=['time', 'Label_sum'], inplace=True)
 
-    remove_nonunique_columns(df, print_steps)
-    remove_unaffected_columns(df, df_no_attacks, print_steps)
-    peak_value_cutoff(df)
-    adfueller_test(df, print_steps)
-    randomness_test(df, print_steps)
-    remove_colinearity(df, protocol, labels, window_size, print_steps)
+    remove_nonunique_columns(df_attack, print_steps)
+    remove_unaffected_columns(df_attack, df_benign, print_steps)
+    peak_value_cutoff(df_attack)
+    adfueller_test(df_attack, print_steps)
+    randomness_test(df_attack, print_steps)
+    remove_colinearity(df_attack, protocol, labels, window_size, print_steps)
 
-    return list(df.columns)
+    return list(df_attack.columns)
 
 
 def perform_build_features(window_size, print_steps):
@@ -138,6 +138,6 @@ def perform_build_features(window_size, print_steps):
     for key in delete:
         del chosen_cols[key]
 
-    with open(const.FULL_SELECTED_FEATURES_FILE.format(window_size), 'w') as f:
+    with open(const.SELECTED_FEATURES_JSON.format(window_size), 'w') as f:
         f.write(json.dumps(chosen_cols))
             

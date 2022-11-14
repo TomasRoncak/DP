@@ -1,7 +1,25 @@
 {
-  "all": ["ct_state_ttl_sum", "ct_dst_src_ltm_sum"],
-  "dns": ["ct_dst_src_ltm_sum"],
-  "ftp": ["sttl_sum", "Dintpkt_sum"],
-  "http": ["sbytes_sum", "sloss_sum", "Dintpkt_sum"],
-  "smtp": ["dttl_sum", "Djit_sum"]
+    "all": [
+        "ct_state_ttl_sum",
+        "ct_dst_src_ltm_sum"
+    ],
+    "dns": [
+        "ct_dst_src_ltm_sum"
+    ],
+    "ftp": [
+        "sttl_sum",
+        "Dintpkt_sum"
+    ],
+    "http": [
+        "sbytes_sum",
+        "sloss_sum",
+        "Dintpkt_sum"
+    ],
+    "smtp": [
+        "dttl_sum",
+        "Djit_sum"
+    ],
+    "ssh": [
+        "ackdat_sum"
+    ]
 }

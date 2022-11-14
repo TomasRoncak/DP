@@ -1,8 +1,8 @@
 from data.create_windowed_data import preprocess_dataset
-from data.generate_time_series import generate_time_series, create_extracted_dataset
+from data.generate_time_series import create_extracted_dataset
+from features.build_features import perform_build_features
 from models.train_model import train
 from models.predict_model import predict
-from features.build_features import perform_build_features
 
 import config as conf
 
@@ -31,7 +31,9 @@ creates dataset suitable for training according to extracted features (on data w
 
 :param window_size: number specifying which dataset to use according to window size
 """
-#create_extracted_dataset(conf.window_size)
+
+create_extracted_dataset(conf.window_size, with_attacks=False)
+create_extracted_dataset(conf.window_size, with_attacks=True)
 
 """
 performs training on a specified neural network and saves trained model 
@@ -48,6 +50,7 @@ performs training on a specified neural network and saves trained model
 :param stl_decomposition: boolean specifying if STL decomposition should be applied on dataset
 """
 
+"""
 train(
     conf.model_name,
     conf.window_size, 
@@ -61,6 +64,7 @@ train(
     conf.stl_decomposition,
     conf.use_real_data
 )
+"""
 
 """
 loads saved model, performs prediction on test data calculates metrics and optionaly saves prediction plots
@@ -73,6 +77,7 @@ loads saved model, performs prediction on test data calculates metrics and optio
 :param save_plots: boolean specifying if prediction plots should be saved
 """
 
+"""
 predict(
     conf.model_name,
     conf.window_size,
@@ -82,3 +87,4 @@ predict(
     model_number=6,
     save_plots=True
 )
+"""
