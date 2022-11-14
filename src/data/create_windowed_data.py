@@ -77,8 +77,8 @@ def preprocess_dataset(window_size, include_attacks, save_plots):
         data.drop(columns=const.UNUSED_FEATURES, inplace=True)
         perform_sliding_window(data, window_size, include_attacks, protocol)
     
-    #if save_plots:
-    #    save_ts_plots(window_size, include_attacks)
+    if save_plots:
+        save_ts_plots(window_size, include_attacks)
 
 
 def save_ts_plots(window_size, include_attacks): 
