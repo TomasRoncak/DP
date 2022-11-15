@@ -92,10 +92,6 @@ def save_prediction_plots(train_y, y, y_hat, extracted_features, n_features, mod
         reality_column = [item[i] for item in y_plot]
         predict_column = [item[i] for item in y_hat_plot]
 
-        figure_name = const.MODEL_PREDICTIONS_PATH.format(model_number) + extracted_features[i] + '.png'
-        if path.exists(figure_name):
-            remove(figure_name)
-
         plt.rcParams["figure.figsize"] = (12, 3)
         plt.plot(train_column, label ='Train & Test data', color="#017b92")
         plt.plot(reality_column, color="#017b92") 
@@ -103,5 +99,5 @@ def save_prediction_plots(train_y, y, y_hat, extracted_features, n_features, mod
 
         plt.title(extracted_features[i])
         plt.legend()
-        plt.savefig(figure_name, dpi=400)
+        plt.savefig(const.MODEL_PREDICTIONS_PATH.format(model_number) + extracted_features[i], dpi=400)
         plt.close()
