@@ -30,27 +30,34 @@ def predict(
     model_number,
     save_plots
 ):
-    extracted_features = ts_handler.features
-
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 
-    train_real = get_y_from_generator(ts_handler.train_generator, len(extracted_features))
     train_predict = model.predict(ts_handler.train_generator)
-
-    test_real = get_y_from_generator(ts_handler.test_generator, len(extracted_features))
     test_predict = model.predict(ts_handler.test_generator)
 
-    metrics(train_real, test_real, train_predict, test_predict, model_number, extracted_features)
+    train_real = get_y_from_generator(ts_handler.train_generator, ts_handler.n_features)
+    test_real = get_y_from_generator(ts_handler.test_generator, ts_handler.n_features)
+
+    metrics(
+        train_real, 
+        test_real, 
+        train_predict, 
+        test_predict, 
+        ts_handler.features,
+        model_number
+    )
 
     if save_plots:
-        train_real_inversed = inverse_transform(train_real, ts_handler)
-        test_real_inversed = inverse_transform(test_real, ts_handler)
-        test_predict_inversed = inverse_transform(test_predict, ts_handler)
-
-        save_model_plots(train_real_inversed, test_real_inversed, test_predict_inversed, extracted_features, model_number)
+        save_model_plots(
+            inverse_transform(train_real, ts_handler), 
+            inverse_transform(test_real, ts_handler), 
+            inverse_transform(test_predict, ts_handler), 
+            ts_handler.features, 
+            model_number
+        )
        
 
-def metrics(train_real, test_real, train_predict, test_predict, model_number, extracted_features):
+def metrics(train_real, test_real, train_predict, test_predict, extracted_features, model_number):
     with open(const.MODEL_METRICS_PATH.format(model_number), 'w') as f:
         for i in range(len(extracted_features)):
             mape_score = mean_absolute_percentage_error(test_real[:,i], test_predict[:,i])
