@@ -9,53 +9,49 @@ import constants as const
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from statsmodels.tsa.seasonal import STL
 
-minmax_scaler = MinMaxScaler(feature_range=(0, 1))
-stand_scaler = StandardScaler()
+class TimeseriesHandler:
+    def __init__(self, use_real_data, window_size):
+        self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
+        self.stand_scaler = StandardScaler()
 
-def normalize_data(df):
-    return minmax_scaler.fit_transform(df)
-
-
-def scale_data(df):
-    return stand_scaler.fit_transform(df)
-
-
-def split_dataset(df, percent):
-    train_size = int(len(df) * percent)
-    train, test = df[0:train_size], df[train_size:len(df)]
-    return train, test
+        if use_real_data:
+            self.df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
+            self.df.dropna(inplace=True)
+        else:
+            self.df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
+        self.features = self.df.columns.tolist()
+        self.n_features = len(self.features)
+        self.df = self.df.to_numpy()
 
 
-def generate_time_series(
-    window_size, 
-    n_input, 
-    get_train=True, 
-    stl_decompose=False, 
-    use_real_data=False
-):
+    def normalize_data(self):
+        self.df = self.minmax_scaler.fit_transform(self.df)
 
-    if use_real_data:
-        df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
-        df.dropna(inplace=True)
-    else:
-        df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
 
-    if stl_decompose:
-        df_trend = pd.DataFrame()
-        for feature in df.columns:
-            result = STL(df[feature], period=6, robust = True).fit()
-            df_trend[feature] = result.trend.values.tolist()
-        df = df_trend
+    def scale_data(self):
+        self.df = self.stand_scaler.fit_transform(self.df)
+
+
+    def split_dataset(self, percent):
+        train_size = int(len(self.df) * percent)
+        train, test = self.df[0:train_size], self.df[train_size:len(self.df)]
+        return train, test
+
+
+    def generate_time_series(self, n_input, stl_decompose, percent_split=0.8):
+        if stl_decompose:
+            df_trend = pd.DataFrame()
+            for feature in self.df.columns:
+                result = STL(self.df[feature], period=6, robust = True).fit()
+                df_trend[feature] = result.trend.values.tolist()
+            self.df = df_trend.to_numpy()
         
-    df = df.to_numpy()
-    df = normalize_data(df)
-    df = scale_data(df)
-    
-    train, test = split_dataset(df, 0.8)
-    data = train if get_train else test
-    generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(data, data, length=n_input, batch_size=1)
+        self.normalize_data()
+        self.scale_data()
+        train, test = self.split_dataset(percent_split)
 
-    return generator, data.shape[1], list(df.columns)
+        self.train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, train, length=n_input, batch_size=1)
+        self.test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, test, length=n_input, batch_size=1)
 
 
 def create_extracted_dataset(window_size, with_attacks):

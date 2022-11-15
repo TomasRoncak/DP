@@ -18,5 +18,8 @@
     "smtp": [
         "dttl_sum",
         "Djit_sum"
+    ],
+    "ssh": [
+        "ackdat_sum"
     ]
 }

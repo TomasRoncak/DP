@@ -8,4 +8,4 @@ blocks = 12
 optimizer = 'adam'
 model_name = 'CNN'
 stl_decomposition = False
-use_real_data = True
+use_real_data = False

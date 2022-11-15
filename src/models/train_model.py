@@ -6,7 +6,6 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 import constants as const
 
-from handle_time_series import generate_time_series
 from os import path, makedirs
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
@@ -34,20 +33,17 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
 
 
 def train(
+    ts_handler,
     model_name,
-    window_size,
     n_steps,
     learning_rate,
     optimizer,
     patience,
     epochs,
     dropout,
-    blocks,
-    stl_decompose,
-    use_real_data
+    blocks
 ):
-
-    train_ts_generator, n_features, _ = generate_time_series(window_size, n_steps, stl_decompose=stl_decompose, use_real_data=use_real_data)
+    n_features = ts_handler.n_features
 
     model = Sequential()
     if model_name == 'CNN':
@@ -72,7 +68,7 @@ def train(
     wandb_callback = wandb.keras.WandbCallback()
 
     model.fit(
-        train_ts_generator, 
+        ts_handler.train_generator, 
         epochs=epochs, 
         verbose=2, 
         callbacks=[earlystop_callback, wandb_callback]

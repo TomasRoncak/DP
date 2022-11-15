@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
-from handle_time_series import generate_time_series, minmax_scaler, stand_scaler
-
 import constants as const
 
 def get_y_from_generator(gen, n_features):
@@ -21,37 +19,33 @@ def get_y_from_generator(gen, n_features):
     return y.reshape((-1, n_features))
 
 
-def inverse_transform(predict):
-    tmp = stand_scaler.inverse_transform(predict)
-    return minmax_scaler.inverse_transform(tmp)
+def inverse_transform(predict, ts_handler):
+    tmp = ts_handler.stand_scaler.inverse_transform(predict)
+    return ts_handler.minmax_scaler.inverse_transform(tmp)
 
 
 def predict(
+    ts_handler,
     model_name,
-    window_size,
-    n_steps,
-    stl_decompose,
-    use_real_data,
     model_number,
     save_plots
 ):
-    train_ts_generator, _, extracted_features = generate_time_series(window_size, n_steps, get_train=True, stl_decompose=stl_decompose, use_real_data=use_real_data)
-    test_ts_generator, _, _ = generate_time_series(window_size, n_steps, get_train=False, stl_decompose=stl_decompose, use_real_data=use_real_data)
+    extracted_features = ts_handler.features
 
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 
-    train_real = get_y_from_generator(train_ts_generator, len(extracted_features))
-    train_predict = model.predict(train_ts_generator)
+    train_real = get_y_from_generator(ts_handler.train_generator, len(extracted_features))
+    train_predict = model.predict(ts_handler.train_generator)
 
-    test_real = get_y_from_generator(test_ts_generator, len(extracted_features))
-    test_predict = model.predict(test_ts_generator)
+    test_real = get_y_from_generator(ts_handler.test_generator, len(extracted_features))
+    test_predict = model.predict(ts_handler.test_generator)
 
     metrics(train_real, test_real, train_predict, test_predict, model_number, extracted_features)
 
     if save_plots:
-        train_real_inversed = inverse_transform(train_real)
-        test_real_inversed = inverse_transform(test_real)
-        test_predict_inversed = inverse_transform(test_predict)
+        train_real_inversed = inverse_transform(train_real, ts_handler)
+        test_real_inversed = inverse_transform(test_real, ts_handler)
+        test_predict_inversed = inverse_transform(test_predict, ts_handler)
 
         save_model_plots(train_real_inversed, test_real_inversed, test_predict_inversed, extracted_features, model_number)
        

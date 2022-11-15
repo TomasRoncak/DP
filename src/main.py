@@ -1,5 +1,5 @@
 from data.create_windowed_data import preprocess_dataset
-from data.handle_time_series import create_extracted_dataset
+from data.handle_time_series import create_extracted_dataset, TimeseriesHandler
 from features.build_features import perform_build_features
 from models.train_model import train
 from models.predict_model import predict
@@ -32,8 +32,8 @@ creates dataset suitable for training according to extracted features (on data w
 :param window_size: number specifying which dataset to use according to window size
 """
 
-create_extracted_dataset(conf.window_size, with_attacks=False)
-create_extracted_dataset(conf.window_size, with_attacks=True)
+#create_extracted_dataset(conf.window_size, with_attacks=False)
+#create_extracted_dataset(conf.window_size, with_attacks=True)
 
 """
 performs training on a specified neural network and saves trained model 
@@ -50,19 +50,20 @@ performs training on a specified neural network and saves trained model
 :param stl_decomposition: boolean specifying if STL decomposition should be applied on dataset
 """
 
+ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size)
+ts_handler.generate_time_series(conf.n_steps, stl_decompose=conf.stl_decomposition)
+
 """
 train(
+    ts_handler,
     conf.model_name,
-    conf.window_size, 
     conf.n_steps, 
     conf.learning_rate, 
     conf.optimizer, 
     conf.patience, 
     conf.epochs,
     conf.dropout_rate,
-    conf.blocks,
-    conf.stl_decomposition,
-    conf.use_real_data
+    conf.blocks
 )
 """
 
@@ -77,14 +78,9 @@ loads saved model, performs prediction on test data calculates metrics and optio
 :param save_plots: boolean specifying if prediction plots should be saved
 """
 
-"""
 predict(
+    ts_handler,
     conf.model_name,
-    conf.window_size,
-    conf.n_steps,
-    conf.stl_decomposition,
-    conf.use_real_data,
-    model_number=6,
+    model_number=1,
     save_plots=True
 )
-"""

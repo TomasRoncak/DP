@@ -31,6 +31,7 @@ SAVE_MODEL_PATH = 'models/model_{0}/model_{1}.h5'
 UNUSED_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
                    'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
+
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
 REAL_DATASET_FEATURES = ['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']
 
