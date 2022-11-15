@@ -1,5 +1,6 @@
 from keras.models import load_model
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
+from os import path, remove
 
 import sys
 import math
@@ -27,8 +28,7 @@ def inverse_transform(predict, ts_handler):
 def predict(
     ts_handler,
     model_name,
-    model_number,
-    save_plots
+    model_number
 ):
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 
@@ -38,7 +38,7 @@ def predict(
     train_real = get_y_from_generator(ts_handler.train_generator, ts_handler.n_features)
     test_real = get_y_from_generator(ts_handler.test_generator, ts_handler.n_features)
 
-    metrics(
+    calculate_metrics(
         train_real, 
         test_real, 
         train_predict, 
@@ -47,17 +47,17 @@ def predict(
         model_number
     )
 
-    if save_plots:
-        save_model_plots(
-            inverse_transform(train_real, ts_handler), 
-            inverse_transform(test_real, ts_handler), 
-            inverse_transform(test_predict, ts_handler), 
-            ts_handler.features, 
-            model_number
-        )
+    save_prediction_plots(
+        inverse_transform(train_real, ts_handler), 
+        inverse_transform(test_real, ts_handler), 
+        inverse_transform(test_predict, ts_handler), 
+        ts_handler.features, 
+        ts_handler.n_features,
+        model_number
+    )
        
 
-def metrics(train_real, test_real, train_predict, test_predict, extracted_features, model_number):
+def calculate_metrics(train_real, test_real, train_predict, test_predict, extracted_features, model_number):
     with open(const.MODEL_METRICS_PATH.format(model_number), 'w') as f:
         for i in range(len(extracted_features)):
             mape_score = mean_absolute_percentage_error(test_real[:,i], test_predict[:,i])
@@ -72,8 +72,7 @@ def metrics(train_real, test_real, train_predict, test_predict, extracted_featur
             f.write('RMSE test score:  %.2f\n\n' % rmse_test_score)
 
 
-def save_model_plots(train_y, y, y_hat, extracted_features, model_number):
-    n_features = len(extracted_features)
+def save_prediction_plots(train_y, y, y_hat, extracted_features, n_features, model_number):
     begin = len(train_y)                  # beginning is where train data ends
     end = begin + len(y_hat)              # end is where predicted data ends
 
@@ -93,6 +92,10 @@ def save_model_plots(train_y, y, y_hat, extracted_features, model_number):
         reality_column = [item[i] for item in y_plot]
         predict_column = [item[i] for item in y_hat_plot]
 
+        figure_name = const.MODEL_PREDICTIONS_PATH.format(model_number) + extracted_features[i] + '.png'
+        if path.exists(figure_name):
+            remove(figure_name)
+
         plt.rcParams["figure.figsize"] = (12, 3)
         plt.plot(train_column, label ='Train & Test data', color="#017b92")
         plt.plot(reality_column, color="#017b92") 
@@ -100,5 +103,5 @@ def save_model_plots(train_y, y, y_hat, extracted_features, model_number):
 
         plt.title(extracted_features[i])
         plt.legend()
-        plt.savefig(const.MODEL_PREDICTIONS_PATH.format(model_number) + extracted_features[i], dpi=400)
+        plt.savefig(figure_name, dpi=400)
         plt.close()

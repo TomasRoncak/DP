@@ -81,6 +81,5 @@ loads saved model, performs prediction on test data calculates metrics and optio
 predict(
     ts_handler,
     conf.model_name,
-    model_number=1,
-    save_plots=True
+    model_number=1
 )
