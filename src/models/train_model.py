@@ -6,7 +6,7 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 import constants as const
 
-from generate_time_series import generate_time_series
+from handle_time_series import generate_time_series
 from os import path, makedirs
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping

@@ -49,7 +49,6 @@ def compute_window_statistics(data, window_length, include_attacks, protocol):
 def perform_sliding_window(data, window_length, include_attacks, protocol):   
     window_length = datetime.timedelta(seconds=window_length)
     start_time, end_time = data['time'].agg(['min', 'max'])[['min', 'max']]
-    print(start_time, end_time)
 
     while start_time < end_time:
         sliding_window = data[(data['time'] >= start_time) & (data['time'] <= start_time + window_length)]

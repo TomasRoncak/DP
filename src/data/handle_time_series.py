@@ -26,27 +26,23 @@ def split_dataset(df, percent):
     return train, test
 
 
-def ts_data_generator(data, n_input):
-    return tf.keras.preprocessing.sequence.TimeseriesGenerator(data, 
-                                                               data,
-                                                               length=n_input, 
-                                                               batch_size=1
-                                                               )
+def generate_time_series(
+    window_size, 
+    n_input, 
+    get_train=True, 
+    stl_decompose=False, 
+    use_real_data=False
+):
 
-
-def generate_time_series(window_size, n_input, get_train=True, stl_decompose=False, use_real_data=False):
     if use_real_data:
-        df = pd.read_csv(const.REAL_DATASET, sep='\t')
-        df = df[['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']]
+        df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
         df.dropna(inplace=True)
     else:
         df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
 
-    features = df.columns
-
     if stl_decompose:
         df_trend = pd.DataFrame()
-        for feature in features:
+        for feature in df.columns:
             result = STL(df[feature], period=6, robust = True).fit()
             df_trend[feature] = result.trend.values.tolist()
         df = df_trend
@@ -57,7 +53,9 @@ def generate_time_series(window_size, n_input, get_train=True, stl_decompose=Fal
     
     train, test = split_dataset(df, 0.8)
     data = train if get_train else test
-    return ts_data_generator(data, n_input), data.shape[1], list(features)
+    generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(data, data, length=n_input, batch_size=1)
+
+    return generator, data.shape[1], list(df.columns)
 
 
 def create_extracted_dataset(window_size, with_attacks):

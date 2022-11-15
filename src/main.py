@@ -1,5 +1,5 @@
 from data.create_windowed_data import preprocess_dataset
-from data.generate_time_series import create_extracted_dataset
+from data.handle_time_series import create_extracted_dataset
 from features.build_features import perform_build_features
 from models.train_model import train
 from models.predict_model import predict

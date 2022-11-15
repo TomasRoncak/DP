@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
-from generate_time_series import generate_time_series, minmax_scaler, stand_scaler
+from handle_time_series import generate_time_series, minmax_scaler, stand_scaler
 
 import constants as const
 

@@ -32,6 +32,7 @@ UNUSED_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
                    'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
+REAL_DATASET_FEATURES = ['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']
 
 CORELLATIONS_FILE_PATH = PROCESSED_DATASET_PATH + '{0}/correlations/'
 CORELLATIONS_PNG_FILE = CORELLATIONS_FILE_PATH + '{1}_matrix.png'
