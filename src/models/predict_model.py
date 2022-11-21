@@ -1,6 +1,5 @@
 from keras.models import load_model
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
-from os import path, remove
 
 import sys
 import math
@@ -38,6 +37,9 @@ def predict(
     train_real = get_y_from_generator(ts_handler.train_generator, ts_handler.n_features)
     test_real = get_y_from_generator(ts_handler.test_generator, ts_handler.n_features)
 
+    attack_train_data = get_y_from_generator(ts_handler.attack_train, ts_handler.n_features)
+    attack_test_data = get_y_from_generator(ts_handler.attack_test, ts_handler.n_features)
+
     calculate_metrics(
         train_real, 
         test_real, 
@@ -47,9 +49,12 @@ def predict(
         model_number
     )
 
+    train_data = inverse_transform(train_real, ts_handler)  # replace with this if want to plot against train data
+    test_data = inverse_transform(test_real, ts_handler)
+
     save_prediction_plots(
-        inverse_transform(train_real, ts_handler), 
-        inverse_transform(test_real, ts_handler), 
+        attack_train_data, 
+        attack_test_data,
         inverse_transform(test_predict, ts_handler), 
         ts_handler.features, 
         ts_handler.n_features,
@@ -72,20 +77,20 @@ def calculate_metrics(train_real, test_real, train_predict, test_predict, extrac
             f.write('RMSE test score:  %.2f\n\n' % rmse_test_score)
 
 
-def save_prediction_plots(train_y, y, y_hat, extracted_features, n_features, model_number):
-    begin = len(train_y)                  # beginning is where train data ends
-    end = begin + len(y_hat)              # end is where predicted data ends
+def save_prediction_plots(train_data, test_data, prediction_data, extracted_features, n_features, model_number):
+    begin = len(train_data)                         # beginning is where train data ends
+    end = begin + len(test_data)                    # end is where predicted data ends
 
-    data = np.append(train_y, y)          # whole dataset
+    data = np.append(train_data, test_data)          # whole dataset
     data = data.reshape(-1, n_features)
 
-    y_plot = np.empty_like(data)          # create empty np array with shape like given array
-    y_plot[:, :] = np.nan                 # fill it with nan
-    y_plot[begin:end, :] = y              # insert real values
+    y_plot = np.empty_like(data)                    # create empty np array with shape like given array
+    y_plot[:, :] = np.nan                           # fill it with nan
+    y_plot[begin:end, :] = test_data                # insert real values
 
     y_hat_plot = np.empty_like(data)
-    y_hat_plot[:, :] = np.nan             # first : stands for first and the second : for the second dimension
-    y_hat_plot[begin:end, :] = y_hat      # insert predicted values
+    y_hat_plot[:, :] = np.nan                       # first : stands for first and the second : for the second dimension
+    y_hat_plot[begin:end, :] = prediction_data      # insert predicted values
 
     for i in range(n_features): 
         train_column = [item[i] for item in data]

@@ -2,6 +2,7 @@ window_size = 180.0
 n_steps = 2
 patience = 10
 epochs = 300
+dataset_split = 0.8
 learning_rate = 0.001
 dropout_rate = 0.3
 blocks = 12

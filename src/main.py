@@ -50,8 +50,8 @@ performs training on a specified neural network and saves trained model
 :param stl_decomposition: boolean specifying if STL decomposition should be applied on dataset
 """
 
-ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size)
-ts_handler.generate_time_series(conf.n_steps, stl_decompose=conf.stl_decomposition)
+ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split)
+ts_handler.generate_time_series(n_input=conf.n_steps, stl_decompose=conf.stl_decomposition)
 
 """
 train(
