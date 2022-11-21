@@ -35,11 +35,14 @@ creates dataset suitable for training according to extracted features (on data w
 #create_extracted_dataset(conf.window_size, with_attacks=False)
 #create_extracted_dataset(conf.window_size, with_attacks=True)
 
+ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split)
+ts_handler.generate_time_series(n_input=conf.n_steps, stl_decompose=conf.stl_decomposition)
+
 """
 performs training on a specified neural network and saves trained model 
 
+:param ts_handler: time series object containing data
 :param model_name: string specifying type of neural network (cnn, ltsm, ...)
-:param window_size: integer specifying the type of dataset to be used according to size of window
 :param n_steps: integer specifying number of previous steps to be used for future prediction
 :param learning_rate: integer specifying the speed of learning (speed of gradient descent)
 :param optimizer: string specifying type of optimizer
@@ -47,11 +50,7 @@ performs training on a specified neural network and saves trained model
 :param epochs: integer specifying number of epochs to be trained
 :param dropout_rate: integer specifying the probability of neurons dropout
 :param blocks: number of blocks to be used in sequential neural networks
-:param stl_decomposition: boolean specifying if STL decomposition should be applied on dataset
 """
-
-ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split)
-ts_handler.generate_time_series(n_input=conf.n_steps, stl_decompose=conf.stl_decomposition)
 
 """
 train(
@@ -70,12 +69,9 @@ train(
 """
 loads saved model, performs prediction on test data calculates metrics and optionaly saves prediction plots
 
+:param ts_handler: time series object containing data
 :param model_name: string specifying type of neural network (cnn, ltsm, ...)
-:param window_size: integer specifying the type of dataset to be used according to size of window
-:param n_steps: integer specifying number of previous steps to be used for future prediction
-:param stl_decomposition: boolean specifying if STL decomposition should be applied on dataset
 :param model_number: integer specifying the number of model on which to predict
-:param save_plots: boolean specifying if prediction plots should be saved
 """
 
 predict(
