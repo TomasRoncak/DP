@@ -63,7 +63,6 @@ def preprocess_dataset(window_size, include_attacks, save_plots):
                                           const.RAW_DATASET_PATH + 'UNSW-NB15_3.csv', 
                                           const.RAW_DATASET_PATH + 'UNSW-NB15_4.csv']), ignore_index=True)
     relevant_protocols = get_relevant_protocols(dataset)
-    relevant_protocols = ['all']
     dataset = clean_data(dataset)
 
     for protocol in relevant_protocols:
