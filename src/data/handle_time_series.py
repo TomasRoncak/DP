@@ -10,11 +10,10 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from statsmodels.tsa.seasonal import STL
 
 class TimeseriesHandler:
-    def __init__(self, use_real_data, window_size, data_split, test_data_split):
+    def __init__(self, use_real_data, window_size, data_split):
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.stand_scaler = StandardScaler()
         self.data_split = data_split
-        self.test_data_split = test_data_split
 
         if use_real_data:
             self.df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
@@ -31,15 +30,17 @@ class TimeseriesHandler:
 
     def normalize_data(self):
         self.df = self.minmax_scaler.fit_transform(self.df)
+        self.attack_df = self.minmax_scaler.fit_transform(self.attack_df)
 
 
     def scale_data(self):
         self.df = self.stand_scaler.fit_transform(self.df)
+        self.attack_df = self.stand_scaler.fit_transform(self.attack_df)
 
 
-    def split_dataset(self, df, data_split):
-        train_size = int(len(df) * data_split)
-        train, test = df[:train_size], df[train_size:]
+    def split_dataset(self):
+        train_size = int(len(self.df) * self.data_split)
+        train, test = self.df[:train_size], self.df[train_size:]
         return train, test
 
 
@@ -54,14 +55,11 @@ class TimeseriesHandler:
         self.normalize_data()
         self.scale_data()
 
-        train, test = self.split_dataset(self.df, self.data_split)
-        attack_train, attack_test = self.split_dataset(self.attack_df, self.test_data_split)
+        train, test = self.split_dataset()
 
         self.train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, train, length=n_input, batch_size=1)
         self.test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, test, length=n_input, batch_size=1)
-        
-        self.attack_train = tf.keras.preprocessing.sequence.TimeseriesGenerator(attack_train, attack_train, length=n_input, batch_size=1)
-        self.attack_test = tf.keras.preprocessing.sequence.TimeseriesGenerator(attack_test, attack_test, length=n_input, batch_size=1)
+        self.attack_data = tf.keras.preprocessing.sequence.TimeseriesGenerator(self.attack_df, self.attack_df, length=n_input, batch_size=1)
 
 
 def create_extracted_dataset(window_size, with_attacks):
@@ -75,4 +73,5 @@ def create_extracted_dataset(window_size, with_attacks):
         data = pd.concat([data, protocol_data], axis=1)
     
     DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
+    data.clip(lower=data.quantile(0.1), axis=1, inplace=True)
     data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)
