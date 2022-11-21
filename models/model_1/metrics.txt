@@ -1,66 +1,66 @@
 ct_state_ttl_all
-MAPE test score:  197.84
-MSE test score:   0.89
-RMSE train score: 0.45
-RMSE test score:  0.94
+MAPE test score:  79.55
+MSE test score:   0.42
+RMSE train score: 0.51
+RMSE test score:  0.65
 
 ct_dst_src_ltm_all
-MAPE test score:  1.05
-MSE test score:   0.94
-RMSE train score: 0.24
-RMSE test score:  0.97
+MAPE test score:  0.98
+MSE test score:   0.42
+RMSE train score: 0.20
+RMSE test score:  0.65
 
 ct_dst_src_ltm_dns
-MAPE test score:  0.86
-MSE test score:   1.33
-RMSE train score: 0.25
-RMSE test score:  1.15
-
-sttl_ftp
-MAPE test score:  4.77
-MSE test score:   0.85
-RMSE train score: 0.34
-RMSE test score:  0.92
-
-Dintpkt_ftp
-MAPE test score:  4.30
-MSE test score:   0.32
-RMSE train score: 0.30
-RMSE test score:  0.57
-
-sbytes_http
-MAPE test score:  2.01
-MSE test score:   1.23
-RMSE train score: 0.45
-RMSE test score:  1.11
-
-sloss_http
-MAPE test score:  4.20
-MSE test score:   0.71
-RMSE train score: 0.39
-RMSE test score:  0.84
-
-Dintpkt_http
-MAPE test score:  4.11
-MSE test score:   1.03
-RMSE train score: 0.27
-RMSE test score:  1.01
-
-dttl_smtp
-MAPE test score:  9.13
+MAPE test score:  0.79
 MSE test score:   0.60
-RMSE train score: 0.41
+RMSE train score: 0.16
 RMSE test score:  0.78
 
+sttl_ftp
+MAPE test score:  3.29
+MSE test score:   0.51
+RMSE train score: 0.27
+RMSE test score:  0.71
+
+Dintpkt_ftp
+MAPE test score:  2.73
+MSE test score:   0.18
+RMSE train score: 0.30
+RMSE test score:  0.43
+
+sbytes_http
+MAPE test score:  2.21
+MSE test score:   0.63
+RMSE train score: 0.43
+RMSE test score:  0.79
+
+sloss_http
+MAPE test score:  2.23
+MSE test score:   0.36
+RMSE train score: 0.40
+RMSE test score:  0.60
+
+Dintpkt_http
+MAPE test score:  3.28
+MSE test score:   0.46
+RMSE train score: 0.27
+RMSE test score:  0.67
+
+dttl_smtp
+MAPE test score:  6.34
+MSE test score:   0.32
+RMSE train score: 0.44
+RMSE test score:  0.56
+
 Djit_smtp
-MAPE test score:  4.43
-MSE test score:   0.30
-RMSE train score: 0.32
-RMSE test score:  0.55
+MAPE test score:  3.69
+MSE test score:   0.20
+RMSE train score: 0.30
+RMSE test score:  0.44
 
 ackdat_ssh
-MAPE test score:  18.64
-MSE test score:   1.49
-RMSE train score: 0.37
-RMSE test score:  1.22
+MAPE test score:  9.42
+MSE test score:   0.65
+RMSE train score: 0.39
+RMSE test score:  0.81
 

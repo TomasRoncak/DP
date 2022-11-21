@@ -10,10 +10,11 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from statsmodels.tsa.seasonal import STL
 
 class TimeseriesHandler:
-    def __init__(self, use_real_data, window_size, data_split):
+    def __init__(self, use_real_data, window_size, data_split, test_data_split):
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.stand_scaler = StandardScaler()
         self.data_split = data_split
+        self.test_data_split = test_data_split
 
         if use_real_data:
             self.df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
@@ -36,8 +37,8 @@ class TimeseriesHandler:
         self.df = self.stand_scaler.fit_transform(self.df)
 
 
-    def split_dataset(self, df):
-        train_size = int(len(df) * self.data_split)
+    def split_dataset(self, df, data_split):
+        train_size = int(len(df) * data_split)
         train, test = df[:train_size], df[train_size:]
         return train, test
 
@@ -53,8 +54,8 @@ class TimeseriesHandler:
         self.normalize_data()
         self.scale_data()
 
-        train, test = self.split_dataset(self.df)
-        attack_train, attack_test = self.split_dataset(self.attack_df)
+        train, test = self.split_dataset(self.df, self.data_split)
+        attack_train, attack_test = self.split_dataset(self.attack_df, self.test_data_split)
 
         self.train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, train, length=n_input, batch_size=1)
         self.test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, test, length=n_input, batch_size=1)
