@@ -19,6 +19,8 @@ class TimeseriesHandler:
             self.df.dropna(inplace=True)
         else:
             self.df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
+            self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_DATASET_PATH.format(window_size))
+
         self.features = self.df.columns.tolist()
         self.n_features = len(self.features)
         self.df = self.df.to_numpy()

@@ -1,10 +1,10 @@
 import json
 import pandas as pd
-import seaborn as sns
+#import seaborn as sns
 import constants as const
+#import matplotlib.pyplot as plt
 
-from matplotlib import pyplot
-from os import path, makedirs
+#from os import path, makedirs
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -90,13 +90,13 @@ def remove_colinearity(df, protocol, labels, window_size, print_steps):
         print("removed {0} features by colinearity test:".format(len(to_delete)), ' '.join(to_delete), end='\n\n')
     df.drop(columns=to_delete, inplace=True)
 
-    if not path.exists(const.CORELLATIONS_FILE_PATH.format(window_size)):
-        makedirs(const.CORELLATIONS_FILE_PATH.format(window_size))
+    #if not path.exists(const.CORELLATIONS_FILE_PATH.format(window_size)):
+    #    makedirs(const.CORELLATIONS_FILE_PATH.format(window_size))
 
-    fig, ax = pyplot.subplots(figsize=(8, 6))
-    svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt=".2f", cmap="YlGnBu")
-    figure = svm.get_figure()
-    figure.savefig(const.CORELLATIONS_PNG_FILE.format(window_size, protocol), dpi=400)
+    #fig, ax = plt.subplots(figsize=(8, 6))
+    #svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt=".2f", cmap="YlGnBu")
+    #figure = svm.get_figure()
+    #figure.savefig(const.CORELLATIONS_PNG_FILE.format(window_size, protocol), dpi=400)
 
 
 def peak_value_cutoff(df):
