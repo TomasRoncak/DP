@@ -1,0 +1,1 @@
+{"all": ["Sjit_sum", "ct_dst_src_ltm_sum"], "ftp": ["Dintpkt_sum"], "http": ["sbytes_sum", "Sintpkt_sum"], "smtp": ["dttl_sum", "Spkts_sum", "Djit_sum"], "ssh": ["ackdat_sum"]}
