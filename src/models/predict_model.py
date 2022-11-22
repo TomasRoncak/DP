@@ -1,5 +1,5 @@
 from keras.models import load_model
-from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
+from sklearn.metrics import mean_squared_error as mse, mean_absolute_percentage_error as mape
 
 import sys
 import math
@@ -37,44 +37,44 @@ def predict(
     train_real = get_y_from_generator(ts_handler.train_generator, ts_handler.n_features)
     test_real = get_y_from_generator(ts_handler.test_generator, ts_handler.n_features)
 
-    attack_train_data = get_y_from_generator(ts_handler.attack_train, ts_handler.n_features)
-    attack_test_data = get_y_from_generator(ts_handler.attack_test, ts_handler.n_features)
-
-    calculate_metrics(
-        train_real, 
-        test_real, 
-        train_predict, 
-        test_predict, 
-        ts_handler.features,
-        model_number
-    )
-
-    train_data = inverse_transform(train_real, ts_handler)  # replace with this if want to plot against train data
-    test_data = inverse_transform(test_real, ts_handler)
-
     save_prediction_plots(
-        attack_train_data, 
-        attack_test_data,
+        inverse_transform(train_real, ts_handler), 
+        inverse_transform(test_real, ts_handler),
         inverse_transform(test_predict, ts_handler), 
         ts_handler.features, 
         ts_handler.n_features,
         model_number
     )
-       
 
-def calculate_metrics(train_real, test_real, train_predict, test_predict, extracted_features, model_number):
+    attack_real = get_y_from_generator(ts_handler.attack_data, ts_handler.n_features)
+    attack_predict = model.predict(ts_handler.attack_data)
+
+    calculate_metrics(
+        attack_real, 
+        attack_predict, 
+        ts_handler.features,
+        model_number
+    )
+    
+    save_attack_prediction_plots(
+        inverse_transform(attack_real, ts_handler),
+        inverse_transform(attack_predict, ts_handler),
+        ts_handler.features, 
+        ts_handler.n_features,
+        model_number
+    )
+
+
+def calculate_metrics(real_data, predict_data, extracted_features, model_number):
     with open(const.MODEL_METRICS_PATH.format(model_number), 'w') as f:
         for i in range(len(extracted_features)):
-            mape_score = mean_absolute_percentage_error(test_real[:,i], test_predict[:,i])
-            mse_test_score = mean_squared_error(test_real[:, i], test_predict[:,i])
-            rmse_train_score = math.sqrt(mean_squared_error(train_real[:,i], train_predict[:,i]))   # [first_row:last_row,column_0] - all rows in column i
-            rmse_test_score = math.sqrt(mse_test_score)
+            mape_score = mape(real_data[:,i], predict_data[:,i])
+            mse_score = mse(real_data[:, i], predict_data[:,i])
 
             f.write(extracted_features[i] + '\n')
-            f.write('MAPE test score:  %.2f\n' % mape_score)
-            f.write('MSE test score:   %.2f\n' % mse_test_score)
-            f.write('RMSE train score: %.2f\n' % rmse_train_score)
-            f.write('RMSE test score:  %.2f\n\n' % rmse_test_score)
+            f.write('MAPE score:  {:.2f}\n'.format(mape_score))
+            f.write('MSE score:   {:.2f}\n'.format(mse_score))
+            f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
 
 
 def save_prediction_plots(train_data, test_data, prediction_data, extracted_features, n_features, model_number):
@@ -105,4 +105,18 @@ def save_prediction_plots(train_data, test_data, prediction_data, extracted_feat
         plt.title(extracted_features[i])
         plt.legend()
         plt.savefig(const.MODEL_PREDICTIONS_PATH.format(model_number) + extracted_features[i], dpi=400)
+        plt.close()
+
+def save_attack_prediction_plots(train_data, prediction_data, extracted_features, n_features, model_number):
+    for i in range(n_features): 
+        reality = [item[i] for item in train_data]
+        predict_column = [item[i] for item in prediction_data]
+
+        plt.rcParams["figure.figsize"] = (12, 3)
+        plt.plot(reality, label ='Reality', color="#017b92")
+        plt.plot(predict_column, label ='Prediction', color="#f97306") 
+
+        plt.title(extracted_features[i])
+        plt.legend()
+        plt.savefig(const.MODEL_PREDICTIONS_PATH.format(model_number) + extracted_features[i] + '_attack', dpi=400)
         plt.close()

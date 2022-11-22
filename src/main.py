@@ -51,7 +51,6 @@ performs training on a specified neural network and saves trained model
 :param dropout_rate: integer specifying the probability of neurons dropout
 :param blocks: number of blocks to be used in sequential neural networks
 """
-
 """
 train(
     ts_handler,
@@ -77,5 +76,5 @@ loads saved model, performs prediction on test data calculates metrics and optio
 predict(
     ts_handler,
     conf.model_name,
-    model_number=1
+    model_number=2
 )

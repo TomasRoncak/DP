@@ -1,0 +1,55 @@
+ct_state_ttl_all
+MAPE score:  1.61
+MSE score:   2.59
+RMSE score:  1.61
+
+ct_dst_src_ltm_all
+MAPE score:  0.82
+MSE score:   0.54
+RMSE score:  0.74
+
+ct_dst_src_ltm_dns
+MAPE score:  1.05
+MSE score:   1.00
+RMSE score:  1.00
+
+sttl_ftp
+MAPE score:  7.95
+MSE score:   1.47
+RMSE score:  1.21
+
+Dintpkt_ftp
+MAPE score:  8.32
+MSE score:   1.52
+RMSE score:  1.23
+
+sbytes_http
+MAPE score:  18.12
+MSE score:   1.81
+RMSE score:  1.35
+
+sloss_http
+MAPE score:  6.11
+MSE score:   1.97
+RMSE score:  1.40
+
+Dintpkt_http
+MAPE score:  68.99
+MSE score:   1.03
+RMSE score:  1.01
+
+dttl_smtp
+MAPE score:  1.08
+MSE score:   1.36
+RMSE score:  1.17
+
+Djit_smtp
+MAPE score:  1.40
+MSE score:   0.93
+RMSE score:  0.97
+
+ackdat_ssh
+MAPE score:  10.21
+MSE score:   1.38
+RMSE score:  1.17
+
