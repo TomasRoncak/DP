@@ -51,6 +51,7 @@ performs training on a specified neural network and saves trained model
 :param dropout_rate: integer specifying the probability of neurons dropout
 :param blocks: number of blocks to be used in sequential neural networks
 """
+
 """
 train(
     ts_handler,

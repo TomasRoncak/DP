@@ -68,7 +68,7 @@ def train(
     wandb_callback = wandb.keras.WandbCallback()
 
     model.fit(
-        ts_handler.train_generator, 
+        ts_handler.benign_train_generator, 
         epochs=epochs, 
         verbose=2, 
         callbacks=[earlystop_callback, wandb_callback]

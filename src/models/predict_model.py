@@ -23,6 +23,10 @@ def inverse_transform(predict, ts_handler):
     tmp = ts_handler.stand_scaler.inverse_transform(predict)
     return ts_handler.minmax_scaler.inverse_transform(tmp)
 
+def attack_inverse_transform(predict, ts_handler):
+    tmp = ts_handler.attack_stand_scaler.inverse_transform(predict)
+    return ts_handler.attack_minmax_scaler.inverse_transform(tmp)
+
 
 def predict(
     ts_handler,
@@ -31,23 +35,26 @@ def predict(
 ):
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
 
-    train_predict = model.predict(ts_handler.train_generator)
-    test_predict = model.predict(ts_handler.test_generator)
+    train_predict = model.predict(ts_handler.benign_train_generator)
+    test_predict = model.predict(ts_handler.benign_test_generator)
 
-    train_real = get_y_from_generator(ts_handler.train_generator, ts_handler.n_features)
-    test_real = get_y_from_generator(ts_handler.test_generator, ts_handler.n_features)
+    train_real = get_y_from_generator(ts_handler.benign_train_generator, ts_handler.n_features)
+    test_real = get_y_from_generator(ts_handler.benign_test_generator, ts_handler.n_features)
+
+    train_inversed = inverse_transform(train_real, ts_handler)
+    test_inversed = inverse_transform(test_real, ts_handler)
 
     save_prediction_plots(
-        inverse_transform(train_real, ts_handler), 
-        inverse_transform(test_real, ts_handler),
+        train_inversed, 
+        test_inversed,
         inverse_transform(test_predict, ts_handler), 
         ts_handler.features, 
         ts_handler.n_features,
         model_number
     )
 
-    attack_real = get_y_from_generator(ts_handler.attack_data, ts_handler.n_features)
-    attack_predict = model.predict(ts_handler.attack_data)
+    attack_real = get_y_from_generator(ts_handler.attack_data_generator, ts_handler.n_features)
+    attack_predict = model.predict(ts_handler.attack_data_generator)
 
     calculate_metrics(
         attack_real, 
@@ -57,8 +64,8 @@ def predict(
     )
     
     save_attack_prediction_plots(
-        inverse_transform(attack_real, ts_handler),
-        inverse_transform(attack_predict, ts_handler),
+        attack_inverse_transform(attack_real, ts_handler),
+        attack_inverse_transform(attack_predict, ts_handler),
         ts_handler.features, 
         ts_handler.n_features,
         model_number

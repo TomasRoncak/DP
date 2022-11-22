@@ -1,6 +1,6 @@
 ## DATA CONFIG ##
 window_size = 180.0
-dataset_split = 0.5
+dataset_split = 0.8
 n_steps = 5
 stl_decomposition = False
 use_real_data = False

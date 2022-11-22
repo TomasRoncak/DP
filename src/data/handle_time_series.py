@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import tensorflow as tf
 import sys
+import numpy as np
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 import constants as const
@@ -13,6 +14,10 @@ class TimeseriesHandler:
     def __init__(self, use_real_data, window_size, data_split):
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.stand_scaler = StandardScaler()
+
+        self.attack_minmax_scaler = MinMaxScaler(feature_range=(0, 1))
+        self.attack_stand_scaler = StandardScaler()
+
         self.data_split = data_split
 
         if use_real_data:
@@ -30,12 +35,12 @@ class TimeseriesHandler:
 
     def normalize_data(self):
         self.df = self.minmax_scaler.fit_transform(self.df)
-        self.attack_df = self.minmax_scaler.fit_transform(self.attack_df)
+        self.attack_df = self.attack_minmax_scaler.fit_transform(self.attack_df)
 
 
     def scale_data(self):
         self.df = self.stand_scaler.fit_transform(self.df)
-        self.attack_df = self.stand_scaler.fit_transform(self.attack_df)
+        self.attack_df = self.attack_stand_scaler.fit_transform(self.attack_df)
 
 
     def split_dataset(self):
@@ -57,9 +62,9 @@ class TimeseriesHandler:
 
         train, test = self.split_dataset()
 
-        self.train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, train, length=n_input, batch_size=1)
-        self.test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, test, length=n_input, batch_size=1)
-        self.attack_data = tf.keras.preprocessing.sequence.TimeseriesGenerator(self.attack_df, self.attack_df, length=n_input, batch_size=1)
+        self.benign_train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, train, length=n_input, batch_size=1)
+        self.benign_test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, test, length=n_input, batch_size=1)
+        self.attack_data_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(self.attack_df, self.attack_df, length=n_input, batch_size=1)
 
 
 def create_extracted_dataset(window_size, with_attacks):
@@ -73,5 +78,12 @@ def create_extracted_dataset(window_size, with_attacks):
         data = pd.concat([data, protocol_data], axis=1)
     
     DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
-    data.clip(lower=data.quantile(0.1), axis=1, inplace=True)
+    if not with_attacks:
+        for column in data.columns:
+            median = data[column].median()
+            std = data[column].std()
+            outliers = (data[column] - median).abs() > std
+            data[column][outliers] = np.nan
+            data[column].fillna(median, inplace=True)
+
     data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)
