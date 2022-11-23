@@ -49,8 +49,12 @@ def compute_window_statistics(data, window_length, include_attacks, protocol):
 def perform_sliding_window(data, window_length, include_attacks, protocol):   
     window_length = datetime.timedelta(seconds=window_length)
     start_time, end_time = data['time'].agg(['min', 'max'])[['min', 'max']]
+    tmp_1 = datetime.datetime.strptime('2015-01-23  01:00:00', "%Y-%m-%d %H:%M:%S")
+    tmp_2 = datetime.datetime.strptime('2015-02-18  00:00:00', "%Y-%m-%d %H:%M:%S")
 
     while start_time < end_time:
+        if start_time > tmp_1 and start_time < tmp_2:
+            start_time = datetime.datetime.strptime('2015-02-18  00:25:00', "%Y-%m-%d %H:%M:%S")
         sliding_window = data[(data['time'] >= start_time) & (data['time'] <= start_time + window_length)]
         if not sliding_window.empty:
             compute_window_statistics(sliding_window, window_length, include_attacks, protocol) 
