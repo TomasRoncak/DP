@@ -24,7 +24,8 @@ EXTRACTED_ATTACK_DATASET_PATH = PROCESSED_DATASET_PATH + '{0}/' + EXTRACTED_ATTA
 ## TRAINED MODEL PATHS ##
 MODEL_PATH = 'models/model_{0}/'
 MODEL_METRICS_PATH = MODEL_PATH + 'metrics.txt'
-MODEL_PREDICTIONS_PATH = 'models/model_{0}/predictions/'
+MODEL_PREDICTIONS_BENIGN_PATH = 'models/model_{0}/predictions_benign/'
+MODEL_PREDICTIONS_ATTACK_PATH = 'models/model_{0}/predictions_attack/'
 SAVE_MODEL_PATH = 'models/model_{0}/model_{1}.h5'
 
 ## OTHERS ##

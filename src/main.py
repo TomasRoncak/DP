@@ -2,7 +2,7 @@ from data.create_windowed_data import preprocess_dataset
 from data.handle_time_series import create_extracted_dataset, TimeseriesHandler
 from features.build_features import perform_build_features
 from models.train_model import train
-from models.predict_model import predict
+from models.predict_model import Prediction
 
 import config as conf
 
@@ -74,9 +74,12 @@ loads saved model, performs prediction on test data calculates metrics and optio
 :param model_number: integer specifying the number of model on which to predict
 """
 
-predict(
+predict = Prediction(
     ts_handler,
     conf.model_name,
     conf.patience_anomaly_limit,
-    model_number=6
+    model_number=3
 )
+
+predict.predict_benign()
+predict.predict_attack()

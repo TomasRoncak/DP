@@ -1,11 +1,4 @@
 {
-    "all": [
-        "ct_state_ttl_sum",
-        "ct_dst_src_ltm_sum"
-    ],
-    "dns": [
-        "ct_dst_src_ltm_sum"
-    ],
     "ftp": [
         "sttl_sum",
         "Dintpkt_sum"

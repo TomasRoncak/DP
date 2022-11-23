@@ -1,0 +1,40 @@
+sttl_ftp
+MAPE score:  6.07
+MSE score:   1.16
+RMSE score:  1.08
+
+Dintpkt_ftp
+MAPE score:  3.07
+MSE score:   1.16
+RMSE score:  1.08
+
+sbytes_http
+MAPE score:  2.43
+MSE score:   0.32
+RMSE score:  0.57
+
+sloss_http
+MAPE score:  5.00
+MSE score:   0.47
+RMSE score:  0.69
+
+Dintpkt_http
+MAPE score:  2.34
+MSE score:   0.43
+RMSE score:  0.65
+
+dttl_smtp
+MAPE score:  0.61
+MSE score:   0.54
+RMSE score:  0.74
+
+Djit_smtp
+MAPE score:  1.67
+MSE score:   1.39
+RMSE score:  1.18
+
+ackdat_ssh
+MAPE score:  8.90
+MSE score:   0.97
+RMSE score:  0.99
+

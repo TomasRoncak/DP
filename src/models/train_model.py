@@ -17,7 +17,8 @@ def save_model(model, model_name):
     while path.exists(const.MODEL_PATH.format(i)):
         i += 1
     makedirs(const.MODEL_PATH.format(i))
-    makedirs(const.MODEL_PREDICTIONS_PATH.format(i))
+    makedirs(const.MODEL_PREDICTIONS_BENIGN_PATH.format(i))
+    makedirs(const.MODEL_PREDICTIONS_ATTACK_PATH.format(i))
     model.save(const.SAVE_MODEL_PATH.format(i, model_name))
 
 
@@ -47,8 +48,8 @@ def train(
 
     model = Sequential()
     if model_name == 'CNN':
-        model.add(Conv2D(filters=64, padding='same', kernel_size=2, activation='relu', input_shape=(n_steps, n_features, 1)))
-        model.add(MaxPooling2D(pool_size=2))
+        model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation='relu', input_shape=(n_steps, n_features)))
+        model.add(MaxPooling1D(pool_size=2))
         #model.add(Conv2D(filters=128, padding='same', kernel_size=2, activation='relu'))
         #model.add(Dropout(dropout)),
         model.add(Flatten())
