@@ -28,34 +28,76 @@ def attack_inverse_transform(predict, ts_handler):
     return ts_handler.attack_minmax_scaler.inverse_transform(tmp)
 
 
+def calculate_threshold(data, i):
+    q1, q3 = np.percentile(data[:i],[25,95]) # mozno nie attack_real ale attack_predict ?
+    iqr = q3 - q1
+    upper_bound = q3 + (1.5 * iqr) 
+    return upper_bound
+
 def predict(
     ts_handler,
     model_name,
+    patience_limit,
     model_number
 ):
     model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
+    exceeding = normal = 0
+    point_anomaly_detected = False
 
-    train_predict = model.predict(ts_handler.benign_train_generator)
-    test_predict = model.predict(ts_handler.benign_test_generator)
-
-    train_real = get_y_from_generator(ts_handler.benign_train_generator, ts_handler.n_features)
-    test_real = get_y_from_generator(ts_handler.benign_test_generator, ts_handler.n_features)
-
-    train_inversed = inverse_transform(train_real, ts_handler)
-    test_inversed = inverse_transform(test_real, ts_handler)
+    train_inversed = inverse_transform(
+        get_y_from_generator(ts_handler.benign_train_generator, ts_handler.n_features), 
+        ts_handler
+    )
+    test_inversed = inverse_transform(
+        get_y_from_generator(ts_handler.benign_test_generator, ts_handler.n_features), 
+        ts_handler
+    )
+    test_predict = inverse_transform(
+        model.predict(ts_handler.benign_test_generator),
+        ts_handler
+    )
 
     save_prediction_plots(
         train_inversed, 
         test_inversed,
-        inverse_transform(test_predict, ts_handler), 
+        test_predict, 
         ts_handler.features, 
         ts_handler.n_features,
         model_number
     )
 
     attack_real = get_y_from_generator(ts_handler.attack_data_generator, ts_handler.n_features)
-    attack_predict = model.predict(ts_handler.attack_data_generator)
+    attack_predict = []
+    data_generator = ts_handler.attack_data_generator
 
+    for i in range(len(data_generator)):
+        x, _ = data_generator[i]
+        pred = model.predict(x)
+        attack_predict.append(pred[0])
+
+        if i == 0:  # nemam este na com robit
+            continue
+
+        treshold = calculate_threshold(attack_real, i)
+        err = mse(attack_real[i], pred[0])
+
+        if err > treshold:
+            exceeding += 1
+            point_anomaly_detected = True
+        elif point_anomaly_detected:
+            normal += 1
+        
+        if normal == 10 and exceeding != 0:     # if after last exceeding comes 10 normals, reset exceeding to 0
+            point_anomaly_detected = False
+            exceeding = 0
+            normal = 0
+            
+        if exceeding == patience_limit:
+            print("ANOMALY !")
+            break
+
+    attack_predict = np.array(attack_predict)
+    
     calculate_metrics(
         attack_real, 
         attack_predict, 
@@ -73,6 +115,7 @@ def predict(
 
 
 def calculate_metrics(real_data, predict_data, extracted_features, model_number):
+    real_data = real_data[0:len(predict_data)]  # slice data, if predicted data are shorter (detected anomaly stops prediction)
     with open(const.MODEL_METRICS_PATH.format(model_number), 'w') as f:
         for i in range(len(extracted_features)):
             mape_score = mape(real_data[:,i], predict_data[:,i])

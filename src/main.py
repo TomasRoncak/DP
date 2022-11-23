@@ -77,5 +77,6 @@ loads saved model, performs prediction on test data calculates metrics and optio
 predict(
     ts_handler,
     conf.model_name,
-    model_number=2
+    conf.patience_anomaly_limit,
+    model_number=6
 )
