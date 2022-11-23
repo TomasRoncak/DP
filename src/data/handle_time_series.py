@@ -6,6 +6,7 @@ import numpy as np
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 import constants as const
+import config as conf
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from statsmodels.tsa.seasonal import STL
@@ -85,5 +86,13 @@ def create_extracted_dataset(window_size, with_attacks):
             outliers = (data[column] - median).abs() > std
             data[column][outliers] = np.nan
             data[column].fillna(median, inplace=True)
+    #else:
+    #    data.clip(lower=data.quantile(0.2), axis=1, inplace=True)
+
+    if with_attacks:
+        if conf.remove_benign_outlier:
+            data.drop(range(86,91), inplace=True)
+        if conf.remove_first_attacks:
+            data = data.iloc[40:]
 
     data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)

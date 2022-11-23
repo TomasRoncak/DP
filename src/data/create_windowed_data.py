@@ -46,7 +46,7 @@ def compute_window_statistics(data, window_length, include_attacks, protocol):
     create_csv(data_row_stats, column_names, window_length.total_seconds(), include_attacks, protocol)
 
 
-def perform_sliding_window(data, window_length, include_attacks, protocol):   
+def perform_sliding_window(data, window_length, include_attacks, protocol):  
     window_length = datetime.timedelta(seconds=window_length)
     start_time, end_time = data['time'].agg(['min', 'max'])[['min', 'max']]
     tmp_1 = datetime.datetime.strptime('2015-01-23  01:00:00', "%Y-%m-%d %H:%M:%S")
@@ -72,9 +72,9 @@ def preprocess_dataset(window_size, include_attacks, save_plots):
     for protocol in relevant_protocols:
         data = dataset.copy()
         if protocol != 'all':
-            data = data.loc[data['service'] == protocol]
+            data = data.loc[data['service'] == protocol]    # get raw data by protocol (http, ...)
         if not include_attacks:
-            data = data.loc[data['Label'] == 0]
+            data = data.loc[data['Label'] == 0]             # get benign data from data filtered by protocol
 
         data.drop(columns=const.UNUSED_FEATURES, inplace=True)
         perform_sliding_window(data, window_size, include_attacks, protocol)

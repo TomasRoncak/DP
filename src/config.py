@@ -6,10 +6,13 @@ stl_decomposition = False
 use_real_data = False
 
 ## MODEL CONFIG ##
-model_name = 'LSTM'
+model_name = 'CNN'
 epochs = 300
 learning_rate = 0.001
 patience = 10
 dropout_rate = 0.3
 blocks = 12
 optimizer = 'adam'
+
+remove_first_attacks = True
+remove_benign_outlier = True
