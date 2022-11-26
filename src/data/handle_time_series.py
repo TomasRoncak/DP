@@ -51,14 +51,7 @@ class TimeseriesHandler:
         return train, test
 
 
-    def generate_time_series(self, n_input, stl_decompose):
-        if stl_decompose:
-            df_trend = pd.DataFrame()
-            for feature in self.df.columns:
-                result = STL(self.df[feature], period=6, robust = True).fit()
-                df_trend[feature] = result.trend.values.tolist()
-            self.df = df_trend.to_numpy()
-        
+    def generate_time_series(self, n_input):
         self.normalize_data()
         self.scale_data()
         
@@ -72,7 +65,12 @@ class TimeseriesHandler:
         self.attack_data_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(self.attack_df, self.attack_df, length=n_input, batch_size=1)
 
 
-def create_extracted_dataset(window_size, with_attacks):
+"""
+creates dataset suitable for training according to extracted features (on data without attacks)
+
+:param window_size: number specifying which dataset to use according to window size
+"""
+def merge_features_to_dataset(window_size, with_attacks):
     protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
 
     DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH

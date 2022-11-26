@@ -61,7 +61,14 @@ def perform_sliding_window(data, window_length, include_attacks, protocol):
         start_time += window_length
 
 
-def preprocess_dataset(window_size, include_attacks, save_plots):
+"""
+clean and create time series dataset out of flow-based network capture dataset
+
+:param window_size: integer specifying the length of sliding window to be used
+:param include_attacks: boolean specifying if dataset should contain network attacks
+:param save_plots: boolean specifying if protocol feature plots should saved
+"""
+def create_windowed_dataset(window_size, include_attacks):
     dataset = pd.concat(map(pd.read_csv, [const.RAW_DATASET_PATH + 'UNSW-NB15_1.csv', 
                                           const.RAW_DATASET_PATH + 'UNSW-NB15_2.csv', 
                                           const.RAW_DATASET_PATH + 'UNSW-NB15_3.csv', 
@@ -79,8 +86,7 @@ def preprocess_dataset(window_size, include_attacks, save_plots):
         data.drop(columns=const.UNUSED_FEATURES, inplace=True)
         perform_sliding_window(data, window_size, include_attacks, protocol)
     
-    if save_plots:
-        save_ts_plots(window_size, include_attacks)
+    save_ts_plots(window_size, include_attacks)
 
 
 def save_ts_plots(window_size, include_attacks): 

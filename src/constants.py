@@ -22,11 +22,12 @@ EXTRACTED_BENIGN_DATASET_PATH = PROCESSED_DATASET_PATH + '{0}/' + EXTRACTED_BENI
 EXTRACTED_ATTACK_DATASET_PATH = PROCESSED_DATASET_PATH + '{0}/' + EXTRACTED_ATTACK_DATA_FILENAME
 
 ## TRAINED MODEL PATHS ##
-MODEL_PATH = 'models/model_{0}/'
+MODEL_PATH = 'models/models_{0}/'
 MODEL_METRICS_PATH = MODEL_PATH + 'metrics.txt'
-MODEL_PREDICTIONS_BENIGN_PATH = 'models/model_{0}/predictions_benign/'
-MODEL_PREDICTIONS_ATTACK_PATH = 'models/model_{0}/predictions_attack/'
-SAVE_MODEL_PATH = 'models/model_{0}/model_{1}.h5'
+MODEL_PREDICTIONS_BENIGN_PATH = MODEL_PATH + 'predictions_benign/'
+MODEL_PREDICTIONS_ATTACK_PATH = MODEL_PATH + 'predictions_attack/'
+SAVE_ANOMALY_MODEL_PATH = MODEL_PATH + 'model_anomaly_{1}.h5'
+SAVE_CAT_MODEL_PATH = MODEL_PATH + 'model_cat_{1}.h5'
 
 ## OTHERS ##
 UNUSED_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \

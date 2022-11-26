@@ -12,14 +12,13 @@ from keras.callbacks import EarlyStopping
 from keras.optimizers import SGD, RMSprop, Adam, Adagrad
 from keras.layers import Dense, Conv1D, Conv2D, LSTM, GRU, Flatten, MaxPooling1D, MaxPooling2D, Dropout
 
-def save_model(model, model_name):
+def save_model(model, model_name, model_type):
+    PATH = const.SAVE_ANOMALY_MODEL_PATH if model_type == 'anomaly' else const.SAVE_CAT_MODEL_PATH
     i = 1
     while path.exists(const.MODEL_PATH.format(i)):
         i += 1
     makedirs(const.MODEL_PATH.format(i))
-    makedirs(const.MODEL_PREDICTIONS_BENIGN_PATH.format(i))
-    makedirs(const.MODEL_PREDICTIONS_ATTACK_PATH.format(i))
-    model.save(const.SAVE_MODEL_PATH.format(i, model_name))
+    model.save(PATH.format(i, model_name.lower()))
 
 
 def get_optimizer(learning_rate, optimizer, momentum = 0):
@@ -33,7 +32,20 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
     return switcher.get(optimizer)
 
 
-def train(
+"""
+performs training on a specified neural network and saves trained model 
+
+:param ts_handler: time series object containing data
+:param model_name: string specifying type of neural network (cnn, ltsm, ...)
+:param n_steps: integer specifying number of previous steps to be used for future prediction
+:param learning_rate: integer specifying the speed of learning (speed of gradient descent)
+:param optimizer: string specifying type of optimizer
+:param patience: integer specifying dropout patience
+:param epochs: integer specifying number of epochs to be trained
+:param dropout_rate: integer specifying the probability of neurons dropout
+:param blocks: number of blocks to be used in sequential neural networks
+"""
+def train_anomaly(
     ts_handler,
     model_name,
     n_steps,
@@ -69,11 +81,21 @@ def train(
     wandb_callback = wandb.keras.WandbCallback()
 
     model.fit(
-        ts_handler.benign_train_generator, 
-        epochs=epochs, 
-        verbose=2, 
+        ts_handler.benign_train_generator,
+        epochs=epochs,
+        verbose=2,
         callbacks=[earlystop_callback, wandb_callback]
     )
 
-    save_model(model, model_name)
+    save_model(model, model_name, model_type='anomaly')
     run.finish()
+
+def train_categorical(
+    model_name,
+    learning_rate,
+    optimizer,
+    patience,
+    epochs,
+    dropout
+):
+    pass

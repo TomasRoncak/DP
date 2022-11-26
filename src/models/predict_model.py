@@ -1,5 +1,6 @@
 from keras.models import load_model
 from sklearn.metrics import mean_squared_error as mse, mean_absolute_percentage_error as mape
+from os import path, makedirs
 
 import sys
 import math
@@ -14,7 +15,7 @@ import constants as const
 
 class Prediction:
     def __init__(self, ts_handler, model_name, patience_limit, model_number):
-        self.model = load_model(const.SAVE_MODEL_PATH.format(model_number, model_name))
+        self.model = load_model(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name.lower()))
         self.ts_handler = ts_handler
         self.model_name = model_name
         self.model_number = model_number
@@ -22,6 +23,10 @@ class Prediction:
         self.exceeding = 0
         self.normal = 0
         self.point_anomaly_detected = False
+
+        if not path.exists(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)):
+            makedirs(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number))
+            makedirs(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number))
 
         
     def get_y_from_generator(self, gen):

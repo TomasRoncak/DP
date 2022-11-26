@@ -122,8 +122,13 @@ def select_features(protocol, window_size, print_steps):
 
     return list(df_attack.columns)
 
+"""
+perform feature selection on created time series dataset (nonunique, randomness, colinearity, adfueller, peak cutoff)
 
-def perform_build_features(window_size, print_steps):
+:param window_size: integer specifying the length of sliding window to be used
+:param print_steps: boolean specifying if selection steps should be described in more detail
+"""
+def select_features_for_an(window_size, print_steps):
     chosen_cols = {}
 
     for protocol in const.PROTOCOLS:
