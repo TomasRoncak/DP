@@ -1,7 +1,8 @@
 from data.create_windowed_data import create_windowed_dataset
 from data.handle_time_series import TimeseriesHandler, merge_features_to_dataset
+from data.preprocess_data import preprocess_data
 from features.feature_selection_an import select_features_for_an
-from models.train_model import train_anomaly
+from models.train_model import train_anomaly, train_categorical
 from models.predict_model import Prediction
 
 import config as conf
@@ -12,7 +13,7 @@ process_cat_data = False
 train_an = False
 train_cat = False
 
-predict_an = True
+predict_an = False
 predict_cat = False
 
 if process_an_data:
@@ -25,7 +26,7 @@ if process_an_data:
     merge_features_to_dataset(conf.window_size, with_attacks=False)
 
 if process_cat_data:
-    pass
+    preprocess_data()
 
 ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split)
 ts_handler.generate_time_series(conf.n_steps)
@@ -44,7 +45,14 @@ if train_an:
     )
 
 if train_cat:
-    pass
+    train_categorical(
+        conf.model_name,
+        conf.learning_rate,
+        conf.optimizer,
+        conf.patience,
+        conf.epochs,
+        conf.dropout_rate
+    )
 
 if predict_an:
     predict = Prediction(
