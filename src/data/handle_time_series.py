@@ -27,21 +27,22 @@ class TimeseriesHandler:
         else:
             self.df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
             self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_DATASET_PATH.format(window_size))
-            self.attack_df = self.attack_df.to_numpy()
 
         self.features = self.df.columns.tolist()
-        self.df = self.df.to_numpy()
-        self.n_features = len(self.features)
+        self.features.remove('time')    # time is not considered a feature
+
+        self.n_features = len(self.features)    
+        self.numeric_cols = self.df.columns[self.df.dtypes.apply(lambda c: np.issubdtype(c, np.number))].to_list()
 
 
     def normalize_data(self):
-        self.df = self.minmax_scaler.fit_transform(self.df)
-        self.attack_df = self.attack_minmax_scaler.fit_transform(self.attack_df)
+        self.df[self.numeric_cols] = self.minmax_scaler.fit_transform(self.df[self.numeric_cols])
+        self.attack_df[self.numeric_cols] = self.attack_minmax_scaler.fit_transform(self.attack_df[self.numeric_cols])
 
 
     def scale_data(self):
-        self.df = self.stand_scaler.fit_transform(self.df)
-        self.attack_df = self.attack_stand_scaler.fit_transform(self.attack_df)
+        self.df[self.numeric_cols] = self.stand_scaler.fit_transform(self.df[self.numeric_cols])
+        self.attack_df[self.numeric_cols] = self.attack_stand_scaler.fit_transform(self.attack_df[self.numeric_cols])
 
 
     def split_dataset(self):
@@ -60,6 +61,9 @@ class TimeseriesHandler:
         
         self.normalize_data()
         self.scale_data()
+        
+        self.df = self.df.to_numpy()
+        self.attack_df = self.attack_df.to_numpy()
 
         train, test = self.split_dataset()
 
@@ -70,7 +74,12 @@ class TimeseriesHandler:
 
 def create_extracted_dataset(window_size, with_attacks):
     protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
-    data = pd.DataFrame()
+
+    DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
+    TIME_PATH = const.TS_BENIGN_DATASET.format(window_size, list(protocol_features.keys())[0])
+
+    time = pd.read_csv(TIME_PATH, usecols = ['time'], squeeze=True).apply(lambda x: x[:-2] + '00')  # delete seconds from time
+    data = pd.DataFrame(time, columns=['time'])
 
     for protocol in protocol_features:   # loop through protocols and their set of features
         PROTOCOL_DATASET_PATH = const.TS_ATTACK_DATASET if with_attacks else const.TS_BENIGN_DATASET
@@ -78,21 +87,24 @@ def create_extracted_dataset(window_size, with_attacks):
         protocol_data.columns = protocol_data.columns.str.replace('_sum', '_{0}'.format(protocol))
         data = pd.concat([data, protocol_data], axis=1)
     
-    DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
     if not with_attacks:
-        for column in data.columns:
-            median = data[column].median()
-            std = data[column].std()
-            outliers = (data[column] - median).abs() > std
-            data[column][outliers] = np.nan
-            data[column].fillna(median, inplace=True)
-    #else:
-    #    data.clip(lower=data.quantile(0.2), axis=1, inplace=True)
+        remove_outliers(data) # removal of benign outliers from benign dataset
 
     if with_attacks:
-        if conf.remove_benign_outlier:
+        if conf.remove_benign_outlier:      # removal of benign outliers from attack dataset
             data.drop(range(86,91), inplace=True)
         if conf.remove_first_attacks:
             data = data.iloc[40:]
 
     data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)
+
+
+def remove_outliers(data):
+    for column in data.columns:
+        if column == 'time':
+            continue
+        median = data[column].median()
+        std = data[column].std()
+        outliers = (data[column] - median).abs() > std
+        data[column][outliers] = np.nan
+        data[column].fillna(median, inplace=True)

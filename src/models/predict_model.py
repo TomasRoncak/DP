@@ -4,6 +4,7 @@ from sklearn.metrics import mean_squared_error as mse, mean_absolute_percentage_
 import sys
 import math
 import numpy as np
+import datetime
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
@@ -28,7 +29,7 @@ class Prediction:
         for i in range(len(gen)):
             batch_y = gen[i][1]
             y = batch_y if y is None else np.append(y, batch_y)
-        return y.reshape((-1, self.ts_handler.n_features))
+        return y.reshape((-1, (self.ts_handler.n_features + 1)))    # time is considered
 
     
     def inverse_transform(self, predict, attack_data=False):
@@ -41,35 +42,60 @@ class Prediction:
 
     
     def predict_benign(self):
-        test_predict = self.model.predict(self.ts_handler.benign_test_generator)
+        data_generator = self.ts_handler.benign_test_generator
+        benign_predict = []
+        for i in range(len(data_generator)):
+            x, _ = data_generator[i]
+            x = np.asarray(x[:,:,1:]).astype('float32') # remove time
+            test_predict = self.model.predict(x)
+            benign_predict.append(test_predict[0])
 
-        train_inversed = self.inverse_transform(self.get_y_from_generator(self.ts_handler.benign_train_generator))
-        test_inversed = self.inverse_transform(self.get_y_from_generator(self.ts_handler.benign_test_generator))
-        test_predict_inversed = self.inverse_transform(test_predict)
+        train_data = self.get_y_from_generator(self.ts_handler.benign_train_generator)
+        test_data = self.get_y_from_generator(self.ts_handler.benign_test_generator)
+        
+        train_time = np.squeeze(train_data[:, :1], axis = 1) 
+        test_time = np.squeeze(test_data[:, :1], axis = 1) 
+        time =  np.concatenate((train_time, test_time), axis = 0)
 
-        self.save_prediction_plots(train_inversed, test_inversed, test_predict_inversed)
+        train_inversed = self.inverse_transform(train_data[:,1:])
+        test_inversed = self.inverse_transform(test_data[:,1:])
+        predict_inversed = self.inverse_transform(benign_predict)
 
-    
+        self.save_benign_plots(train_inversed, test_inversed, predict_inversed, time)
+
+
     def predict_attack(self):
         attack_real = self.get_y_from_generator(self.ts_handler.attack_data_generator)
+        time = np.squeeze(attack_real[:, :1], axis = 1) 
+        attack_real = attack_real[:,1:]
         attack_predict = []
         data_generator = self.ts_handler.attack_data_generator
 
         for i in range(len(data_generator)):
             x, _ = data_generator[i]
+            curr_time = np.squeeze(x[:,:,:1], axis = 0) 
+            x = np.asarray(x[:,:,1:]).astype('float32') # remove time
+
             pred = self.model.predict(x)
             attack_predict.append(pred[0])
 
             if self.detect_anomaly(attack_real, pred, i):
-                print("ANOMALY !")
+                detection_time = curr_time[len(curr_time)-1][0]
+                begin_time = datetime.datetime.strptime(detection_time, '%Y-%m-%d %H:%M:%S')
+                end_time = begin_time + datetime.timedelta(minutes=3)
+
+                print('First anomaly occured in window {0} - {1}.' \
+                        .format(begin_time.strftime('%d.%m %H:%M'), end_time.strftime('%d.%m %H:%M')))
                 break
 
         attack_predict = np.array(attack_predict)
         
         self.calculate_metrics(attack_real, attack_predict)
-        self.save_attack_prediction_plots(
-            self.inverse_transform(attack_real, True),
-            self.inverse_transform(attack_predict, True)
+        self.save_plots(
+                self.inverse_transform(attack_real, True), 
+                self.inverse_transform(attack_predict, True), 
+                time, 
+                attack=True
         )
         
         
@@ -114,49 +140,34 @@ class Prediction:
                 f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
 
 
-    def save_prediction_plots(self, train_data, test_data, prediction_data):
+    def save_benign_plots(self, train_data, test_data, prediction_data, time):
         begin = len(train_data)                             # beginning is where train data ends
         end = begin + len(test_data)                        # end is where predicted data ends
 
         data = np.append(train_data, test_data)             # whole dataset
         data = data.reshape(-1, self.ts_handler.n_features)
 
-        y_plot = np.empty_like(data)                        # create empty np array with shape like given array
-        y_plot[:, :] = np.nan                               # fill it with nan
-        y_plot[begin:end, :] = test_data                    # insert real values
-
         y_hat_plot = np.empty_like(data)
         y_hat_plot[:, :] = np.nan                           # first : stands for first and the second : for the second dimension
         y_hat_plot[begin:end, :] = prediction_data          # insert predicted values
 
+        self.save_plots(data, y_hat_plot, time, attack=False)
+
+
+    def save_plots(self, train_data, prediction_data, time, attack):
+        fig = const.MODEL_PREDICTIONS_ATTACK_PATH if attack else const.MODEL_PREDICTIONS_BENIGN_PATH
+    
         for i in range(self.ts_handler.n_features): 
-            train_column = [item[i] for item in data]
-            reality_column = [item[i] for item in y_plot]
-            predict_column = [item[i] for item in y_hat_plot]
+            train_feature = [item[i] for item in train_data]
+            predict_feature = [item[i] for item in prediction_data]
 
-            plt.rcParams["figure.figsize"] = (12, 3)
-            plt.plot(train_column, label ='Train & Test data', color="#017b92")
-            plt.plot(reality_column, color="#017b92") 
-            plt.plot(predict_column, label ='Prediction', color="#f97306") 
+            plt.rcParams["figure.figsize"] = (25, 10)
+            plt.plot(time, train_feature, label ='Reality', color="#017b92")
+            plt.plot(predict_feature, label ='Prediction', color="#f97306") 
 
+            plt.xticks(time[::25],  rotation='vertical')
+            plt.tight_layout()
             plt.title(self.ts_handler.features[i])
             plt.legend()
-            plt.savefig(const.MODEL_PREDICTIONS_BENIGN_PATH \
-                    .format(self.model_number) + self.ts_handler.features[i], dpi=400)
-            plt.close()
-
-            
-    def save_attack_prediction_plots(self, train_data, prediction_data):
-        for i in range(self.ts_handler.n_features): 
-            reality = [item[i] for item in train_data]
-            predict_column = [item[i] for item in prediction_data]
-
-            plt.rcParams["figure.figsize"] = (12, 3)
-            plt.plot(reality, label ='Reality', color="#017b92")
-            plt.plot(predict_column, label ='Prediction', color="#f97306") 
-
-            plt.title(self.ts_handler.features[i])
-            plt.legend()
-            plt.savefig(const.MODEL_PREDICTIONS_ATTACK_PATH \
-                    .format(self.model_number) + self.ts_handler.features[i], dpi=400)
+            plt.savefig(fig.format(self.model_number) + self.ts_handler.features[i], dpi=400)
             plt.close()
