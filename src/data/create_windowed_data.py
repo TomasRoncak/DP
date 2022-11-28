@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt 
-import numpy as np
+import constants as const
 import pandas as pd
 import datetime
 import csv
-import constants as const
 
 from os import path, makedirs, stat
 
@@ -15,6 +14,10 @@ def get_relevant_protocols(dataset):
         if dataset['service'][dataset['service'] == protocol].count() > 1000:
             relevant_protocols.append(protocol)
     return relevant_protocols
+
+
+def time_from_string(time_str):
+    return datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
 
 
 def create_csv(data, columns, window_length, include_attacks, protocol):
@@ -49,12 +52,13 @@ def compute_window_statistics(data, window_length, include_attacks, protocol):
 def perform_sliding_window(data, window_length, include_attacks, protocol):  
     window_length = datetime.timedelta(seconds=window_length)
     start_time, end_time = data['time'].agg(['min', 'max'])[['min', 'max']]
-    tmp_1 = datetime.datetime.strptime('2015-01-23  01:00:00', "%Y-%m-%d %H:%M:%S")
-    tmp_2 = datetime.datetime.strptime('2015-02-18  00:00:00', "%Y-%m-%d %H:%M:%S")
+    
+    tmp_1 = time_from_string('2015-01-23  01:00:00')
+    tmp_2 = time_from_string('2015-02-18  00:00:00')
 
     while start_time < end_time:
         if start_time > tmp_1 and start_time < tmp_2:
-            start_time = datetime.datetime.strptime('2015-02-18  00:25:00', "%Y-%m-%d %H:%M:%S")
+            start_time = time_from_string('2015-02-18  00:25:00')
         sliding_window = data[(data['time'] >= start_time) & (data['time'] <= start_time + window_length)]
         if not sliding_window.empty:
             compute_window_statistics(sliding_window, window_length, include_attacks, protocol) 
@@ -69,21 +73,17 @@ clean and create time series dataset out of flow-based network capture dataset
 :param save_plots: boolean specifying if protocol feature plots should saved
 """
 def create_windowed_dataset(window_size, include_attacks):
-    dataset = pd.concat(map(pd.read_csv, [const.RAW_DATASET_PATH + 'UNSW-NB15_1.csv', 
-                                          const.RAW_DATASET_PATH + 'UNSW-NB15_2.csv', 
-                                          const.RAW_DATASET_PATH + 'UNSW-NB15_3.csv', 
-                                          const.RAW_DATASET_PATH + 'UNSW-NB15_4.csv']), ignore_index=True)
+    dataset = pd.read_csv(const.WHOLE_DATASET, parse_dates=['time'])
     relevant_protocols = get_relevant_protocols(dataset)
-    dataset = clean_data(dataset)
 
     for protocol in relevant_protocols:
         data = dataset.copy()
         if protocol != 'all':
-            data = data.loc[data['service'] == protocol]    # get raw data by protocol (http, ...)
+            data = data.loc[data['service'] == protocol]        # get raw data by protocol (http, ...)
         if not include_attacks:
-            data = data.loc[data['Label'] == 0]             # get benign data from data filtered by protocol
+            data = data.loc[data['attack_cat'] == 'Normal']     # get benign data from data filtered by protocol
 
-        data.drop(columns=const.UNUSED_FEATURES, inplace=True)
+        data.drop(columns=const.UNUSED_FEATURES_FOR_ANOMALY, inplace=True)
         perform_sliding_window(data, window_size, include_attacks, protocol)
     
     save_ts_plots(window_size, include_attacks)
@@ -111,13 +111,3 @@ def save_ts_plots(window_size, include_attacks):
                 plt.tight_layout()
                 plt.savefig(PLOTS_PATH + feature)
                 plt.close()
-
-
-def clean_data(data):
-    data['time'] = pd.to_datetime(data['Stime'], unit='s')
-    data['tc_flw_http_mthd'].fillna(value = data.tc_flw_http_mthd.mean(), inplace = True)
-    data['is_ftp_login'].fillna(value = data.is_ftp_login.mean(), inplace = True)
-    data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
-    data = data.fillna(0)
-
-    return data

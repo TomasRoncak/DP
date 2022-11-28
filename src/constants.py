@@ -8,6 +8,9 @@ EXTRACTED_BENIGN_DATA_FILENAME = 'extracted_benign_dataset.csv'
 EXTRACTED_ATTACK_DATA_FILENAME = 'extracted_attacks_dataset.csv'
 ATTACKS_FILENAME = 'attacks_dataset.csv'
 BENIGN_FILENAME = 'benign_dataset.csv'
+WHOLE_DATASET_FILENAME = 'whole_dataset.csv'
+
+WHOLE_DATASET = RAW_DATASET_PATH + WHOLE_DATASET_FILENAME
 
 ## PROCESSED DATASETS GROUPED PER PROTOCOL ##
 TS_ATTACK_DATASET = PROCESSED_DATASET_PATH + '{0}/{1}/' + ATTACKS_FILENAME
@@ -30,8 +33,8 @@ SAVE_ANOMALY_MODEL_PATH = MODEL_PATH + 'model_anomaly_{1}.h5'
 SAVE_CAT_MODEL_PATH = MODEL_PATH + 'model_cat_{1}.h5'
 
 ## OTHERS ##
-UNUSED_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'proto', 'state', \
-                   'service', 'Stime', 'Ltime', 'attack_cat', 'dur', 'ct_ftp_cmd']
+USELESS_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', 'Label']
+UNUSED_FEATURES_FOR_ANOMALY = ['proto', 'state', 'service', 'attack_cat', 'dur', 'ct_ftp_cmd']
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'

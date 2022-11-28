@@ -7,7 +7,7 @@ from models.predict_model import Prediction
 
 import config as conf
 
-process_an_data = False
+process_an_data = True
 process_cat_data = False
 
 train_an = False
@@ -17,16 +17,20 @@ predict_an = False
 predict_cat = False
 
 if process_an_data:
+    #preprocess_data('an')
+
     create_windowed_dataset(conf.window_size, include_attacks=True)
     create_windowed_dataset(conf.window_size, include_attacks=False)
 
+    """
     select_features_for_an(conf.window_size, print_steps=False)
 
     merge_features_to_dataset(conf.window_size, with_attacks=True)
     merge_features_to_dataset(conf.window_size, with_attacks=False)
+    """
 
 if process_cat_data:
-    preprocess_data()
+    preprocess_data('cat')
 
 ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split)
 ts_handler.generate_time_series(conf.n_steps)
