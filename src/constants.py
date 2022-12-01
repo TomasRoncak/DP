@@ -1,6 +1,6 @@
 ## BASE PATHS ##
 RAW_DATASET_PATH = 'data/original/'
-PREPROCESSED_DATASET_PATH = 'data/preprocessed/'
+PREPROCESSED_DATASET_PATH = 'data/preprocessed_category/'
 PROCESSED_DATASET_PATH = 'data/processed_anomaly/'
 
 ## FILENAMES ##
@@ -9,11 +9,11 @@ EXTRACTED_BENIGN_DATA_FILENAME = 'extracted_benign_dataset.csv'
 EXTRACTED_ATTACK_DATA_FILENAME = 'extracted_attacks_dataset.csv'
 ATTACKS_FILENAME = 'attacks_dataset.csv'
 BENIGN_FILENAME = 'benign_dataset.csv'
-WHOLE_AN_DATASET_FILENAME = 'whole_dataset.csv'
-WHOLE_CAT_TRAIN_DATASET_FILENAME = 'cat_train_dataset.csv'
-WHOLE_CAT_TEST_DATASET_FILENAME = 'cat_test_dataset.csv'
+WHOLE_DATASET_FILENAME = 'whole_dataset.csv'
+WHOLE_CAT_TRAIN_DATASET_FILENAME = 'train_dataset.csv'
+WHOLE_CAT_TEST_DATASET_FILENAME = 'test_dataset.csv'
 
-WHOLE_AN_DATASET = PREPROCESSED_DATASET_PATH + WHOLE_AN_DATASET_FILENAME
+WHOLE_DATASET = PREPROCESSED_DATASET_PATH + WHOLE_DATASET_FILENAME
 WHOLE_CAT_TRAIN_DATASET = PREPROCESSED_DATASET_PATH + WHOLE_CAT_TRAIN_DATASET_FILENAME
 WHOLE_CAT_TEST_DATASET = PREPROCESSED_DATASET_PATH + WHOLE_CAT_TEST_DATASET_FILENAME
 
@@ -38,8 +38,8 @@ SAVE_ANOMALY_MODEL_PATH = MODEL_PATH + 'model_anomaly_{1}.h5'
 SAVE_CAT_MODEL_PATH = MODEL_PATH + 'model_cat_{1}.h5'
 
 ## OTHERS ##
-USELESS_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', 'Label']
-UNUSED_FEATURES_FOR_ANOMALY = ['proto', 'state', 'service', 'attack_cat', 'dur', 'ct_ftp_cmd']
+USELESS_FEATURES = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', 'Label', 'ct_ftp_cmd'] # ct_ftp_cmd is mainly empty
+UNUSED_FEATURES_FOR_ANOMALY = ['proto', 'state', 'service', 'attack_cat', 'dur']
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'

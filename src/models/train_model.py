@@ -1,24 +1,28 @@
 import sys
 import wandb
+import pandas as pd
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 import constants as const
+from preprocess_data import format_data
 
 from os import path, makedirs
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 from keras.optimizers import SGD, RMSprop, Adam, Adagrad
+from sklearn.model_selection import train_test_split
+from keras.losses import SparseCategoricalCrossentropy
 from keras.layers import Dense, Conv1D, Conv2D, LSTM, GRU, Flatten, MaxPooling1D, MaxPooling2D, Dropout
 
-def save_model(model, model_name, model_type):
-    PATH = const.SAVE_ANOMALY_MODEL_PATH if model_type == 'anomaly' else const.SAVE_CAT_MODEL_PATH
-    i = 1
-    while path.exists(const.MODEL_PATH.format(i)):
-        i += 1
-    makedirs(const.MODEL_PATH.format(i))
-    model.save(PATH.format(i, model_name.lower()))
+def save_model(model, name, number, type):
+    MODEL_FOLDER_PATH = const.MODEL_PATH.format(number)
+    MODEL_PATH = const.SAVE_ANOMALY_MODEL_PATH if type == 'anomaly' else const.SAVE_CAT_MODEL_PATH
+
+    if not path.exists(MODEL_FOLDER_PATH):
+        makedirs(MODEL_FOLDER_PATH)
+    model.save(MODEL_PATH.format(number, name.lower()))
 
 
 def get_optimizer(learning_rate, optimizer, momentum = 0):
@@ -54,7 +58,8 @@ def train_anomaly(
     patience,
     epochs,
     dropout,
-    blocks
+    blocks,
+    model_number
 ):
     n_features = ts_handler.n_features
 
@@ -75,7 +80,7 @@ def train_anomaly(
     optimizer_fn = get_optimizer(learning_rate=learning_rate, optimizer=optimizer)
     model.compile(optimizer=optimizer_fn, loss='mse')
 
-    run = wandb.init(project="dp", entity="tomasroncak")
+    run = wandb.init(project="dp_an", entity="tomasroncak")
 
     earlystop_callback = EarlyStopping(monitor='loss', patience=patience, verbose=1)
     wandb_callback = wandb.keras.WandbCallback()
@@ -87,7 +92,7 @@ def train_anomaly(
         callbacks=[earlystop_callback, wandb_callback]
     )
 
-    save_model(model, model_name, model_type='anomaly')
+    save_model(model, model_name, model_number, type='anomaly')
     run.finish()
 
 def train_categorical(
@@ -96,6 +101,50 @@ def train_categorical(
     optimizer,
     patience,
     epochs,
-    dropout
+    batch_size,
+    dropout,
+    model_number
 ):
-    pass
+    df = pd.read_csv(const.WHOLE_CAT_TRAIN_DATASET)
+    test_df = pd.read_csv(const.WHOLE_CAT_TEST_DATASET)
+
+    num_categories = df.iloc[:,-1].nunique()
+    input_shape = df.shape[1] - 1   # -  1 = category
+
+    trainX, trainY = format_data(df)
+    testX, testY = format_data(test_df)
+
+    trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
+
+    model = Sequential()
+    if model_name == 'MLP':
+        model.add(Flatten(input_shape=(input_shape, 1)))
+        model.add(Dense(30, activation='relu'))
+        model.add(Dense(30, activation='relu'))
+        model.add(Dense(num_categories, activation='softmax'))
+
+    loss_fn = SparseCategoricalCrossentropy(from_logits=True)
+    optimizer = get_optimizer(learning_rate=learning_rate, optimizer=optimizer)
+
+    model.compile(optimizer=optimizer, loss=loss_fn, metrics=['accuracy'])
+
+    run = wandb.init(project="dp_cat", entity="tomasroncak")
+
+    wandb_callback = wandb.keras.WandbCallback()
+    earlystop_callback = EarlyStopping(monitor='loss', patience=patience, verbose=1)
+
+    model.fit(
+            trainX,
+            trainY,
+            batch_size=batch_size,
+            epochs=epochs,
+            validation_data=(valX, valY),
+            callbacks=[earlystop_callback, wandb_callback],
+            verbose=1
+    ) 
+
+    test_scores = model.evaluate(testX, testY)
+    print("Test scores:", test_scores)
+
+    save_model(model, model_name, model_number, type='categorical')
+    run.finish()

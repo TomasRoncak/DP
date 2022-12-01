@@ -1,10 +1,12 @@
 from keras.models import load_model
 from sklearn.metrics import mean_squared_error as mse, mean_absolute_percentage_error as mape
 from os import path, makedirs
+from collections import Counter
 
 import sys
 import math
 import numpy as np
+import pandas as pd
 import datetime
 import matplotlib.pyplot as plt
 
@@ -12,17 +14,19 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 import constants as const
+from preprocess_data import format_data, get_classes
 
 class Prediction:
-    def __init__(self, ts_handler, model_name, patience_limit, model_number):
-        self.model = load_model(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name.lower()))
+    def __init__(self, ts_handler, an_model_name, cat_model_name, patience_limit, model_number):
+        self.anomaly_model = load_model(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, an_model_name.lower()))
+        self.category_model = load_model(const.SAVE_CAT_MODEL_PATH.format(model_number, cat_model_name.lower()))
         self.ts_handler = ts_handler
-        self.model_name = model_name
         self.model_number = model_number
         self.patience_limit = patience_limit
         self.exceeding = 0
         self.normal = 0
         self.point_anomaly_detected = False
+        self.anomaly_detection_time = ()
 
         if not path.exists(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)):
             makedirs(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number))
@@ -45,14 +49,38 @@ class Prediction:
             tmp = self.ts_handler.stand_scaler.inverse_transform(predict)
             return self.ts_handler.minmax_scaler.inverse_transform(tmp)
 
+
+    def categorize_attack(self):
+        df = pd.read_csv(const.WHOLE_DATASET, parse_dates=['time'])
+        data = df[(df['time'] >= self.anomaly_detection_time[0]) & (df['time'] <= self.anomaly_detection_time[1])]
+        classes = get_classes()
+
+        x, y = format_data(data)
+        x = np.asarray(x).astype('float32')
+
+        prob = self.category_model.predict(x)
+        pred = np.argmax(prob, axis=-1)
+
+        err = mse(y, pred)
+        res_list = list(Counter(pred).items())
+        res_list.sort(key=lambda a: a[1], reverse=True)
+        res = [(classes[x[0]], x[1]) for x in res_list]
+
+        print("Detected attacks:")
+        for x in res:
+            if x[0] == 'Normal':
+                continue
+            print(x)
+        print("MSE Error:", err)
+
     
     def predict_benign(self):
         data_generator = self.ts_handler.benign_test_generator
         benign_predict = []
         for i in range(len(data_generator)):
             x, _ = data_generator[i]
-            x = np.asarray(x[:,:,1:]).astype('float32') # remove time
-            test_predict = self.model.predict(x)
+            x = np.asarray(x[:,:,1:]).astype('float32')     # remove time
+            test_predict = self.anomaly_model.predict(x)
             benign_predict.append(test_predict[0])
 
         train_data = self.get_y_from_generator(self.ts_handler.benign_train_generator)
@@ -71,7 +99,6 @@ class Prediction:
 
     def predict_attack(self):
         attack_real = self.get_y_from_generator(self.ts_handler.attack_data_generator)
-        time = np.squeeze(attack_real[:, :1], axis = 1) 
         attack_real = attack_real[:,1:]
         attack_predict = []
         data_generator = self.ts_handler.attack_data_generator
@@ -81,13 +108,14 @@ class Prediction:
             curr_time = np.squeeze(x[:,:,:1], axis = 0) 
             x = np.asarray(x[:,:,1:]).astype('float32') # remove time
 
-            pred = self.model.predict(x)
+            pred = self.anomaly_model.predict(x)
             attack_predict.append(pred[0])
 
             if self.detect_anomaly(attack_real, pred, i):
                 detection_time = curr_time[len(curr_time)-1][0]
                 begin_time = datetime.datetime.strptime(detection_time, '%Y-%m-%d %H:%M:%S')
                 end_time = begin_time + datetime.timedelta(minutes=3)
+                self.anomaly_detection_time = (begin_time, end_time)
 
                 print('First anomaly occured in window {0} - {1}.' \
                         .format(begin_time.strftime('%d.%m %H:%M'), end_time.strftime('%d.%m %H:%M')))
@@ -137,7 +165,7 @@ class Prediction:
         with open(const.MODEL_METRICS_PATH.format(self.model_number), 'w') as f:
             for i in range(len(self.ts_handler.features)):
                 mape_score = mape(real_data[:,i], predict_data[:,i])
-                mse_score = mse(real_data[:, i], predict_data[:,i])
+                mse_score = mse(real_data[:,i], predict_data[:,i])
 
                 f.write(self.ts_handler.features[i] + '\n')
                 f.write('MAPE score:  {:.2f}\n'.format(mape_score))
