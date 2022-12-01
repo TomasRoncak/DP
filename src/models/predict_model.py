@@ -101,6 +101,7 @@ class Prediction:
         attack_real = self.get_y_from_generator(self.ts_handler.attack_data_generator)
         attack_real = attack_real[:,1:]
         attack_predict = []
+        time = np.squeeze(attack_real[:, :1], axis = 1)
         data_generator = self.ts_handler.attack_data_generator
 
         for i in range(len(data_generator)):
