@@ -1,20 +1,25 @@
 import sys
-import wandb
+
 import pandas as pd
+
+import wandb
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
-import constants as const
-from preprocess_data import format_data
+from os import makedirs, path
 
-from os import path, makedirs
-from keras.models import Sequential
 from keras.callbacks import EarlyStopping
-from keras.optimizers import SGD, RMSprop, Adam, Adagrad
-from sklearn.model_selection import train_test_split
+from keras.layers import (GRU, LSTM, Conv1D, Conv2D, Dense, Dropout, Flatten,
+                          MaxPooling1D, MaxPooling2D)
 from keras.losses import SparseCategoricalCrossentropy
-from keras.layers import Dense, Conv1D, Conv2D, LSTM, GRU, Flatten, MaxPooling1D, MaxPooling2D, Dropout
+from keras.models import Sequential
+from keras.optimizers import SGD, Adagrad, Adam, RMSprop
+from preprocess_data import format_data
+from sklearn.model_selection import train_test_split
+
+import constants as const
+
 
 def save_model(model, name, number, type):
     MODEL_FOLDER_PATH = const.MODEL_PATH.format(number)

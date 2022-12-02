@@ -1,11 +1,11 @@
-from data.create_windowed_data import create_windowed_dataset
-from data.handle_time_series import TimeseriesHandler, merge_features_to_dataset
-from data.preprocess_data import preprocess_data, preprocess_cat_data
-from features.feature_selection_an import select_features_for_an
-from models.train_model import train_anomaly, train_categorical
-from models.predict_model import Prediction
-
 import config as conf
+from data.create_windowed_data import create_windowed_dataset
+from data.handle_time_series import (TimeseriesHandler,
+                                     merge_features_to_dataset)
+from data.preprocess_data import preprocess_cat_data, preprocess_data
+from features.feature_selection_an import select_features_for_an
+from models.predict_model import Prediction
+from models.train_model import train_anomaly, train_categorical
 
 models_number = 1
 

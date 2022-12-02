@@ -1,10 +1,12 @@
-import matplotlib.pyplot as plt 
-import constants as const
-import pandas as pd
-import datetime
 import csv
+import datetime
+from os import makedirs, path, stat
 
-from os import path, makedirs, stat
+import matplotlib.pyplot as plt
+import pandas as pd
+
+import constants as const
+
 
 def get_relevant_protocols(dataset):
     relevant_protocols = ['all']
@@ -17,7 +19,7 @@ def get_relevant_protocols(dataset):
 
 
 def time_from_string(time_str):
-    return datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+    return datetime.datetime.strptime(time_str, const.TIME_FORMAT)
 
 
 def create_csv(data, columns, window_length, include_attacks, protocol):
@@ -33,14 +35,14 @@ def create_csv(data, columns, window_length, include_attacks, protocol):
     with open(PROCESSED_DATA_PATH, 'a') as csv_file:                                                  
         writer = csv.writer(csv_file)
         if stat(PROCESSED_DATA_PATH).st_size == 0:      # if folder is empty, insert column names first
-            writer.writerow([x + '_sum' if x != 'time' else x for x in columns])
+            writer.writerow([x + '_sum' if x != const.TIME else x for x in columns])
         writer.writerow(data)
 
 
 def compute_window_statistics(data, window_length, include_attacks, protocol):    
     # data is content of one sliding window (x rows)
     # calculate statistics across columns or if time, take first time (one row)
-    data_row_stats = [data[column].sum() if column != 'time' else data[column].iloc[0] for column in data]  
+    data_row_stats = [data[column].sum() if column != const.TIME else data[column].iloc[0] for column in data]  
     data_row_stats.append(len(data))  # number of connections
 
     column_names = data.columns.values.tolist()
@@ -51,7 +53,7 @@ def compute_window_statistics(data, window_length, include_attacks, protocol):
 
 def perform_sliding_window(data, window_length, include_attacks, protocol):  
     window_length = datetime.timedelta(seconds=window_length)
-    start_time, end_time = data['time'].agg(['min', 'max'])[['min', 'max']]
+    start_time, end_time = data[const.TIME].agg(['min', 'max'])[['min', 'max']]
     
     tmp_1 = time_from_string('2015-01-23  01:00:00')
     tmp_2 = time_from_string('2015-02-18  00:00:00')
@@ -59,7 +61,7 @@ def perform_sliding_window(data, window_length, include_attacks, protocol):
     while start_time < end_time:
         if start_time > tmp_1 and start_time < tmp_2:
             start_time = time_from_string('2015-02-18  00:25:00')
-        sliding_window = data[(data['time'] >= start_time) & (data['time'] <= start_time + window_length)]
+        sliding_window = data[(data[const.TIME] >= start_time) & (data[const.TIME] <= start_time + window_length)]
         if not sliding_window.empty:
             compute_window_statistics(sliding_window, window_length, include_attacks, protocol) 
         start_time += window_length
@@ -73,7 +75,7 @@ clean and create time series dataset out of flow-based network capture dataset
 :param save_plots: boolean specifying if protocol feature plots should saved
 """
 def create_windowed_dataset(window_size, include_attacks):
-    dataset = pd.read_csv(const.WHOLE_DATASET, parse_dates=['time'])
+    dataset = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
     relevant_protocols = get_relevant_protocols(dataset)
 
     for protocol in relevant_protocols:
@@ -104,10 +106,10 @@ def save_ts_plots(window_size, include_attacks):
         data = pd.read_csv(DATASET_FILE_NAME)
 
         for feature in data.columns:
-            if feature == 'time' or (data[feature] == 0).all():   # if column contains only zeroes
+            if feature == const.TIME or (data[feature] == 0).all():   # if column contains only zeroes
                 continue
             if not path.exists(PLOTS_PATH + feature):
-                pd.DataFrame(data, columns=['time', feature]).plot(x='time', y=feature, rot=90, figsize=(15, 5))
+                pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
                 plt.tight_layout()
                 plt.savefig(PLOTS_PATH + feature)
                 plt.close()

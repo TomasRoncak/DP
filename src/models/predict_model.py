@@ -1,20 +1,23 @@
-from keras.models import load_model
-from sklearn.metrics import mean_squared_error as mse, mean_absolute_percentage_error as mape
-from os import path, makedirs
-from collections import Counter
-
-import sys
+import datetime
 import math
+import sys
+from collections import Counter
+from os import makedirs, path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import datetime
-import matplotlib.pyplot as plt
+from keras.models import load_model
+from sklearn.metrics import mean_absolute_percentage_error as mape
+from sklearn.metrics import mean_squared_error as mse
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
-import constants as const
 from preprocess_data import format_data, get_classes
+
+import constants as const
+
 
 class Prediction:
     def __init__(self, ts_handler, an_model_name, cat_model_name, patience_limit, model_number):
@@ -51,8 +54,8 @@ class Prediction:
 
 
     def categorize_attack(self):
-        df = pd.read_csv(const.WHOLE_DATASET, parse_dates=['time'])
-        data = df[(df['time'] >= self.anomaly_detection_time[0]) & (df['time'] <= self.anomaly_detection_time[1])]
+        df = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
+        data = df[(df[const.TIME] >= self.anomaly_detection_time[0]) & (df[const.TIME] <= self.anomaly_detection_time[1])]
         classes = get_classes()
 
         x, y = format_data(data)
@@ -114,12 +117,12 @@ class Prediction:
 
             if self.detect_anomaly(attack_real, pred, i):
                 detection_time = curr_time[len(curr_time)-1][0]
-                begin_time = datetime.datetime.strptime(detection_time, '%Y-%m-%d %H:%M:%S')
+                begin_time = datetime.datetime.strptime(detection_time, const.TIME_FORMAT)
                 end_time = begin_time + datetime.timedelta(minutes=3)
                 self.anomaly_detection_time = (begin_time, end_time)
 
                 print('First anomaly occured in window {0} - {1}.' \
-                        .format(begin_time.strftime('%d.%m %H:%M'), end_time.strftime('%d.%m %H:%M')))
+                        .format(begin_time.strftime(const.PRETTY_TIME_FORMAT), end_time.strftime(const.PRETTY_TIME_FORMAT)))
                 break
 
         attack_predict = np.array(attack_predict)

@@ -1,13 +1,11 @@
 import json
-import pandas as pd
-#import seaborn as sns
-import constants as const
-#import matplotlib.pyplot as plt
 
-#from os import path, makedirs
-from statsmodels.tsa.stattools import adfuller
+import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.diagnostic import acorr_ljungbox
+from statsmodels.tsa.stattools import adfuller
+
+import constants as const
 
 
 def remove_nonunique_columns(df, print_steps):
@@ -110,8 +108,8 @@ def select_features(protocol, window_size, print_steps):
 
     labels = df_benign['Label_sum'].copy()
 
-    df_attack.drop(columns=['time', 'Label_sum'], inplace=True)
-    df_benign.drop(columns=['time', 'Label_sum'], inplace=True)
+    df_attack.drop(columns=[const.TIME, 'Label_sum'], inplace=True)
+    df_benign.drop(columns=[const.TIME, 'Label_sum'], inplace=True)
 
     remove_nonunique_columns(df_attack, print_steps)
     remove_unaffected_columns(df_attack, df_benign, print_steps)

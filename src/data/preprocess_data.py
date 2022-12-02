@@ -1,25 +1,26 @@
-import pandas as pd
-import numpy as np
 import sys
+from os import makedirs, path
 
-from os import path, makedirs
+import numpy as np
+import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 import constants as const
 
+
 def preprocess_data():
     # process whole dataset
     if not path.exists(const.PREPROCESSED_DATASET_PATH):   
         makedirs(const.PREPROCESSED_DATASET_PATH)
     
-    data = pd.concat(map(pd.read_csv, [const.RAW_DATASET_PATH + 'UNSW-NB15_1.csv', 
-                                       const.RAW_DATASET_PATH + 'UNSW-NB15_2.csv', 
-                                       const.RAW_DATASET_PATH + 'UNSW-NB15_3.csv', 
-                                       const.RAW_DATASET_PATH + 'UNSW-NB15_4.csv']), ignore_index=True)
+    data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_PARTIAL_CSV.format(1), 
+                                       const.UNPROCESSED_PARTIAL_CSV.format(2), 
+                                       const.UNPROCESSED_PARTIAL_CSV.format(3), 
+                                       const.UNPROCESSED_PARTIAL_CSV.format(4)]), ignore_index=True)
 
-    data['time'] = pd.to_datetime(data['Stime'], unit='s')
+    data[const.TIME] = pd.to_datetime(data['Stime'], unit='s')
     data['tc_flw_http_mthd'].fillna(value = data.tc_flw_http_mthd.mean(), inplace = True)
     data.rename(columns = {'tc_flw_http_mthd':'ct_flw_http_mthd'}, inplace=True)
 
@@ -30,20 +31,20 @@ def preprocess_data():
     data['attack_cat'].fillna('Normal', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
 
-    data.drop(columns=const.USELESS_FEATURES, inplace=True)
+    data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
     data.to_csv(const.WHOLE_DATASET, index=False)
     
 
 def preprocess_cat_data(dataset_type):
     # preprocess train or test data
     if dataset_type == 'train':
-        data = pd.read_csv(const.RAW_DATASET_PATH + 'UNSW_NB15_training-set.csv')
+        data = pd.read_csv(const.UNPROCESSED_TRAINING_SET)
         PATH = const.WHOLE_CAT_TRAIN_DATASET
     elif dataset_type == 'test':
-        data = pd.read_csv(const.RAW_DATASET_PATH + 'UNSW_NB15_testing-set.csv')
+        data = pd.read_csv(const.UNPROCESSED_TESTING_SET)
         PATH = const.WHOLE_CAT_TEST_DATASET
     
-    data.drop(columns=['id', 'label', 'ct_ftp_cmd', 'rate'], axis=1, inplace=True)
+    data.drop(columns=const.USELESS_FEATURES_FOR_CATEGORIZE, axis=1, inplace=True)
     data["attack_cat"].fillna('Normal', inplace=True)
     data["attack_cat"].replace('Backdoors','Backdoor', inplace=True)
 
@@ -77,7 +78,7 @@ def log_numeric_data(df, cols):
                 
 def reduce_cat_labels(df, cols):
     for feature in cols:  # proto and service reduce to 10 labels
-        if feature in ['time', 'attack_cat']:
+        if feature in [const.TIME, 'attack_cat']:
             continue
         if df[feature].nunique() > 10:
             df[feature] = np.where(df[feature].isin(df[feature].value_counts().head().index), df[feature], '-')
@@ -89,8 +90,8 @@ def format_data(df):
     minmax_scaler = MinMaxScaler(feature_range=(0, 1))
     standard_scaler = StandardScaler()
 
-    if 'time' in df:
-        df = df.drop('time', axis=1)
+    if const.TIME in df:
+        df = df.drop(const.TIME, axis=1)
 
     x = df.iloc[:,:-1]
     y = label_encoder.fit_transform(df.iloc[:,-1])

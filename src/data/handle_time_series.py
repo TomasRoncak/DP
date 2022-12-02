@@ -1,15 +1,16 @@
 import json
+import sys
+
+import numpy as np
 import pandas as pd
 import tensorflow as tf
-import sys
-import numpy as np
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
-import constants as const
-import config as conf
-
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from statsmodels.tsa.seasonal import STL
+
+import config as conf
+import constants as const
+
 
 class TimeseriesHandler:
     def __init__(self, use_real_data, window_size, data_split):
@@ -29,7 +30,7 @@ class TimeseriesHandler:
             self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_DATASET_PATH.format(window_size))
 
         self.features = self.df.columns.tolist()
-        self.features.remove('time')    # time is not considered a feature
+        self.features.remove(const.TIME)    # time is not considered a feature
 
         self.n_features = len(self.features)    
         self.numeric_cols = self.df.columns[self.df.dtypes.apply(lambda c: np.issubdtype(c, np.number))].to_list()
@@ -76,8 +77,8 @@ def merge_features_to_dataset(window_size, with_attacks):
     DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
     TIME_PATH = const.TS_BENIGN_DATASET.format(window_size, list(protocol_features.keys())[0])
 
-    time = pd.read_csv(TIME_PATH, usecols = ['time'], squeeze=True).apply(lambda x: x[:-2] + '00')  # delete seconds from time
-    data = pd.DataFrame(time, columns=['time'])
+    time = pd.read_csv(TIME_PATH, usecols = [const.TIME], squeeze=True).apply(lambda x: x[:-2] + '00')  # delete seconds from time
+    data = pd.DataFrame(time, columns=[const.TIME])
 
     for protocol in protocol_features:   # loop through protocols and their set of features
         PROTOCOL_DATASET_PATH = const.TS_ATTACK_DATASET if with_attacks else const.TS_BENIGN_DATASET
@@ -99,7 +100,7 @@ def merge_features_to_dataset(window_size, with_attacks):
 
 def remove_outliers(data):
     for column in data.columns:
-        if column == 'time':
+        if column == const.TIME:
             continue
         median = data[column].median()
         std = data[column].std()
