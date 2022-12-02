@@ -68,7 +68,7 @@ UNUSED_FEATURES_FOR_ANOMALY = ['proto', 'state', 'service', 'attack_cat', 'dur']
 USELESS_FEATURES_FOR_CATEGORIZE = ['id', 'label', 'ct_ftp_cmd', 'rate']
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
-ATTACK_CATEGORIES = ['Analysis', 'Backdoor', 'DoS', 'Exploits', 'Fuzzers', 'Generic', 'Normal', 'Reconnaissance', 'Sheelcode', 'Worms']
+ATTACK_CATEGORIES = ['Analysis', 'Backdoor', 'DoS', 'Exploits', 'Fuzzers', 'Generic', 'Normal', 'Reconnaissance', 'Shellcode', 'Worms']
 
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
 REAL_DATASET_FEATURES = ['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']
