@@ -75,13 +75,13 @@ def merge_features_to_dataset(window_size, with_attacks):
     protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
 
     DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
-    TIME_PATH = const.TS_BENIGN_DATASET.format(window_size, list(protocol_features.keys())[0])
+    TIME_PATH = const.TS_BENIGN_DATASET_PATH.format(window_size, list(protocol_features.keys())[0])
 
     time = pd.read_csv(TIME_PATH, usecols = [const.TIME], squeeze=True).apply(lambda x: x[:-2] + '00')  # delete seconds from time
     data = pd.DataFrame(time, columns=[const.TIME])
 
     for protocol in protocol_features:   # loop through protocols and their set of features
-        PROTOCOL_DATASET_PATH = const.TS_ATTACK_DATASET if with_attacks else const.TS_BENIGN_DATASET
+        PROTOCOL_DATASET_PATH = const.TS_ATTACK_DATASET_PATH if with_attacks else const.TS_BENIGN_DATASET_PATH
         protocol_data = pd.read_csv(PROTOCOL_DATASET_PATH.format(window_size, protocol), usecols = protocol_features[protocol])
         protocol_data.columns = protocol_data.columns.str.replace('_sum', '_{0}'.format(protocol))
         data = pd.concat([data, protocol_data], axis=1)

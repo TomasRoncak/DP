@@ -1,5 +1,5 @@
 import config as conf
-from data.create_windowed_data import create_windowed_dataset
+from data.create_windowed_data import TimeSeriesDataCreator
 from data.handle_time_series import (TimeseriesHandler,
                                      merge_features_to_dataset)
 from data.preprocess_data import preprocess_cat_data, preprocess_data
@@ -9,25 +9,28 @@ from models.train_model import train_anomaly, train_categorical
 
 models_number = 1
 
-process_an_data = False
+process_an_data = True
 train_an = False
-predict_an = True
+predict_an = False
 
 process_cat_data = False
 train_cat = False
-predict_cat = True
+predict_cat = False
 
 
 if process_an_data:
-    preprocess_data()
+    #preprocess_data()
 
-    create_windowed_dataset(conf.window_size, include_attacks=True)
-    create_windowed_dataset(conf.window_size, include_attacks=False)
+    ts_data_get = TimeSeriesDataCreator(window_length=conf.window_size)
+    #ts_data_get.create_ts_dataset_by_protocols(include_attacks=True)
+    #ts_data_get.create_ts_dataset_by_protocols(include_attacks=False)
 
-    select_features_for_an(conf.window_size, print_steps=False)
+    ts_data_get.create_ts_dataset_by_attacks()
 
-    merge_features_to_dataset(conf.window_size, with_attacks=True)
-    merge_features_to_dataset(conf.window_size, with_attacks=False)
+    #select_features_for_an(conf.window_size, print_steps=False)
+
+    #merge_features_to_dataset(conf.window_size, with_attacks=True)
+    #merge_features_to_dataset(conf.window_size, with_attacks=False)
 
 if process_cat_data:
     preprocess_cat_data('train')

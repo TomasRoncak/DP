@@ -103,8 +103,8 @@ def peak_value_cutoff(df):
 
 
 def select_features(protocol, window_size, print_steps):
-    df_attack = pd.read_csv(const.TS_ATTACK_DATASET.format(window_size, protocol))
-    df_benign = pd.read_csv(const.TS_BENIGN_DATASET.format(window_size, protocol))
+    df_attack = pd.read_csv(const.TS_ATTACK_DATASET_PATH.format(window_size, protocol))
+    df_benign = pd.read_csv(const.TS_BENIGN_DATASET_PATH.format(window_size, protocol))
 
     labels = df_benign['Label_sum'].copy()
 
