@@ -96,7 +96,7 @@ class TimeSeriesDataCreator:
             data.drop(columns=const.UNUSED_FEATURES_FOR_ANOMALY, inplace=True)
             self.perform_sliding_window(data)
         
-        self.save_ts_plots()
+        self.save_ts_plots(self.relevant_protocols)
 
     
     def create_ts_dataset_by_attacks(self):
@@ -108,17 +108,21 @@ class TimeSeriesDataCreator:
             data.drop(columns=const.UNUSED_FEATURES_FOR_ANOMALY, inplace=True)
             self.perform_sliding_window(data)
 
-        self.save_ts_plots()
+        self.save_ts_plots(const.ATTACK_CATEGORIES)
 
 
-    def save_ts_plots(self): 
-        for protocol in const.PROTOCOLS:
-            if self.include_attacks:
-                DATASET_FILE_NAME = const.TS_ATTACK_DATASET_PATH.format(self.window_length, protocol) 
-                PLOTS_PATH = const.ATTACKS_PLOTS_FOLDER.format(self.window_length, protocol)
-            else:
-                DATASET_FILE_NAME = const.TS_BENIGN_DATASET_PATH.format(self.window_length, protocol)
-                PLOTS_PATH = const.BENIGN_PLOTS_FOLDER.format(self.window_length, protocol)
+    def save_ts_plots(self, columns): 
+        for column in columns:
+            if self.data_type == 'by_protocols':
+                if self.include_attacks:
+                    DATASET_FILE_NAME = const.TS_ATTACK_DATASET_PATH.format(self.window_length, column) 
+                    PLOTS_PATH = const.ATTACKS_PLOTS_BY_PROT_FOLDER.format(self.window_length, column)
+                else:
+                    DATASET_FILE_NAME = const.TS_BENIGN_DATASET_PATH.format(self.window_length, column)
+                    PLOTS_PATH = const.BENIGN_PLOTS__BY_PROT_FOLDER.format(self.window_length, column)
+            elif self.data_type == 'by_attacks':
+                DATASET_FILE_NAME = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, column) 
+                PLOTS_PATH = const.ATTACKS_PLOTS_BY_ATT_FOLDER.format(self.window_length, column)
 
             Path(PLOTS_PATH).mkdir(parents=True, exist_ok=True)
 
