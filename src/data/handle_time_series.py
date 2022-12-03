@@ -92,11 +92,15 @@ def merge_features_to_dataset(window_size, with_attacks):
 
     if with_attacks:
         if conf.remove_benign_outlier:      # removal of benign outliers from attack dataset
-            data.drop(range(86,91), inplace=True)
+            data.drop(range(98,103), inplace=True)
         if conf.remove_first_attacks:
             data = data.iloc[40:]
 
     Path(const.EXTRACTED_DATASETS_FOLDER.format(window_size)).mkdir(parents=True, exist_ok=True)
+
+    data.replace(0, np.NaN, inplace=True)
+    data.interpolate()  # replace zeroes with interpolate number
+
     data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)
 
 
