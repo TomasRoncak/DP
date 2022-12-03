@@ -1,5 +1,6 @@
 import json
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -13,7 +14,7 @@ import constants as const
 
 
 class TimeseriesHandler:
-    def __init__(self, use_real_data, window_size, data_split):
+    def __init__(self, use_real_data, window_size, data_split, attack_cat):
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.stand_scaler = StandardScaler()
 
@@ -27,7 +28,7 @@ class TimeseriesHandler:
             self.df.dropna(inplace=True)
         else:
             self.df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
-            self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_DATASET_PATH.format(window_size))
+            self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat))
 
         self.features = self.df.columns.tolist()
         self.features.remove(const.TIME)    # time is not considered a feature
@@ -95,7 +96,28 @@ def merge_features_to_dataset(window_size, with_attacks):
         if conf.remove_first_attacks:
             data = data.iloc[40:]
 
+    Path(const.EXTRACTED_DATASETS_FOLDER.format(window_size)).mkdir(parents=True, exist_ok=True)
     data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)
+
+
+def merge_features_to_attack_cat_dataset(window_size):
+    Path(const.EXTRACTED_DATASETS_FOLDER.format(window_size)).mkdir(parents=True, exist_ok=True)
+    protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
+    TIME_PATH = const.TS_BENIGN_DATASET_PATH.format(window_size, list(protocol_features.keys())[0])
+    time = pd.read_csv(TIME_PATH, usecols = [const.TIME], squeeze=True).apply(lambda x: x[:-2] + '00')  # delete seconds from time
+
+    for attack_type in const.ATTACK_CATEGORIES:
+        data = pd.DataFrame(time, columns=[const.TIME])
+        for protocol in protocol_features: 
+            if protocol == 'all':
+                continue
+            benign_protocol_data = pd.read_csv(const.TS_BENIGN_DATASET_PATH.format(window_size, protocol), usecols = protocol_features[protocol])
+            attack_protocol_data = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), usecols = protocol_features[protocol])
+            combined_data = benign_protocol_data + attack_protocol_data
+            combined_data.columns = combined_data.columns.str.replace('_sum', '_{0}'.format(protocol))
+            data = pd.concat([data, combined_data], axis=1)
+
+        data.to_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_type), index=False)
 
 
 def remove_outliers(data):

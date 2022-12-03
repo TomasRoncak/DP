@@ -1,17 +1,17 @@
 import config as conf
 from data.create_windowed_data import TimeSeriesDataCreator
 from data.handle_time_series import (TimeseriesHandler,
-                                     merge_features_to_dataset)
+                                     merge_features_to_dataset, merge_features_to_attack_cat_dataset)
 from data.preprocess_data import preprocess_cat_data, preprocess_data
 from features.feature_selection_an import select_features_for_an
 from models.predict_model import Prediction
 from models.train_model import train_anomaly, train_categorical
 
-models_number = 1
+models_number = 2
 
-process_an_data = True
+process_an_data = False
 train_an = False
-predict_an = False
+predict_an = True
 
 process_cat_data = False
 train_cat = False
@@ -21,23 +21,22 @@ predict_cat = False
 if process_an_data:
     #preprocess_data()
 
-    ts_data_get = TimeSeriesDataCreator(window_length=conf.window_size)
-    #ts_data_get.create_ts_dataset_by_protocols(include_attacks=True)
-    #ts_data_get.create_ts_dataset_by_protocols(include_attacks=False)
-
+    """ts_data_get = TimeSeriesDataCreator(window_length=conf.window_size)
+    ts_data_get.create_ts_dataset_by_protocols(include_attacks=True)
+    ts_data_get.create_ts_dataset_by_protocols(include_attacks=False)
     ts_data_get.create_ts_dataset_by_attacks()
 
-    #select_features_for_an(conf.window_size, print_steps=False)
+    select_features_for_an(conf.window_size, print_steps=False)"""
 
-    #merge_features_to_dataset(conf.window_size, with_attacks=True)
-    #merge_features_to_dataset(conf.window_size, with_attacks=False)
+    merge_features_to_dataset(conf.window_size, with_attacks=False)
+    merge_features_to_attack_cat_dataset(conf.window_size)
 
 if process_cat_data:
     preprocess_cat_data('train')
     preprocess_cat_data('test')
 
 if train_an or predict_an:
-    ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split)
+    ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split, attack_cat='Analysis')
     ts_handler.generate_time_series(conf.n_steps)
 
 if train_an:
@@ -76,7 +75,7 @@ if predict_an or predict_cat:
     )
 
     if predict_an:
-        predict.predict_benign()
+        #predict.predict_benign()
         predict.predict_attack()
 
     if predict_cat:

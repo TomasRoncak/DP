@@ -33,6 +33,7 @@ class Prediction:
 
         if not path.exists(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)):
             makedirs(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number))
+        if not path.exists(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)):
             makedirs(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number))
 
         
@@ -102,9 +103,9 @@ class Prediction:
 
     def predict_attack(self):
         attack_real = self.get_y_from_generator(self.ts_handler.attack_data_generator)
+        time = np.squeeze(attack_real[:, :1], axis = 1)
         attack_real = attack_real[:,1:]
         attack_predict = []
-        time = np.squeeze(attack_real[:, :1], axis = 1)
         data_generator = self.ts_handler.attack_data_generator
 
         for i in range(len(data_generator)):

@@ -36,8 +36,6 @@ class TimeSeriesDataCreator:
 
     def create_csv(self, data):
         if self.data_type == 'by_attacks':
-            if self.current_protocol == '-':
-                self.current_protocol = 'all'
             Path(const.PROCESSED_ATT_PROTOCOL_FOLDER.format(self.window_length, self.attack_cat, self.current_protocol)).mkdir(parents=True, exist_ok=True)
             PATH = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, self.attack_cat, self.current_protocol)
         elif self.data_type == 'by_protocols':
@@ -67,8 +65,10 @@ class TimeSeriesDataCreator:
 
     def perform_sliding_window(self, data):  
         window_length = datetime.timedelta(seconds=self.window_length)
-        current_time, end_time = data[const.TIME].agg(['min', 'max'])[['min', 'max']]
-        
+        #current_time, end_time = data[const.TIME].agg(['min', 'max'])[['min', 'max']]
+        current_time = self.time_from_string('2015-01-22 11:45:00')
+        end_time = self.time_from_string('2015-02-18 12:20:00')
+
         tmp_1 = self.time_from_string('2015-01-23  01:00:00')
         tmp_2 = self.time_from_string('2015-02-18  00:00:00')
 
@@ -83,9 +83,7 @@ class TimeSeriesDataCreator:
     """
     clean and create time series dataset out of flow-based network capture dataset
 
-    :param window_size: integer specifying the length of sliding window to be used
     :param include_attacks: boolean specifying if dataset should contain network attacks
-    :param save_plots: boolean specifying if protocol feature plots should saved
     """
     def create_ts_dataset_by_protocols(self, include_attacks):
         self.include_attacks = include_attacks
@@ -121,7 +119,7 @@ class TimeSeriesDataCreator:
                 data.drop(columns=['service', 'attack_cat'], inplace=True)
                 self.perform_sliding_window(data)
 
-        self.save_ts_plots(const.ATTACK_CATEGORIES)
+        #self.save_ts_plots(const.ATTACK_CATEGORIES)
 
 
     def save_ts_plots(self, columns): 
