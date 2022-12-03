@@ -1,5 +1,5 @@
 import sys
-from os import makedirs, path
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -12,9 +12,8 @@ import constants as const
 
 def preprocess_data():
     # process whole dataset
-    if not path.exists(const.PREPROCESSED_DATASET_PATH):   
-        makedirs(const.PREPROCESSED_DATASET_PATH)
-    
+    Path(const.DATA_FOLDER + const.PREPROCESSED_CATEGORY_FOLDER).mkdir(exist_ok=True)
+            
     data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_PARTIAL_CSV.format(1), 
                                        const.UNPROCESSED_PARTIAL_CSV.format(2), 
                                        const.UNPROCESSED_PARTIAL_CSV.format(3), 
@@ -55,6 +54,7 @@ def preprocess_cat_data(dataset_type):
     log_numeric_data(data, numeric_cols)
     reduce_cat_labels(data, cat_cols)
 
+    Path(PATH).mkdir(parents=True, exist_ok=True)
     data.to_csv(PATH, index=False)
     
 

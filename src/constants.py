@@ -63,9 +63,9 @@ SAVE_CAT_MODEL_PATH = MODEL_PATH + 'model_cat_{1}.h5'
 
 
 ## OTHERS ##
-USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', 'Label', 'ct_ftp_cmd'] # ct_ftp_cmd is mainly empty
-UNUSED_FEATURES_FOR_ANOMALY = ['proto', 'state', 'service', 'attack_cat', 'dur']
-USELESS_FEATURES_FOR_CATEGORIZE = ['id', 'label', 'ct_ftp_cmd', 'rate']
+USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', \
+                                     'Label', 'dur', 'state', 'proto', 'ct_ftp_cmd'] # ct_ftp_cmd is mainly empty
+USELESS_FEATURES_FOR_CATEGORIZE = ['id', 'label', 'rate', 'ct_ftp_cmd']
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 ATTACK_CATEGORIES = ['Analysis', 'Backdoor', 'DoS', 'Exploits', 'Fuzzers', 'Generic', 'Normal', 'Reconnaissance', 'Shellcode', 'Worms']
