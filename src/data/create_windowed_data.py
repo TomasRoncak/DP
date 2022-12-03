@@ -2,6 +2,7 @@ import csv
 import datetime
 from os import path, stat
 from pathlib import Path
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,6 +17,7 @@ class TimeSeriesDataCreator:
         self.window_length = window_length
         self.include_attacks = None
         self.current_protocol = None
+        self.attack_cat = None
         self.data_type = None
 
     def get_relevant_protocols(self, dataset):
@@ -34,8 +36,10 @@ class TimeSeriesDataCreator:
 
     def create_csv(self, data):
         if self.data_type == 'by_attacks':
-            Path(const.PROCESSED_ATTACK_FOLDER.format(self.window_length, self.current_protocol)).mkdir(parents=True, exist_ok=True)
-            PATH = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, self.current_protocol)
+            if self.current_protocol == '-':
+                self.current_protocol = 'all'
+            Path(const.PROCESSED_ATT_PROTOCOL_FOLDER.format(self.window_length, self.attack_cat, self.current_protocol)).mkdir(parents=True, exist_ok=True)
+            PATH = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, self.attack_cat, self.current_protocol)
         elif self.data_type == 'by_protocols':
             Path(const.PROCESSED_PROTOCOL_FOLDER.format(self.window_length, self.current_protocol)).mkdir(parents=True, exist_ok=True)
             PATH = const.TS_ATTACK_DATASET_PATH if self.include_attacks else const.TS_BENIGN_DATASET_PATH
@@ -109,37 +113,47 @@ class TimeSeriesDataCreator:
         self.column_names.append('connections')
 
         for attack in const.ATTACK_CATEGORIES:
-            self.current_protocol = attack
-            data = self.dataset.copy()
-            data = data.loc[data['attack_cat'] == attack]
-            data.drop(columns=['service', 'attack_cat'], inplace=True)
-            self.perform_sliding_window(data)
+            for protocol in self.relevant_protocols:
+                self.current_protocol = protocol
+                self.attack_cat = attack
+                data = self.dataset.copy()
+                data = data.loc[(data['attack_cat'] == attack) & (data['service'] == protocol)]
+                data.drop(columns=['service', 'attack_cat'], inplace=True)
+                self.perform_sliding_window(data)
 
         self.save_ts_plots(const.ATTACK_CATEGORIES)
 
 
     def save_ts_plots(self, columns): 
-        for column in columns:
-            if self.data_type == 'by_protocols':
+        if self.data_type == 'by_protocols':
+            for column in columns:
                 if self.include_attacks:
                     DATASET_FILE_NAME = const.TS_ATTACK_DATASET_PATH.format(self.window_length, column) 
                     PLOTS_PATH = const.ATTACKS_PLOTS_BY_PROT_FOLDER.format(self.window_length, column)
                 else:
                     DATASET_FILE_NAME = const.TS_BENIGN_DATASET_PATH.format(self.window_length, column)
                     PLOTS_PATH = const.BENIGN_PLOTS__BY_PROT_FOLDER.format(self.window_length, column)
-            elif self.data_type == 'by_attacks':
-                DATASET_FILE_NAME = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, column) 
-                PLOTS_PATH = const.ATTACKS_PLOTS_BY_ATT_FOLDER.format(self.window_length, column)
+                self.plot(PLOTS_PATH, DATASET_FILE_NAME)
+        elif self.data_type == 'by_attacks':
+            for attack in columns:
+                for protocol in self.relevant_protocols:
+                    if protocol == 'all':   #TODO
+                        continue
+                    if os.path.exists(const.PROCESSED_ATT_PROTOCOL_FOLDER.format(self.window_length, attack, protocol)):
+                        DATASET_FILE_NAME = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, attack, protocol) 
+                        PLOTS_PATH = const.ATTACKS_PLOTS_BY_ATT_FOLDER.format(self.window_length, attack, protocol)
+                        self.plot(PLOTS_PATH, DATASET_FILE_NAME)
 
-            Path(PLOTS_PATH).mkdir(parents=True, exist_ok=True)
 
-            data = pd.read_csv(DATASET_FILE_NAME)
+    def plot(self, path, dataset_file_name):
+        Path(path).mkdir(parents=True, exist_ok=True)
+        data = pd.read_csv(dataset_file_name)
 
-            for feature in data.columns:
-                if feature == const.TIME or (data[feature] == 0).all():   # if column contains only zeroes
-                    continue
-                if not path.exists(PLOTS_PATH + feature):
-                    pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
-                    plt.tight_layout()
-                    plt.savefig(PLOTS_PATH + feature)
-                    plt.close()
+        for feature in data.columns:
+            if feature == const.TIME or (data[feature] == 0).all():   # if column contains only zeroes
+                continue
+            if not os.path.exists(path + feature):
+                pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
+                plt.tight_layout()
+                plt.savefig(path + feature)
+                plt.close()
