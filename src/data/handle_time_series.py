@@ -129,11 +129,10 @@ def remove_outliers(data):
             continue
         median = data[column].median()
         std = data[column].std()
-        upper_outliers = (data[column] - median).abs() > std
-        lower_outliers = data[column] * 40 < median
+        upper_outliers = data[column] > median * 1.5
+        lower_outliers = data[column] * 1.5 < median
         data[column][upper_outliers] = np.nan
         data[column][lower_outliers] = np.nan
-        #data[column].fillna(median, inplace=True)
     return interpolate_data(data)
 
 
