@@ -115,7 +115,10 @@ class TimeSeriesDataCreator:
                 self.current_protocol = protocol
                 self.attack_cat = attack
                 data = self.dataset.copy()
-                data = data.loc[(data['attack_cat'] == attack) & (data['service'] == protocol)]
+                if protocol == 'all':
+                    data = data.loc[data['attack_cat'] == attack]
+                else:
+                    data = data.loc[(data['attack_cat'] == attack) & (data['service'] == protocol)]
                 data.drop(columns=['service', 'attack_cat'], inplace=True)
                 self.perform_sliding_window(data)
 

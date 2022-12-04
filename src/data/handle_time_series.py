@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+import random
 
 import numpy as np
 import pandas as pd
@@ -87,8 +88,11 @@ def merge_features_to_dataset(window_size, with_attacks):
         protocol_data.columns = protocol_data.columns.str.replace('_sum', '_{0}'.format(protocol))
         data = pd.concat([data, protocol_data], axis=1)
     
+    data.replace(0, np.NaN, inplace=True)
     if not with_attacks:
-        remove_outliers(data) # removal of benign outliers from benign dataset
+        data = remove_outliers(data) # removal of benign outliers from benign dataset
+    else:
+        data = interpolate_data(data)
 
     if with_attacks:
         if conf.remove_benign_outlier:      # removal of benign outliers from attack dataset
@@ -97,11 +101,7 @@ def merge_features_to_dataset(window_size, with_attacks):
             data = data.iloc[40:]
 
     Path(const.EXTRACTED_DATASETS_FOLDER.format(window_size)).mkdir(parents=True, exist_ok=True)
-
-    data.replace(0, np.NaN, inplace=True)
-    data.interpolate()  # replace zeroes with interpolate number
-
-    data.dropna().to_csv(DATASET_PATH.format(window_size), index=False)
+    data.to_csv(DATASET_PATH.format(window_size), index=False)
 
 
 def merge_features_to_attack_cat_dataset(window_size):
@@ -113,11 +113,10 @@ def merge_features_to_attack_cat_dataset(window_size):
     for attack_type in const.ATTACK_CATEGORIES:
         data = pd.DataFrame(time, columns=[const.TIME])
         for protocol in protocol_features: 
-            if protocol == 'all':
-                continue
             benign_protocol_data = pd.read_csv(const.TS_BENIGN_DATASET_PATH.format(window_size, protocol), usecols = protocol_features[protocol])
             attack_protocol_data = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), usecols = protocol_features[protocol])
-            combined_data = benign_protocol_data + attack_protocol_data
+            combined_data = remove_outliers(benign_protocol_data) + attack_protocol_data
+
             combined_data.columns = combined_data.columns.str.replace('_sum', '_{0}'.format(protocol))
             data = pd.concat([data, combined_data], axis=1)
 
@@ -130,6 +129,19 @@ def remove_outliers(data):
             continue
         median = data[column].median()
         std = data[column].std()
-        outliers = (data[column] - median).abs() > std
-        data[column][outliers] = np.nan
-        data[column].fillna(median, inplace=True)
+        upper_outliers = (data[column] - median).abs() > std
+        lower_outliers = data[column] * 40 < median
+        data[column][upper_outliers] = np.nan
+        data[column][lower_outliers] = np.nan
+        #data[column].fillna(median, inplace=True)
+    return interpolate_data(data)
+
+
+def interpolate_data(data):
+    # fill zeroes with interpolate values + rand value to not be a straight line
+    for index, row in data.iterrows():
+        for col in data.columns:
+            if row[col] != row[col]:    # if is NaN
+                mean = data[col].mean()
+                data.loc[index, col] = mean + random.uniform(-mean/8, mean/8)
+    return data
