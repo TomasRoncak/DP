@@ -122,7 +122,7 @@ class TimeSeriesDataCreator:
                 data.drop(columns=['service', 'attack_cat'], inplace=True)
                 self.perform_sliding_window(data)
 
-        #self.save_ts_plots(const.ATTACK_CATEGORIES)
+        self.save_ts_plots(const.ATTACK_CATEGORIES)
 
 
     def save_ts_plots(self, columns): 
@@ -138,8 +138,6 @@ class TimeSeriesDataCreator:
         elif self.data_type == 'by_attacks':
             for attack in columns:
                 for protocol in self.relevant_protocols:
-                    if protocol == 'all':   #TODO
-                        continue
                     if os.path.exists(const.PROCESSED_ATT_PROTOCOL_FOLDER.format(self.window_length, attack, protocol)):
                         DATASET_FILE_NAME = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, attack, protocol) 
                         PLOTS_PATH = const.ATTACKS_PLOTS_BY_ATT_FOLDER.format(self.window_length, attack, protocol)
