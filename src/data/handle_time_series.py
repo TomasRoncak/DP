@@ -93,10 +93,7 @@ def merge_features_to_dataset(window_size, with_attacks):
         data = pd.concat([data, protocol_data], axis=1)
     
     data.replace(0, np.NaN, inplace=True)
-    if not with_attacks:
-        data = remove_outliers(data) # removal of benign outliers from benign dataset
-    else:
-        data = interpolate_data(data)
+    data = remove_outliers(data, upper=(not with_attacks))  # if data contains attacks dont cut upper outliers
 
     if with_attacks:
         if conf.remove_benign_outlier:      # removal of benign outliers from attack dataset
@@ -127,14 +124,15 @@ def merge_features_to_attack_cat_dataset(window_size):
         data.to_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_type), index=False)
 
 
-def remove_outliers(data):
+def remove_outliers(data, upper):
     for column in data.columns:
         if column == const.TIME:
             continue
         median = data[column].median()
-        upper_outliers = data[column] > median * 1.5
+        if upper:
+            upper_outliers = data[column] > median * 1.5
+            data[column][upper_outliers] = np.nan
         lower_outliers = data[column] * 1.5 < median
-        data[column][upper_outliers] = np.nan
         data[column][lower_outliers] = np.nan
     return interpolate_data(data)
 
