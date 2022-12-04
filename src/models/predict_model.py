@@ -104,15 +104,13 @@ class Prediction:
 
     def predict_attack(self):
         attack_real = self.get_y_from_generator(self.ts_handler.attack_data_generator)
-        time = np.squeeze(attack_real[:, :1], axis = 1)
-        attack_real = attack_real[:,1:]
+        time = self.ts_handler.time
         attack_predict = []
         data_generator = self.ts_handler.attack_data_generator
 
         for i in range(len(data_generator)):
             x, _ = data_generator[i]
-            curr_time = np.squeeze(x[:,:,:1], axis = 0) 
-            x = np.asarray(x[:,:,1:]).astype('float32') # remove time
+            curr_time = time[i] 
 
             pred = self.anomaly_model.predict(x)
             attack_predict.append(pred[0])

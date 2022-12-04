@@ -60,6 +60,7 @@ class TimeseriesHandler:
         
         self.time = self.df['time']
         self.df.drop('time', axis=1, inplace=True)
+        self.attack_df.drop('time', axis=1, inplace=True)
 
         self.df = self.df.to_numpy()
         self.attack_df = self.attack_df.to_numpy()
