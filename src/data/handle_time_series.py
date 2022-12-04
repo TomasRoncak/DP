@@ -58,6 +58,9 @@ class TimeseriesHandler:
         self.normalize_data()
         self.scale_data()
         
+        self.time = self.df['time']
+        self.df.drop('time', axis=1, inplace=True)
+
         self.df = self.df.to_numpy()
         self.attack_df = self.attack_df.to_numpy()
 
@@ -128,7 +131,6 @@ def remove_outliers(data):
         if column == const.TIME:
             continue
         median = data[column].median()
-        std = data[column].std()
         upper_outliers = data[column] > median * 1.5
         lower_outliers = data[column] * 1.5 < median
         data[column][upper_outliers] = np.nan

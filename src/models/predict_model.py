@@ -1,8 +1,9 @@
 import datetime
 import math
+import os
 import sys
 from collections import Counter
-from os import makedirs, path
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,8 +22,14 @@ import constants as const
 
 class Prediction:
     def __init__(self, ts_handler, an_model_name, cat_model_name, patience_limit, model_number):
-        self.anomaly_model = load_model(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, an_model_name.lower()))
-        self.category_model = load_model(const.SAVE_CAT_MODEL_PATH.format(model_number, cat_model_name.lower()))
+        an_model_path = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, an_model_name.lower())
+        cat_model_path = const.SAVE_CAT_MODEL_PATH.format(model_number, cat_model_name.lower())
+
+        if os.path.isfile(an_model_path):
+            self.anomaly_model = load_model(an_model_path)
+        if os.path.isfile(cat_model_path):
+            self.category_model = load_model(cat_model_path)
+
         self.ts_handler = ts_handler
         self.model_number = model_number
         self.patience_limit = patience_limit
@@ -31,10 +38,8 @@ class Prediction:
         self.point_anomaly_detected = False
         self.anomaly_detection_time = ()
 
-        if not path.exists(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)):
-            makedirs(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number))
-        if not path.exists(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)):
-            makedirs(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number))
+        Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
+        Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
 
         
     def get_y_from_generator(self, gen):
@@ -42,7 +47,7 @@ class Prediction:
         for i in range(len(gen)):
             batch_y = gen[i][1]
             y = batch_y if y is None else np.append(y, batch_y)
-        return y.reshape((-1, (self.ts_handler.n_features + 1)))    # time is considered
+        return y.reshape((-1, (self.ts_handler.n_features)))    
 
     
     def inverse_transform(self, predict, attack_data=False):
@@ -81,24 +86,20 @@ class Prediction:
     def predict_benign(self):
         data_generator = self.ts_handler.benign_test_generator
         benign_predict = []
+        
         for i in range(len(data_generator)):
             x, _ = data_generator[i]
-            x = np.asarray(x[:,:,1:]).astype('float32')     # remove time
-            test_predict = self.anomaly_model.predict(x)
-            benign_predict.append(test_predict[0])
+            predict = self.anomaly_model.predict(x)
+            benign_predict.append(predict[0])
 
         train_data = self.get_y_from_generator(self.ts_handler.benign_train_generator)
         test_data = self.get_y_from_generator(self.ts_handler.benign_test_generator)
         
-        train_time = np.squeeze(train_data[:, :1], axis = 1) 
-        test_time = np.squeeze(test_data[:, :1], axis = 1) 
-        time =  np.concatenate((train_time, test_time), axis = 0)
-
-        train_inversed = self.inverse_transform(train_data[:,1:])
-        test_inversed = self.inverse_transform(test_data[:,1:])
+        train_inversed = self.inverse_transform(train_data)
+        test_inversed = self.inverse_transform(test_data)
         predict_inversed = self.inverse_transform(benign_predict)
 
-        self.save_benign_plots(train_inversed, test_inversed, predict_inversed, time)
+        self.save_benign_plots(train_inversed, test_inversed, predict_inversed, self.ts_handler.time)
 
 
     def predict_attack(self):
@@ -200,7 +201,7 @@ class Prediction:
             predict_feature = [item[i] for item in prediction_data]
 
             plt.rcParams["figure.figsize"] = (25, 10)
-            plt.plot(time, train_feature, label ='Reality', color="#017b92")
+            plt.plot(time[:len(train_feature)], train_feature, label ='Reality', color="#017b92")
             plt.plot(predict_feature, label ='Prediction', color="#f97306") 
 
             plt.xticks(time[::25],  rotation='vertical')
