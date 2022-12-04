@@ -116,8 +116,7 @@ class Prediction:
             attack_predict.append(pred[0])
 
             if self.detect_anomaly(attack_real, pred, i):
-                detection_time = curr_time[len(curr_time)-1][0]
-                begin_time = datetime.datetime.strptime(detection_time, const.TIME_FORMAT)
+                begin_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
                 end_time = begin_time + datetime.timedelta(minutes=3)
                 self.anomaly_detection_time = (begin_time, end_time)
 
