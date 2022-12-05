@@ -114,7 +114,7 @@ def train_categorical(
     test_df = pd.read_csv(const.WHOLE_CAT_TEST_DATASET)
 
     num_categories = df.iloc[:,-1].nunique()
-    input_shape = df.shape[1] - 1   # -  1 = category
+    input_shape = df.shape[1] - 1   # - 1 => category
 
     trainX, trainY = format_data(df)
     testX, testY = format_data(test_df)
@@ -128,7 +128,7 @@ def train_categorical(
         model.add(Dense(30, activation='relu'))
         model.add(Dense(num_categories, activation='softmax'))
 
-    loss_fn = SparseCategoricalCrossentropy(from_logits=True)
+    loss_fn = SparseCategoricalCrossentropy()
     optimizer = get_optimizer(learning_rate=learning_rate, optimizer=optimizer)
 
     model.compile(optimizer=optimizer, loss=loss_fn, metrics=['accuracy'])
