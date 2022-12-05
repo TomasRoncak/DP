@@ -1,7 +1,7 @@
 import config as conf
 from data.create_windowed_data import TimeSeriesDataCreator
-from data.handle_time_series import (TimeseriesHandler,
-                                     merge_features_to_dataset, 
+from data.handle_time_series import TimeseriesHandler
+from data.merge_features_to_dataset import (merge_features_to_dataset, 
                                      merge_features_to_attack_cat_dataset)
 from data.preprocess_data import preprocess_cat_data, preprocess_whole_data
 from features.feature_selection_an import select_features_for_an
