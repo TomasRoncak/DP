@@ -1,18 +1,19 @@
 import config as conf
 from data.create_windowed_data import TimeSeriesDataCreator
 from data.handle_time_series import (TimeseriesHandler,
-                                     merge_features_to_dataset, merge_features_to_attack_cat_dataset)
-from data.preprocess_data import preprocess_cat_data, preprocess_data
+                                     merge_features_to_dataset, 
+                                     merge_features_to_attack_cat_dataset)
+from data.preprocess_data import preprocess_cat_data, preprocess_whole_data
 from features.feature_selection_an import select_features_for_an
 from models.predict_model import Prediction
 from models.train_model import train_anomaly, train_categorical
 
-models_number = 2
-attack_category = 'Generic'
+models_number = 4
+attack_category = 'All_attacks'
 
 process_an_data = False
 train_an = False
-predict_an = True 
+predict_an = False 
 
 process_cat_data = False
 train_cat = False
@@ -20,7 +21,7 @@ predict_cat = False
 
 
 if process_an_data:
-    #preprocess_data()
+    preprocess_whole_data()
 
     ts_data_get = TimeSeriesDataCreator(window_length=conf.window_size)
     ts_data_get.create_ts_dataset_by_protocols(include_attacks=True)

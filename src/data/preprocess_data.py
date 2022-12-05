@@ -10,10 +10,9 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 import constants as const
 
 
-def preprocess_data():
+def preprocess_whole_data():
     # process whole dataset
     Path(const.DATA_FOLDER + const.PREPROCESSED_CATEGORY_FOLDER).mkdir(exist_ok=True)
-            
     data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_PARTIAL_CSV.format(1), 
                                        const.UNPROCESSED_PARTIAL_CSV.format(2), 
                                        const.UNPROCESSED_PARTIAL_CSV.format(3), 
@@ -48,13 +47,11 @@ def preprocess_cat_data(dataset_type):
     data["attack_cat"].replace('Backdoors','Backdoor', inplace=True)
 
     numeric_cols = data.select_dtypes(include=[np.number]).columns
-    cat_cols = data.select_dtypes(exclude=[np.number]).columns
     
     clamp_numeric_data(data, numeric_cols)
     log_numeric_data(data, numeric_cols)
-    reduce_cat_labels(data, cat_cols)
 
-    Path(PATH).mkdir(parents=True, exist_ok=True)
+    Path(const.PREPROCESSED_CAT_FOLDER).mkdir(parents=True, exist_ok=True)
     data.to_csv(PATH, index=False)
     
 
@@ -76,12 +73,14 @@ def log_numeric_data(df, cols):
                 df[feature] = np.log(df[feature])
 
                 
+"""
 def reduce_cat_labels(df, cols):
     for feature in cols:  # proto and service reduce to 10 labels
         if feature in [const.TIME, 'attack_cat']:
             continue
         if df[feature].nunique() > 10:
             df[feature] = np.where(df[feature].isin(df[feature].value_counts().head().index), df[feature], '-')
+"""
 
 
 def format_data(df):
@@ -97,15 +96,14 @@ def format_data(df):
     y = label_encoder.fit_transform(df.iloc[:,-1])
 
     x['service'] = label_encoder.fit_transform(x['service'])
-    x['proto'] = label_encoder.fit_transform(x['proto'])
-    x['state'] = label_encoder.fit_transform(x['state'])
-
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
+    
+    numeric_cols = x.select_dtypes(include=[np.number]).columns
 
     x[numeric_cols] = minmax_scaler.fit_transform(x[numeric_cols])
     x[numeric_cols] = standard_scaler.fit_transform(x[numeric_cols])
 
     return x, y
+
 
 def get_classes():
     return { 0: 'Analysis',

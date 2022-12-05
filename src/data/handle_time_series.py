@@ -116,7 +116,7 @@ def merge_features_to_attack_cat_dataset(window_size):
         for protocol in protocol_features: 
             benign_protocol_data = pd.read_csv(const.TS_BENIGN_DATASET_PATH.format(window_size, protocol), usecols = protocol_features[protocol])
             attack_protocol_data = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), usecols = protocol_features[protocol])
-            combined_data = remove_outliers(benign_protocol_data) + attack_protocol_data
+            combined_data = remove_outliers(benign_protocol_data, upper=True) + attack_protocol_data
 
             combined_data.columns = combined_data.columns.str.replace('_sum', '_{0}'.format(protocol))
             data = pd.concat([data, combined_data], axis=1)
