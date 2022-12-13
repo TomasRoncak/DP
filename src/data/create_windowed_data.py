@@ -1,6 +1,6 @@
 import csv
 import datetime
-from os import path, stat
+from os import stat
 from pathlib import Path
 import os
 
