@@ -17,7 +17,7 @@ def remove_nonunique_columns(df, print_steps):
             to_remove.append(df.columns[i])
     
     if print_steps:
-        print('removed {0} features by nonuniquenes:'.format(len(to_remove)), ', '.join(to_remove), end='\n\n')
+        print('removed {0} features by Nonuniqueness test:'.format(len(to_remove)), ', '.join(to_remove), end='\n\n')
     df.drop(columns=to_remove, inplace=True)
 
 
@@ -33,7 +33,7 @@ def remove_unaffected_columns(df_attacks, df_benign, print_steps):
             sim_cols.add(df_attacks.columns.values[j])
     
     if print_steps:    
-        print('removed {0} features by cosine similarity (unaffected columns):'\
+        print('removed {0} features by Cosine similarity test:'\
             .format(len(sim_cols)), ', '.join(sim_cols), end='\n\n')
     df_attacks.drop(columns=sim_cols, inplace=True)
 
@@ -49,7 +49,7 @@ def adfueller_test(df, print_steps):
             #if (dftest[1] < 0.05):
             #    print(col)
     if print_steps:
-        print("removed {0} features by adfueller test:".format(len(failed_columns)), ', '.join(failed_columns), end='\n\n')
+        print('removed {0} features by Augmented Dickey Fuller test:'.format(len(failed_columns)), ', '.join(failed_columns), end='\n\n')
     df.drop(columns=failed_columns, inplace=True)
 
 
@@ -61,7 +61,7 @@ def randomness_test(df, print_steps):
             if all(p > 0.05 for p in res.lb_pvalue): 
                 to_remove.append(col)
     if print_steps:
-        print("removed {0} features by randomness test:".format(len(to_remove)), ' '.join(to_remove), end='\n\n')
+        print('removed {0} features by Ljung-Box test:'.format(len(to_remove)), ', '.join(to_remove), end='\n\n')
     df.drop(columns=to_remove, inplace=True)
 
 
@@ -85,14 +85,14 @@ def remove_colinearity(df, protocol, labels, window_size, print_steps):
             to_delete.add(columns[0])
 
     if print_steps:
-        print("removed {0} features by colinearity test:".format(len(to_delete)), ' '.join(to_delete), end='\n\n')
+        print('removed {0} features by Collinearity test:'.format(len(to_delete)), ', '.join(to_delete), end='\n\n')
     df.drop(columns=to_delete, inplace=True)
 
     #if not path.exists(const.CORELLATIONS_FILE_PATH.format(window_size)):
     #    makedirs(const.CORELLATIONS_FILE_PATH.format(window_size))
 
     #fig, ax = plt.subplots(figsize=(8, 6))
-    #svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt=".2f", cmap="YlGnBu")
+    #svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt='.2f', cmap='YlGnBu')
     #figure = svm.get_figure()
     #figure.savefig(const.CORELLATIONS_PNG_FILE.format(window_size, protocol), dpi=400)
 
@@ -131,11 +131,11 @@ def select_features_for_an(window_size, print_steps):
 
     for protocol in const.PROTOCOLS:
         if print_steps:
-            print("---------------------------------------------------------")
-            print("Protocol:", protocol, "\n")
+            print('---------------------------------------------------------')
+            print('Protocol:', protocol, '\n')
         chosen_cols[protocol] = select_features(protocol, window_size, print_steps)
         if print_steps:
-            print(protocol, ', '.join(chosen_cols[protocol]))
+            print('Remaining features:', ', '.join(chosen_cols[protocol]))
 
     delete = [key for key in chosen_cols if chosen_cols[key] == []]
     for key in delete:
