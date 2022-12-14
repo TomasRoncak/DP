@@ -7,6 +7,7 @@ import wandb
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
+from pathlib import Path
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten, MaxPooling1D)
 from keras.losses import SparseCategoricalCrossentropy
@@ -73,6 +74,8 @@ def train_anomaly(
     activation,
     momentum
 ):
+    Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)   
+
     n_features = ts_handler.n_features
 
     model = Sequential()
@@ -100,7 +103,9 @@ def train_anomaly(
         callbacks=[get_callbacks(model_number, 'anomaly_' + model_name.lower(), patience)]
     )
 
+    #model.save(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name) + 'model.h5')
     run.finish()
+
 
 def train_categorical(
     model_name,
@@ -114,6 +119,8 @@ def train_categorical(
     activation,
     momentum
 ):
+    Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)   
+
     df = pd.read_csv(const.WHOLE_CAT_TRAIN_DATASET)
     test_df = pd.read_csv(const.WHOLE_CAT_TEST_DATASET)
 
@@ -138,6 +145,8 @@ def train_categorical(
 
     model.compile(optimizer=optimizer, loss=loss_fn, metrics=['accuracy'])
 
+    run = wandb.init(project="dp_cat", entity="tomasroncak")
+
     model.fit(
             trainX,
             trainY,
@@ -153,6 +162,9 @@ def train_categorical(
         'test_loss': test_scores[0],
         'test_acc': test_scores[1]
     })
+
+    #model.save(const.SAVE_CAT_MODEL_PATH.format(model_number, model_name) + 'model.h5')
+    run.finish()
 
 
 def run_sweep(
