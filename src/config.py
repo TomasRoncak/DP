@@ -9,15 +9,18 @@ remove_benign_outlier = True
 ## AN MODEL CONFIG ##
 an_model_name = 'CNN'
 an_epochs = 300
+an_activation = 'relu'
 
 ## CAT MODEL CONFIG ##
 cat_model_name = 'MLP'
 cat_epochs = 50
 cat_batch_size = 2000
+cat_activation = 'relu'
 
 learning_rate = 0.001
+momentum = 0
 patience = 10
 patience_anomaly_limit = 5
-dropout_rate = 0.3
+dropout_rate = 0.1
 blocks = 12
 optimizer = 'adam'

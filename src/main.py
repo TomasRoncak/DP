@@ -6,10 +6,12 @@ from data.merge_features_to_dataset import (merge_features_to_dataset,
 from data.preprocess_data import preprocess_cat_data, preprocess_whole_data
 from features.feature_selection_an import select_features_for_an
 from models.predict_model import Prediction
-from models.train_model import train_anomaly, train_categorical
+from models.train_model import train_anomaly, train_categorical, run_sweep
 
-models_number = 4
+models_number = 1
 attack_category = 'All_attacks'
+
+start_sweep = False
 
 process_an_data = False
 train_an = False
@@ -43,30 +45,59 @@ if train_an or predict_an:
     ts_handler.generate_time_series(conf.n_steps)
 
 if train_an:
-    train_anomaly(
-        ts_handler,
-        conf.an_model_name,
-        conf.n_steps, 
-        conf.learning_rate, 
-        conf.optimizer, 
-        conf.patience, 
-        conf.an_epochs,
-        conf.dropout_rate,
-        conf.blocks,
-        models_number
-    )
+    if not start_sweep:
+        train_anomaly(
+            ts_handler,
+            conf.an_model_name,
+            conf.n_steps, 
+            conf.learning_rate, 
+            conf.optimizer, 
+            conf.patience, 
+            conf.an_epochs,
+            conf.dropout_rate,
+            conf.blocks,
+            models_number,
+            conf.an_activation,
+            conf.momentum
+        )
+    else:
+        run_sweep(
+            ts_handler,
+            conf.an_model_name,
+            conf.n_steps, 
+            conf.patience, 
+            conf.dropout_rate,
+            conf.blocks,
+            models_number,
+            'anomaly'
+        )
 
 if train_cat:
-    train_categorical(
-        conf.cat_model_name,
-        conf.learning_rate,
-        conf.optimizer,
-        conf.patience,
-        conf.cat_epochs,
-        conf.cat_batch_size,
-        conf.dropout_rate,
-        models_number
-    )
+    if not start_sweep:
+        train_categorical(
+            conf.cat_model_name,
+            conf.learning_rate,
+            conf.optimizer,
+            conf.patience,
+            conf.cat_epochs,
+            conf.cat_batch_size,
+            conf.dropout_rate,
+            models_number,
+            conf.cat_activation,
+            conf.momentum
+        )
+    else:
+        run_sweep(
+            ts_handler,
+            conf.cat_model_name,
+            conf.n_steps, 
+            conf.patience, 
+            conf.dropout_rate,
+            conf.blocks,
+            models_number,
+            'categorical'
+        )
+
 
 if predict_an or predict_cat:
     predict = Prediction(

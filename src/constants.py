@@ -64,8 +64,8 @@ MODEL_PATH = 'models/models_{0}/'
 MODEL_METRICS_PATH = MODEL_PATH + 'metrics.txt'
 MODEL_PREDICTIONS_BENIGN_PATH = MODEL_PATH + 'predictions_benign/'
 MODEL_PREDICTIONS_ATTACK_PATH = MODEL_PATH + 'predictions_attack/'
-SAVE_ANOMALY_MODEL_PATH = MODEL_PATH + 'model_anomaly_{1}.h5'
-SAVE_CAT_MODEL_PATH = MODEL_PATH + 'model_cat_{1}.h5'
+SAVE_ANOMALY_MODEL_PATH = MODEL_PATH + 'savings/anomaly_{1}/'
+SAVE_CAT_MODEL_PATH = MODEL_PATH + 'savings/category_{1}/'
 
 
 ## OTHERS ##

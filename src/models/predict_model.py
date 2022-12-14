@@ -20,16 +20,23 @@ from preprocess_data import format_data, get_classes
 import constants as const
 
 
+def load_best_model(model_number, model_name, model_type):
+    if model_type == 'an':
+        dir = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name.lower())
+    else:
+        dir = const.SAVE_CAT_MODEL_PATH.format(model_number, model_name.lower())
+
+    if os.path.exists(dir):
+        sub_dirs = os.listdir(dir)
+        sub_dirs.sort()
+        return load_model(dir + sub_dirs[0])
+    return None
+
+
 class Prediction:
     def __init__(self, ts_handler, an_model_name, cat_model_name, patience_limit, model_number):
-        an_model_path = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, an_model_name.lower())
-        cat_model_path = const.SAVE_CAT_MODEL_PATH.format(model_number, cat_model_name.lower())
-
-        if os.path.isfile(an_model_path):
-            self.anomaly_model = load_model(an_model_path)
-        if os.path.isfile(cat_model_path):
-            self.category_model = load_model(cat_model_path)
-
+        self.anomaly_model = load_best_model(model_number, an_model_name, model_type='an')
+        self.category_model = load_best_model(model_number, cat_model_name, model_type='cat')
         self.ts_handler = ts_handler
         self.model_number = model_number
         self.patience_limit = patience_limit
