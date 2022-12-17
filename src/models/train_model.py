@@ -187,6 +187,11 @@ def run_sweep(
             'batch_size': {
                 'values': [32, 64, 128]
             },
+            'dropout': {
+                'distribution': 'uniform',
+                'min': 0.01,
+                'max': 0.3
+            },
             'learning_rate': {
                 'distribution': 'uniform',
                 'min': 0.01,
@@ -223,7 +228,7 @@ def run_sweep(
                                 model_number,
                                 model_type
                                 ), 
-        count=25
+        count=40
     )
 
 def wandb_train(
@@ -246,7 +251,7 @@ def wandb_train(
                     wandb.config.optimizer,
                     patience,
                     wandb.config.epochs,
-                    dropout,
+                    wandb.config.dropout,
                     blocks,
                     model_number,
                     wandb.config.activation,
@@ -260,7 +265,7 @@ def wandb_train(
                     patience,
                     wandb.config.epochs,
                     wandb.config.batch_size,
-                    dropout,
+                    wandb.config.dropout,
                     model_number,
                     wandb.config.activation,
                     wandb.config.momentum
