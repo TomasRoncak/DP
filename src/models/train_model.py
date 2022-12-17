@@ -8,8 +8,10 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 from pathlib import Path
+
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten, MaxPooling1D)
+from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
+                          MaxPooling1D)
 from keras.losses import SparseCategoricalCrossentropy
 from keras.models import Sequential
 from keras.optimizers import SGD, Adagrad, Adam, RMSprop

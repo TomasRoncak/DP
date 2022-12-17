@@ -1,26 +1,29 @@
 import config as conf
 from data.create_windowed_data import TimeSeriesDataCreator
 from data.handle_time_series import TimeseriesHandler
-from data.merge_features_to_dataset import (merge_features_to_dataset, 
-                                     merge_features_to_attack_cat_dataset)
+from data.merge_features_to_dataset import (
+    merge_features_to_attack_cat_dataset, merge_features_to_dataset)
 from data.preprocess_data import preprocess_cat_data, preprocess_whole_data
 from features.feature_selection_an import select_features_for_an
 from models.predict_model import Prediction
-from models.train_model import train_anomaly, train_categorical, run_sweep
+from models.train_model import run_sweep, train_anomaly, train_categorical
 
 models_number = 1
 attack_category = 'All_attacks'
 
 start_sweep = False
 
+## Anomaly ##
 process_an_data = False
 train_an = False
 predict_an = False 
 
+## Category ##
 process_cat_data = False
 train_cat = False
 predict_cat = False
 
+ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split, attack_cat=attack_category)
 
 if process_an_data:
     preprocess_whole_data()
@@ -41,7 +44,6 @@ if process_cat_data:
     preprocess_cat_data('test')
 
 if train_an or predict_an:
-    ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split, attack_cat=attack_category)
     ts_handler.generate_time_series(conf.n_steps)
 
 if train_an:
@@ -109,8 +111,9 @@ if predict_an or predict_cat:
     )
 
     if predict_an:
-        predict.predict_benign()
-        predict.predict_attack()
+        predict.predict_benign_ts()
+        predict.predict_attacks_ts()
 
     if predict_cat:
-        predict.categorize_attack()
+        predict.categorize_attacks_on_test()
+        predict.categorize_attacks_on_window()

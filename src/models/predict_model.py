@@ -8,9 +8,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from keras.models import load_model
+from sklearn.metrics import (accuracy_score, classification_report,
+                             confusion_matrix, f1_score)
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
+from sklearn.metrics import precision_score, recall_score
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
@@ -18,19 +22,6 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 from preprocess_data import format_data, get_classes
 
 import constants as const
-
-
-def load_best_model(model_number, model_name, model_type):
-    if model_type == 'an':
-        dir = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name.lower())
-    else:
-        dir = const.SAVE_CAT_MODEL_PATH.format(model_number, model_name.lower())
-
-    if os.path.exists(dir):
-        sub_dirs = os.listdir(dir)
-        sub_dirs.sort()
-        return load_model(dir + sub_dirs[0])
-    return None
 
 
 class Prediction:
@@ -47,50 +38,10 @@ class Prediction:
 
         Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
         Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
-
-        
-    def get_y_from_generator(self, gen):
-        y = None
-        for i in range(len(gen)):
-            batch_y = gen[i][1]
-            y = batch_y if y is None else np.append(y, batch_y)
-        return y.reshape((-1, (self.ts_handler.n_features)))    
-
     
-    def inverse_transform(self, predict, attack_data=False):
-        if attack_data:
-            tmp = self.ts_handler.attack_stand_scaler.inverse_transform(predict)
-            return self.ts_handler.attack_minmax_scaler.inverse_transform(tmp)
-        else:
-            tmp = self.ts_handler.stand_scaler.inverse_transform(predict)
-            return self.ts_handler.minmax_scaler.inverse_transform(tmp)
 
-
-    def categorize_attack(self):
-        df = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
-        data = df[(df[const.TIME] >= self.anomaly_detection_time[0]) & (df[const.TIME] <= self.anomaly_detection_time[1])]
-        classes = get_classes()
-
-        x, y = format_data(data)
-        x = np.asarray(x).astype('float32')
-
-        prob = self.category_model.predict(x)
-        pred = np.argmax(prob, axis=-1)
-
-        err = mse(y, pred)
-        res_list = list(Counter(pred).items())
-        res_list.sort(key=lambda a: a[1], reverse=True)
-        res = [(classes[x[0]], x[1]) for x in res_list]
-
-        print("Detected attacks:")
-        for x in res:
-            if x[0] == 'Normal':
-                continue
-            print(x)
-        print("MSE Error:", err)
-
-    
-    def predict_benign(self):
+    ## Anomaly model prediction ##
+    def predict_benign_ts(self):
         data_generator = self.ts_handler.benign_test_generator
         benign_predict = []
         
@@ -106,10 +57,10 @@ class Prediction:
         test_inversed = self.inverse_transform(test_data)
         predict_inversed = self.inverse_transform(benign_predict)
 
-        self.save_benign_plots(train_inversed, test_inversed, predict_inversed, self.ts_handler.time)
+        self.save_benign_ts_plots(train_inversed, test_inversed, predict_inversed, self.ts_handler.time)
 
 
-    def predict_attack(self):
+    def predict_attacks_ts(self):
         attack_real = self.get_y_from_generator(self.ts_handler.attack_data_generator)
         time = self.ts_handler.time
         attack_predict = []
@@ -122,7 +73,7 @@ class Prediction:
             pred = self.anomaly_model.predict(x)
             attack_predict.append(pred[0])
 
-            if self.detect_anomaly(attack_real, pred, i):
+            if self.detect_anomaly_ts(attack_real, pred, i):
                 begin_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
                 end_time = begin_time + datetime.timedelta(minutes=3)
                 self.anomaly_detection_time = (begin_time, end_time)
@@ -133,7 +84,7 @@ class Prediction:
 
         attack_predict = np.array(attack_predict)
         
-        self.calculate_metrics(attack_real, attack_predict)
+        self.calculate_regression_metrics(attack_real, attack_predict)
         self.save_plots(
                 self.inverse_transform(attack_real, True), 
                 self.inverse_transform(attack_predict, True), 
@@ -142,7 +93,7 @@ class Prediction:
         )
         
         
-    def detect_anomaly(self, real, pred, i):
+    def detect_anomaly_ts(self, real, pred, i):
         if i == 0:  # nemam este na com robit
             return False
         
@@ -170,9 +121,49 @@ class Prediction:
         return upper_bound
 
 
-    def calculate_metrics(self, real_data, predict_data):
+    ## Classification model prediction ##
+    def categorize_attacks_on_window(self):
+        if not self.anomaly_detection_time:
+            print('No window found to classify on!')
+            return
+
+        df = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
+        data = df[(df[const.TIME] >= self.anomaly_detection_time[0]) & (df[const.TIME] <= self.anomaly_detection_time[1])]
+        classes = get_classes()
+
+        x, y = format_data(data)
+        x = np.asarray(x).astype('float32')
+
+        prob = self.category_model.predict(x)
+        y_pred = np.argmax(prob, axis=-1)
+
+        self.calculate_classification_metrics(y, y_pred, x, is_test_set=False)
+
+        res_list = list(Counter(y_pred).items())
+        res_list.sort(key=lambda a: a[1], reverse=True)
+        res = [(classes[x[0]], x[1]) for x in res_list]
+
+        print("Detected attacks:")
+        for x in res:
+            if x[0] == 'Normal':
+                continue
+            print(x)
+
+
+    def categorize_attacks_on_test(self):
+        test_df = pd.read_csv(const.WHOLE_CAT_TEST_DATASET)
+        testX, testY = format_data(test_df)
+
+        prob = self.category_model.predict(testX)
+        pred = np.argmax(prob, axis=-1)
+
+        self.calculate_classification_metrics(testY, pred, testX, is_test_set=True)
+
+
+    ## Metrics ##
+    def calculate_regression_metrics(self, real_data, predict_data):
         real_data = real_data[0:len(predict_data)]  # slice data, if predicted data are shorter (detected anomaly stops prediction)
-        with open(const.MODEL_METRICS_PATH.format(self.model_number), 'w') as f:
+        with open(const.MODEL_REGRESSION_METRICS_PATH.format(self.model_number), 'w') as f:
             for i in range(len(self.ts_handler.features)):
                 mape_score = mape(real_data[:,i], predict_data[:,i])
                 mse_score = mse(real_data[:,i], predict_data[:,i])
@@ -183,7 +174,50 @@ class Prediction:
                 f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
 
 
-    def save_benign_plots(self, train_data, test_data, prediction_data, time):
+    def calculate_classification_metrics(self, y, y_pred, x, is_test_set):
+        PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if is_test_set else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
+
+        accuracy = accuracy_score(y, y_pred)
+        precision = precision_score(y, y_pred, average='weighted')
+        recall = recall_score(y, y_pred, average='weighted')
+        f1 = f1_score(y, y_pred, average='weighted')
+        report = classification_report(y, y_pred, 
+            target_names=['class 0', 'class 1', 'class 2', 'class 3', 'class 4', 'class 5', 'class 6', 'class 7', 'class 8', 'class 9'])
+
+        with open(PATH.format(self.model_number), 'w') as f:
+            f.write('Accuracy:   {:.2f}\n'.format(accuracy))
+            f.write('Precision:  {:.2f}\n'.format(precision))
+            f.write('Recall:     {:.2f}\n'.format(recall))
+            f.write('F1 score:   {:.2f}\n\n'.format(f1))
+            f.write(report)
+
+        plt.figure(figsize=(8, 5))
+        cm = confusion_matrix(y, y_pred)
+        sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
+        plt.xlabel('Predicted',fontsize=15)
+        plt.ylabel('Actual',fontsize=15)
+        plt.savefig(const.MODEL_CONF_MATRIX_PATH.format(self.model_number), dpi=400)
+
+
+    ## Plots and other functions ##
+    def get_y_from_generator(self, gen):
+        y = None
+        for i in range(len(gen)):
+            batch_y = gen[i][1]
+            y = batch_y if y is None else np.append(y, batch_y)
+        return y.reshape((-1, (self.ts_handler.n_features)))    
+
+    
+    def inverse_transform(self, predict, attack_data=False):
+        if attack_data:
+            tmp = self.ts_handler.attack_stand_scaler.inverse_transform(predict)
+            return self.ts_handler.attack_minmax_scaler.inverse_transform(tmp)
+        else:
+            tmp = self.ts_handler.stand_scaler.inverse_transform(predict)
+            return self.ts_handler.minmax_scaler.inverse_transform(tmp)
+
+
+    def save_benign_ts_plots(self, train_data, test_data, prediction_data, time):
         begin = len(train_data)                             # beginning is where train data ends
         end = begin + len(test_data)                        # end is where predicted data ends
 
@@ -214,3 +248,16 @@ class Prediction:
             plt.legend()
             plt.savefig(fig.format(self.model_number) + self.ts_handler.features[i], dpi=400)
             plt.close()
+
+
+def load_best_model(model_number, model_name, model_type):
+    if model_type == 'an':
+        dir = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name.lower())
+    elif model_type == 'cat':
+        dir = const.SAVE_CAT_MODEL_PATH.format(model_number, model_name.lower())
+
+    if os.path.exists(dir):
+        sub_dirs = os.listdir(dir)
+        sub_dirs.sort()
+        return load_model(dir + sub_dirs[0])
+    return None
