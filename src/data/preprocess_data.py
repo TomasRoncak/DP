@@ -114,6 +114,6 @@ def get_classes():
             5: 'Generic', 
             6: 'Normal', 
             7: 'Reconnaissance', 
-            8: 'Sheelcode',
+            8: 'Shellcode',
             9: 'Worms'  
             }

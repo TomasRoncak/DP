@@ -10,14 +10,14 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from keras.models import load_model
-from sklearn.metrics import (accuracy_score, classification_report,
+from sklearn.metrics import (accuracy_score, auc, classification_report,
                              confusion_matrix, f1_score)
+from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
-from sklearn.metrics import mean_absolute_error as mae
-from sklearn.metrics import precision_score, recall_score
-from sklearn.metrics import roc_curve, auc
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import precision_score, recall_score, roc_curve
+
+from data.preprocess_data import get_classes
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
@@ -41,6 +41,7 @@ class Prediction:
 
         Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
         Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
+        Path(const.METRICS_FOLDER.format(model_number)).mkdir(parents=True, exist_ok=True)
     
 
     ## Anomaly model prediction ##
@@ -188,13 +189,13 @@ class Prediction:
             CONF_MATRIX_PATH = const.MODEL_CONF_MATRIX_PATH
 
         y_pred = np.argmax(prob, axis=-1)
+        classes = list(get_classes().values())
 
         accuracy = accuracy_score(y, y_pred)
         precision = precision_score(y, y_pred, average='weighted')
         recall = recall_score(y, y_pred, average='weighted')
         f1 = f1_score(y, y_pred, average='weighted')
-        report = classification_report(y, y_pred, 
-            target_names=['class 0', 'class 1', 'class 2', 'class 3', 'class 4', 'class 5', 'class 6', 'class 7', 'class 8', 'class 9'])
+        report = classification_report(y, y_pred, target_names=classes)
 
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
             f.write('Accuracy:   {:.2f}\n'.format(accuracy))
@@ -205,9 +206,12 @@ class Prediction:
 
         plt.figure(figsize=(8, 5))
         cm = confusion_matrix(y, y_pred)
-        sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
+        ax = sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
+        ax.xaxis.set_ticklabels(classes, rotation = 90)
+        ax.yaxis.set_ticklabels(classes, rotation = 0)
         plt.xlabel('Predicted',fontsize=15)
         plt.ylabel('Actual',fontsize=15)
+        plt.tight_layout()
         plt.savefig(CONF_MATRIX_PATH.format(self.model_number), dpi=400)
 
         roc_auc_multiclass(y, prob, ROC_CURVE_PATH.format(self.model_number))
@@ -280,6 +284,7 @@ def load_best_model(model_number, model_name, model_type):
 def roc_auc_multiclass(y_test, y_pred, path):
     sns.set_style('darkgrid')        # darkgrid, white grid, dark, white and ticks
     deep_colors = sns.color_palette('deep')
+    classes = get_classes()
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
@@ -291,7 +296,7 @@ def roc_auc_multiclass(y_test, y_pred, path):
 
     plt.figure(figsize=(10, 5))
     for i in range(n_classes):
-        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], label='class {0} (AUC = {1:0.2f})' ''.format(i, roc_auc[i]))
+        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], label='{0} (AUC = {1:0.2f})'.format(i, roc_auc[i]))
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])

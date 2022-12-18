@@ -21,7 +21,7 @@ predict_an = False
 ## Category ##
 process_cat_data = False
 train_cat = False
-predict_cat = False
+predict_cat = True
 
 ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split, attack_cat=attack_category)
 
