@@ -16,6 +16,7 @@ from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import precision_score, recall_score, roc_curve
+from sklearn.preprocessing import LabelBinarizer
 
 from data.preprocess_data import get_classes
 
@@ -141,7 +142,7 @@ class Prediction:
         prob = self.category_model.predict(x)
         y_pred = np.argmax(prob, axis=-1)
 
-        self.calculate_classification_metrics(y, y_pred, x, is_test_set=False)
+        self.calculate_classification_metrics(y, y, y_pred, x, is_test_set=False)
 
         res_list = list(Counter(y_pred).items())
         res_list.sort(key=lambda a: a[1], reverse=True)
@@ -158,8 +159,11 @@ class Prediction:
         test_df = pd.read_csv(const.WHOLE_CAT_TEST_DATASET)
         testX, testY = format_data(test_df)
 
+        train_df = pd.read_csv(const.WHOLE_CAT_TRAIN_DATASET)
+        _, trainY = format_data(train_df)
+
         prob = self.category_model.predict(testX)
-        self.calculate_classification_metrics(testY, prob, is_test_set=True)
+        self.calculate_classification_metrics(trainY, testY, prob, is_test_set=True)
 
 
     ## Metrics ##
@@ -178,7 +182,7 @@ class Prediction:
                 f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
 
 
-    def calculate_classification_metrics(self, y, prob, is_test_set):
+    def calculate_classification_metrics(self, y_train, y, prob, is_test_set):
         if is_test_set:
             METRICS_PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH
             ROC_CURVE_PATH = const.MODEL_METRICS_ROC_TEST_PATH
@@ -214,7 +218,7 @@ class Prediction:
         plt.tight_layout()
         plt.savefig(CONF_MATRIX_PATH.format(self.model_number), dpi=400)
 
-        roc_auc_multiclass(y, prob, ROC_CURVE_PATH.format(self.model_number))
+        roc_auc_multiclass(y_train, y, prob, ROC_CURVE_PATH.format(self.model_number))
 
 
     ## Plots and other functions ##
@@ -281,8 +285,8 @@ def load_best_model(model_number, model_name, model_type):
     return None
 
 
-def roc_auc_multiclass(y_test, y_pred, path):
-    sns.set_style('darkgrid')        # darkgrid, white grid, dark, white and ticks
+def roc_auc_multiclass(y_train, y_test, y_score, path):
+    sns.set_style('darkgrid')        
     deep_colors = sns.color_palette('deep')
     classes = get_classes()
     fpr = dict()
@@ -290,13 +294,16 @@ def roc_auc_multiclass(y_test, y_pred, path):
     roc_auc = dict()
     n_classes = 9
 
+    label_binarizer = LabelBinarizer().fit(y_train)
+    y_onehot_test = label_binarizer.transform(y_test)
+
     for i in range(n_classes):
-        fpr[i], tpr[i], _ = roc_curve(y_test, y_pred[:, i], pos_label=2)
+        fpr[i], tpr[i], _ = roc_curve(y_onehot_test[:, i], y_score[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
 
     plt.figure(figsize=(10, 5))
     for i in range(n_classes):
-        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], label='{0} (AUC = {1:0.2f})'.format(i, roc_auc[i]))
+        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], label='{0} (AUC = {1:0.2f})'.format(classes[i], roc_auc[i]))
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
