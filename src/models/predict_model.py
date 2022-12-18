@@ -14,7 +14,10 @@ from sklearn.metrics import (accuracy_score, classification_report,
                              confusion_matrix, f1_score)
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
+from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import train_test_split
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
@@ -155,9 +158,7 @@ class Prediction:
         testX, testY = format_data(test_df)
 
         prob = self.category_model.predict(testX)
-        pred = np.argmax(prob, axis=-1)
-
-        self.calculate_classification_metrics(testY, pred, testX, is_test_set=True)
+        self.calculate_classification_metrics(testY, prob, is_test_set=True)
 
 
     ## Metrics ##
@@ -167,15 +168,26 @@ class Prediction:
             for i in range(len(self.ts_handler.features)):
                 mape_score = mape(real_data[:,i], predict_data[:,i])
                 mse_score = mse(real_data[:,i], predict_data[:,i])
+                mae_score = mae(real_data[:,i], predict_data[:,i])
 
                 f.write(self.ts_handler.features[i] + '\n')
                 f.write('MAPE score:  {:.2f}\n'.format(mape_score))
+                f.write('MAE score:   {:.2f}\n'.format(mae_score))
                 f.write('MSE score:   {:.2f}\n'.format(mse_score))
                 f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
 
 
-    def calculate_classification_metrics(self, y, y_pred, x, is_test_set):
-        PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if is_test_set else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
+    def calculate_classification_metrics(self, y, prob, is_test_set):
+        if is_test_set:
+            METRICS_PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH
+            ROC_CURVE_PATH = const.MODEL_METRICS_ROC_TEST_PATH
+            CONF_MATRIX_PATH = const.MODEL_CONF_TEST_MATRIX_PATH
+        else:
+            METRICS_PATH = const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
+            ROC_CURVE_PATH = const.MODEL_METRICS_ROC_PATH
+            CONF_MATRIX_PATH = const.MODEL_CONF_MATRIX_PATH
+
+        y_pred = np.argmax(prob, axis=-1)
 
         accuracy = accuracy_score(y, y_pred)
         precision = precision_score(y, y_pred, average='weighted')
@@ -184,7 +196,7 @@ class Prediction:
         report = classification_report(y, y_pred, 
             target_names=['class 0', 'class 1', 'class 2', 'class 3', 'class 4', 'class 5', 'class 6', 'class 7', 'class 8', 'class 9'])
 
-        with open(PATH.format(self.model_number), 'w') as f:
+        with open(METRICS_PATH.format(self.model_number), 'w') as f:
             f.write('Accuracy:   {:.2f}\n'.format(accuracy))
             f.write('Precision:  {:.2f}\n'.format(precision))
             f.write('Recall:     {:.2f}\n'.format(recall))
@@ -196,7 +208,9 @@ class Prediction:
         sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
         plt.xlabel('Predicted',fontsize=15)
         plt.ylabel('Actual',fontsize=15)
-        plt.savefig(const.MODEL_CONF_MATRIX_PATH.format(self.model_number), dpi=400)
+        plt.savefig(CONF_MATRIX_PATH.format(self.model_number), dpi=400)
+
+        roc_auc_multiclass(y, prob, ROC_CURVE_PATH.format(self.model_number))
 
 
     ## Plots and other functions ##
@@ -261,3 +275,27 @@ def load_best_model(model_number, model_name, model_type):
         sub_dirs.sort()
         return load_model(dir + sub_dirs[0])
     return None
+
+
+def roc_auc_multiclass(y_test, y_pred, path):
+    sns.set_style('darkgrid')        # darkgrid, white grid, dark, white and ticks
+    deep_colors = sns.color_palette('deep')
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    n_classes = 9
+
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_test, y_pred[:, i], pos_label=2)
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    plt.figure(figsize=(10, 5))
+    for i in range(n_classes):
+        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], label='class {0} (AUC = {1:0.2f})' ''.format(i, roc_auc[i]))
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
+    plt.savefig(path)
