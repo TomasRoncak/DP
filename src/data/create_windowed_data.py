@@ -153,6 +153,10 @@ class TimeSeriesDataCreator:
                 continue
             if not os.path.exists(path + feature):
                 pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
+                plt.legend('', frameon=False)   # hide legend
                 plt.tight_layout()
-                plt.savefig(path + feature)
+                plt.xlabel('Čas', fontsize=15)
+                plt.ylabel('Počet', fontsize=15)
+                plt.title(feature, fontsize=15)
+                plt.savefig(path + feature, bbox_inches='tight')
                 plt.close()
