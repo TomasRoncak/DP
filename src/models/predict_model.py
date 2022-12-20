@@ -94,7 +94,7 @@ class Prediction:
                 self.inverse_transform(attack_real, True), 
                 self.inverse_transform(attack_predict, True), 
                 time, 
-                attack=True
+                is_attack=True
         )
         
         
@@ -240,10 +240,11 @@ class Prediction:
 
 
     def save_benign_ts_plots(self, train_data, test_data, prediction_data, time, show_full_data):
+        time = time.str[5:16]     # slice year and seconds from time
         if not show_full_data:                              # display only half of the train data
             train_len = len(train_data)
-            train_data = train_data[int(train_len/2):]    
-            time = time[int(train_len/2):train_len + len(train_data)]
+            train_data = train_data[int(train_len/3)*2:]    
+            time = time[int(train_len/3)*2:train_len + len(train_data)]
 
         begin = len(train_data)                             # beginning is where train data ends
         end = begin + len(test_data)                        # end is where predicted data ends
@@ -265,7 +266,7 @@ class Prediction:
             train_feature = [item[i] for item in train_data]
             predict_feature = [item[i] for item in prediction_data]
 
-            plt.rcParams["figure.figsize"] = (35, 15)
+            plt.rcParams["figure.figsize"] = (45, 15)
             plt.plot(time.iloc[:len(train_feature)], train_feature, label ='Realita', color="#017b92", linewidth=3)
             plt.plot(predict_feature, label ='Predikcia', color="#f97306", linewidth=3) 
 
