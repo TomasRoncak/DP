@@ -62,7 +62,7 @@ class Prediction:
         test_inversed = self.inverse_transform(test_data)
         predict_inversed = self.inverse_transform(benign_predict)
 
-        self.save_benign_ts_plots(train_inversed, test_inversed, predict_inversed, self.ts_handler.time)
+        self.save_benign_ts_plots(train_inversed, test_inversed, predict_inversed, self.ts_handler.time, show_full_data=False)
 
 
     def predict_attacks_ts(self):
@@ -239,36 +239,42 @@ class Prediction:
             return self.ts_handler.minmax_scaler.inverse_transform(tmp)
 
 
-    def save_benign_ts_plots(self, train_data, test_data, prediction_data, time):
+    def save_benign_ts_plots(self, train_data, test_data, prediction_data, time, show_full_data):
+        if not show_full_data:                              # display only half of the train data
+            train_len = len(train_data)
+            train_data = train_data[int(train_len/2):]    
+            time = time[int(train_len/2):train_len + len(train_data)]
+
         begin = len(train_data)                             # beginning is where train data ends
         end = begin + len(test_data)                        # end is where predicted data ends
 
-        data = np.append(train_data, test_data)             # whole dataset
-        data = data.reshape(-1, self.ts_handler.n_features)
+        whole_data = np.append(train_data, test_data)             
+        whole_data = whole_data.reshape(-1, self.ts_handler.n_features)
 
-        y_hat_plot = np.empty_like(data)
-        y_hat_plot[:, :] = np.nan                           # first : stands for first and the second : for the second dimension
-        y_hat_plot[begin:end, :] = prediction_data          # insert predicted values
+        pred_data = np.empty_like(whole_data)
+        pred_data[:, :] = np.nan                            # first : stands for first and the second : for the second dimension
+        pred_data[begin:end, :] = prediction_data           # insert predicted values
 
-        self.save_plots(data, y_hat_plot, time, attack=False)
+        self.save_plots(whole_data, pred_data, time, is_attack=False)
 
 
-    def save_plots(self, train_data, prediction_data, time, attack):
-        fig = const.MODEL_PREDICTIONS_ATTACK_PATH if attack else const.MODEL_PREDICTIONS_BENIGN_PATH
+    def save_plots(self, train_data, prediction_data, time, is_attack):
+        fig = const.MODEL_PREDICTIONS_ATTACK_PATH if is_attack else const.MODEL_PREDICTIONS_BENIGN_PATH
     
         for i in range(self.ts_handler.n_features): 
             train_feature = [item[i] for item in train_data]
             predict_feature = [item[i] for item in prediction_data]
 
-            plt.rcParams["figure.figsize"] = (25, 10)
-            plt.plot(time[:len(train_feature)], train_feature, label ='Reality', color="#017b92")
-            plt.plot(predict_feature, label ='Prediction', color="#f97306") 
+            plt.rcParams["figure.figsize"] = (35, 15)
+            plt.plot(time.iloc[:len(train_feature)], train_feature, label ='Realita', color="#017b92", linewidth=3)
+            plt.plot(predict_feature, label ='Predikcia', color="#f97306", linewidth=3) 
 
-            plt.xticks(time[::25],  rotation='vertical')
+            plt.xticks(time[::30], rotation='vertical', fontsize=30)
+            plt.yticks(fontsize=30)
             plt.tight_layout()
-            plt.title(self.ts_handler.features[i])
-            plt.legend()
-            plt.savefig(fig.format(self.model_number) + self.ts_handler.features[i], dpi=400)
+            plt.title(self.ts_handler.features[i], fontsize=40)
+            plt.legend(fontsize=40)
+            plt.savefig(fig.format(self.model_number) + self.ts_handler.features[i], dpi=400, bbox_inches='tight')
             plt.close()
 
 

@@ -54,6 +54,7 @@ class TimeseriesHandler:
         self.normalize_data()
         self.scale_data()
         
+        self.df['time'] = self.df['time'].str[5:16]     # slice year and seconds from time
         self.time = self.df['time']
         self.df.drop('time', axis=1, inplace=True)
         self.attack_df.drop('time', axis=1, inplace=True)
