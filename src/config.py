@@ -21,6 +21,6 @@ learning_rate = 0.001
 momentum = 0
 patience = 10
 patience_anomaly_limit = 5
-dropout_rate = 0.1
+dropout_rate = 0.01
 blocks = 12
 optimizer = 'adam'

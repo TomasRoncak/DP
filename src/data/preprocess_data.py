@@ -25,8 +25,8 @@ def preprocess_whole_data():
     data['is_ftp_login'].fillna(value = data.is_ftp_login.mean(), inplace = True)
     data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
 
-    data["attack_cat"].replace('Backdoors','Backdoor', inplace=True)
     data['attack_cat'].fillna('Normal', inplace=True)
+    data["attack_cat"].replace('Backdoors','Backdoor', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
 
     data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
@@ -35,72 +35,56 @@ def preprocess_whole_data():
 
 def preprocess_cat_data(dataset_type):
     # preprocess train or test data
+    Path(const.PREPROCESSED_CAT_FOLDER).mkdir(parents=True, exist_ok=True)
+
     if dataset_type == 'train':
         data = pd.read_csv(const.UNPROCESSED_TRAINING_SET)
-        PATH = const.WHOLE_CAT_TRAIN_DATASET
+        PATH = const.CAT_TRAIN_DATASET
     elif dataset_type == 'test':
         data = pd.read_csv(const.UNPROCESSED_TESTING_SET)
-        PATH = const.WHOLE_CAT_TEST_DATASET
+        PATH = const.CAT_TEST_DATASET
     
-    data.drop(columns=const.USELESS_FEATURES_FOR_CATEGORIZE, axis=1, inplace=True)
     data["attack_cat"].fillna('Normal', inplace=True)
     data["attack_cat"].replace('Backdoors','Backdoor', inplace=True)
+    data['attack_cat'] = data['attack_cat'].str.strip()
 
-    numeric_cols = data.select_dtypes(include=[np.number]).columns
-    
-    clamp_numeric_data(data, numeric_cols)
-    log_numeric_data(data, numeric_cols)
-
-    Path(const.PREPROCESSED_CAT_FOLDER).mkdir(parents=True, exist_ok=True)
+    data.drop(columns=const.USELESS_FEATURES_FOR_CATEGORIZE, inplace=True)
     data.to_csv(PATH, index=False)
     
 
-def clamp_numeric_data(df, cols):
-    for feature in cols:
-        max = df[feature].max()
-        median = df[feature].median()
-        quantile = df[feature].quantile(0.95)
-        if max > 10 and max > median * 10:
-            df[feature] = np.where(df[feature] < quantile, df[feature], quantile)
+# def clamp_numeric_data(df, cols):
+#     for feature in cols:
+#         max = df[feature].max()
+#         median = df[feature].median()
+#         quantile = df[feature].quantile(0.95)
+#         if max > 10 and max > median * 10:
+#             df[feature] = np.where(df[feature] < quantile, df[feature], quantile)
 
             
-def log_numeric_data(df, cols):
-    for feature in cols:
-        if df[feature].nunique() > 50:
-            if df[feature].min() == 0:
-                df[feature] = np.log(df[feature] + 1)
-            else:
-                df[feature] = np.log(df[feature])
-
-                
-"""
-def reduce_cat_labels(df, cols):
-    for feature in cols:  # proto and service reduce to 10 labels
-        if feature in [const.TIME, 'attack_cat']:
-            continue
-        if df[feature].nunique() > 10:
-            df[feature] = np.where(df[feature].isin(df[feature].value_counts().head().index), df[feature], '-')
-"""
+# def log_numeric_data(df, cols):
+#     for feature in cols:
+#         if df[feature].nunique() > 50:
+#             if df[feature].min() == 0:
+#                 df[feature] = np.log(df[feature] + 1)
+#             else:
+#                 df[feature] = np.log(df[feature])
 
 
-def format_data(df):
-    # one hot encoding categorical data, scaling and normalizing numerical data
+def format_data(df, istrain=False):
     label_encoder = LabelEncoder()
     minmax_scaler = MinMaxScaler(feature_range=(0, 1))
     standard_scaler = StandardScaler()
 
     if const.TIME in df:
         df = df.drop(const.TIME, axis=1)
+    if istrain:
+        df = df[df['attack_cat'] != 'Normal']
 
     x = df.iloc[:,:-1]
     y = label_encoder.fit_transform(df.iloc[:,-1])
 
-    x['service'] = label_encoder.fit_transform(x['service'])
-    
-    numeric_cols = x.select_dtypes(include=[np.number]).columns
-
-    x[numeric_cols] = minmax_scaler.fit_transform(x[numeric_cols])
-    x[numeric_cols] = standard_scaler.fit_transform(x[numeric_cols])
+    x = minmax_scaler.fit_transform(x)
+    x = standard_scaler.fit_transform(x)
 
     return x, y
 

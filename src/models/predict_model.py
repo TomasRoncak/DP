@@ -156,12 +156,11 @@ class Prediction:
 
 
     def categorize_attacks_on_test(self):
-        test_df = pd.read_csv(const.WHOLE_CAT_TEST_DATASET)
+        test_df = pd.read_csv(const.CAT_TEST_DATASET)
         testX, testY = format_data(test_df)
 
-        train_df = pd.read_csv(const.WHOLE_CAT_TRAIN_DATASET)
+        train_df = pd.read_csv(const.CAT_TRAIN_DATASET)
         _, trainY = format_data(train_df)
-
         prob = self.category_model.predict(testX)
         self.calculate_classification_metrics(trainY, testY, prob, is_test_set=True)
 
@@ -213,8 +212,8 @@ class Prediction:
         ax = sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
         ax.xaxis.set_ticklabels(classes, rotation = 90)
         ax.yaxis.set_ticklabels(classes, rotation = 0)
-        plt.xlabel('Predicted',fontsize=15)
-        plt.ylabel('Actual',fontsize=15)
+        plt.xlabel('Predikované',fontsize=15)
+        plt.ylabel('Skutočné',fontsize=15)
         plt.tight_layout()
         plt.savefig(CONF_MATRIX_PATH.format(self.model_number), dpi=400)
 
@@ -314,7 +313,7 @@ def roc_auc_multiclass(y_train, y_test, y_score, path):
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
+    plt.xlabel('Falošne pozitívne')
+    plt.ylabel('Správne pozitívne')
     plt.legend(loc="lower right")
     plt.savefig(path)

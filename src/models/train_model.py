@@ -123,29 +123,23 @@ def train_categorical(
 ):
     Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)   
 
-    df = pd.read_csv(const.WHOLE_CAT_TRAIN_DATASET)
-    test_df = pd.read_csv(const.WHOLE_CAT_TEST_DATASET)
+    df = pd.read_csv(const.CAT_TRAIN_DATASET)
+    trainX, trainY = format_data(df, istrain=True)
+    trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
 
     num_categories = df.iloc[:,-1].nunique()
-    input_shape = df.shape[1] - 1   # - 1 => category
-
-    trainX, trainY = format_data(df)
-    testX, testY = format_data(test_df)
-
-    trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
 
     model = Sequential()
     if model_name == 'MLP':
-        model.add(Flatten(input_shape=(input_shape, 1)))
-        model.add(Dense(30, activation=activation))
+        model.add(Dense(1024, activation=activation, input_dim=trainX.shape[1]))
         model.add(Dropout(dropout))
-        model.add(Dense(30, activation=activation))
+        model.add(Dense(768, activation=activation))
+        model.add(Dropout(dropout))
         model.add(Dense(num_categories, activation='softmax'))
 
-    loss_fn = SparseCategoricalCrossentropy()
     optimizer = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
 
-    model.compile(optimizer=optimizer, loss=loss_fn, metrics=['accuracy'])
+    model.compile(optimizer=optimizer, loss=SparseCategoricalCrossentropy(), metrics=['accuracy'])
 
     run = wandb.init(project="dp_cat", entity="tomasroncak")
 
@@ -158,12 +152,6 @@ def train_categorical(
             callbacks=[get_callbacks(model_number, 'category_' + model_name.lower(), patience)],
             verbose=1
     )
-
-    test_scores = model.evaluate(testX, testY)
-    wandb.log({
-        'test_loss': test_scores[0],
-        'test_acc': test_scores[1]
-    })
 
     #model.save(const.SAVE_CAT_MODEL_PATH.format(model_number, model_name) + 'model.h5')
     run.finish()
