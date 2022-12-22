@@ -231,7 +231,7 @@ def wandb_train(
     model_number,
     model_type
 ):
-    run = wandb.init(project="dp"+ model_type, entity="tomasroncak")
+    run = wandb.init(project="dp" + model_type, entity="tomasroncak")
     if model_type == 'anomaly':
         train_anomaly(
                     ts_handler,
