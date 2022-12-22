@@ -134,19 +134,19 @@ class Prediction:
             print('No window found to classify on!')
             return
 
+        train_df = pd.read_csv(const.CAT_TRAIN_DATASET)
         df = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
         data = df[(df[const.TIME] >= self.anomaly_detection_time[0]) & (df[const.TIME] <= self.anomaly_detection_time[1])]
         classes = get_classes()
 
         x, y = format_data(data)
+        _, trainY = format_data(train_df)
         x = np.asarray(x).astype('float32')
 
         prob = self.category_model.predict(x)
-        y_pred = np.argmax(prob, axis=-1)
+        self.calculate_classification_metrics(trainY, y, prob, is_test_set=False)
 
-        self.calculate_classification_metrics(y, y, y_pred, x, is_test_set=False)
-
-        res_list = list(Counter(y_pred).items())
+        res_list = list(Counter(np.argmax(prob, axis=-1)).items())
         res_list.sort(key=lambda a: a[1], reverse=True)
         res = [(classes[x[0]], x[1]) for x in res_list]
 
@@ -183,7 +183,7 @@ class Prediction:
                 f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
 
 
-    def calculate_classification_metrics(self, y_train, y, prob, is_test_set):
+    def calculate_classification_metrics(self, trainY, y, prob, is_test_set):
         if is_test_set:
             METRICS_PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH
             ROC_CURVE_PATH = const.MODEL_METRICS_ROC_TEST_PATH
@@ -195,6 +195,13 @@ class Prediction:
 
         y_pred = np.argmax(prob, axis=-1)
         classes = list(get_classes().values())
+
+        if (y == 0).all():
+            print('Selected window contains only benign traffic !')
+            return
+        elif (y_pred == 0).all():
+            print('Prediction contains only benign traffic !')
+            return
 
         accuracy = accuracy_score(y, y_pred)
         precision = precision_score(y, y_pred, average='weighted')
@@ -219,7 +226,7 @@ class Prediction:
         plt.tight_layout()
         plt.savefig(CONF_MATRIX_PATH.format(self.model_number), dpi=400)
 
-        roc_auc_multiclass(y_train, y, prob, ROC_CURVE_PATH.format(self.model_number))
+        roc_auc_multiclass(trainY, y, prob, ROC_CURVE_PATH.format(self.model_number))
 
 
     ## Plots and other functions ##
