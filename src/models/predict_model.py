@@ -67,7 +67,7 @@ class Prediction:
 
     def predict_attacks_ts(self):
         attack_real = self.get_y_from_generator(self.ts_handler.attack_data_generator)
-        time = self.ts_handler.time
+        time = self.ts_handler.attack_time
         attack_predict = []
         data_generator = self.ts_handler.attack_data_generator
 
@@ -79,12 +79,11 @@ class Prediction:
             attack_predict.append(pred[0])
 
             if self.detect_anomaly_ts(attack_real, pred, i, curr_time):
-                begin_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
-                end_time = begin_time + datetime.timedelta(minutes=3)
-                self.anomaly_detection_time = (begin_time, end_time)
+                detection_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
+                lookbehind_time = detection_time - datetime.timedelta(minutes=3)
+                self.anomaly_detection_time = (lookbehind_time, detection_time)
 
-                print('Anomaly occured in window {0} - {1} !' \
-                        .format(begin_time.strftime(const.PRETTY_TIME_FORMAT), end_time.strftime(const.PRETTY_TIME_FORMAT)))
+                print('Anomaly detected at {0} !'.format(detection_time.strftime(const.PRETTY_TIME_FORMAT)))
                 break
 
         attack_predict = np.array(attack_predict)
@@ -194,7 +193,9 @@ class Prediction:
             CONF_MATRIX_PATH = const.MODEL_CONF_MATRIX_PATH
 
         y_pred = np.argmax(prob, axis=-1)
-        classes = list(get_classes().values())
+        all_classes = get_classes()
+        pred_classes_values = np.unique(y_pred)
+        present_classes = [all_classes[x] for x in pred_classes_values]
 
         if (y == 0).all():
             print('Selected window contains only benign traffic !')
@@ -207,7 +208,7 @@ class Prediction:
         precision = precision_score(y, y_pred, average='weighted')
         recall = recall_score(y, y_pred, average='weighted')
         f1 = f1_score(y, y_pred, average='weighted')
-        report = classification_report(y, y_pred, target_names=classes)
+        report = classification_report(y, y_pred, target_names=present_classes)
 
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
             f.write('Accuracy:   {:.2f}\n'.format(accuracy))
@@ -219,8 +220,8 @@ class Prediction:
         plt.figure(figsize=(8, 5))
         cm = confusion_matrix(y, y_pred)
         ax = sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
-        ax.xaxis.set_ticklabels(classes, rotation = 90)
-        ax.yaxis.set_ticklabels(classes, rotation = 0)
+        ax.xaxis.set_ticklabels(present_classes, rotation = 90)
+        ax.yaxis.set_ticklabels(present_classes, rotation = 0)
         plt.xlabel('Predikované',fontsize=15)
         plt.ylabel('Skutočné',fontsize=15)
         plt.tight_layout()

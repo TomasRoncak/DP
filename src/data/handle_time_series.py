@@ -59,6 +59,7 @@ class TimeseriesHandler:
         self.scale_data()
         
         self.time = self.df['time']
+        self.attack_time = self.attack_df['time']
         self.df.drop('time', axis=1, inplace=True)
         self.attack_df.drop('time', axis=1, inplace=True)
 
