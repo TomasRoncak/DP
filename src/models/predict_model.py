@@ -78,12 +78,12 @@ class Prediction:
             pred = self.anomaly_model.predict(x)
             attack_predict.append(pred[0])
 
-            if self.detect_anomaly_ts(attack_real, pred, i):
+            if self.detect_anomaly_ts(attack_real, pred, i, curr_time):
                 begin_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
                 end_time = begin_time + datetime.timedelta(minutes=3)
                 self.anomaly_detection_time = (begin_time, end_time)
 
-                print('First anomaly occured in window {0} - {1}.' \
+                print('Anomaly occured in window {0} - {1} !' \
                         .format(begin_time.strftime(const.PRETTY_TIME_FORMAT), end_time.strftime(const.PRETTY_TIME_FORMAT)))
                 break
 
@@ -98,7 +98,7 @@ class Prediction:
         )
         
         
-    def detect_anomaly_ts(self, real, pred, i):
+    def detect_anomaly_ts(self, real, pred, i, curr_time):
         if i == 0:  # nemam este na com robit
             return False
         
@@ -108,6 +108,8 @@ class Prediction:
         if err > treshold:
             self.exceeding += 1
             self.point_anomaly_detected = True
+            print("Point anomaly detected at {0}, err {1:.2f} exceeded treshold {2:.2f} ! (patience={3}/{4})"
+            .format(curr_time, err, treshold, self.exceeding, self.patience_limit))
         elif self.point_anomaly_detected:
             self.normal += 1
         

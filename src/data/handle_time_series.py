@@ -27,6 +27,10 @@ class TimeseriesHandler:
             self.df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
             self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat))
 
+            if attack_cat == 'All_attacks':
+                self.attack_labels = self.attack_df['Label_all']
+                self.attack_df.drop('Label_all', axis=1, inplace=True)
+
         self.features = self.df.columns.tolist()
         self.features.remove(const.TIME)    # time is not considered a feature
 

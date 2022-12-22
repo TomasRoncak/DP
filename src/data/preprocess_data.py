@@ -70,13 +70,15 @@ def preprocess_cat_data(dataset_type):
 #                 df[feature] = np.log(df[feature])
 
 
-def format_data(df, istrain=False):
+def format_data(df):
     label_encoder = LabelEncoder()
     minmax_scaler = MinMaxScaler(feature_range=(0, 1))
     standard_scaler = StandardScaler()
 
     if const.TIME in df:
         df = df.drop(const.TIME, axis=1)
+    if 'service' in df:
+        df = df.drop('service', axis=1)
 
     x = df.iloc[:,:-1]
     y = label_encoder.fit_transform(df.iloc[:,-1])

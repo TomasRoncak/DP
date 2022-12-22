@@ -101,7 +101,7 @@ def train_anomaly(
     model.fit(
         ts_handler.benign_train_generator,
         epochs=epochs,
-        verbose=1,
+        verbose=0,
         callbacks=[get_callbacks(model_number, 'anomaly_' + model_name.lower(), patience)]
     )
 
@@ -124,7 +124,7 @@ def train_categorical(
     Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)   
 
     df = pd.read_csv(const.CAT_TRAIN_DATASET)
-    trainX, trainY = format_data(df, istrain=True)
+    trainX, trainY = format_data(df)
     trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
 
     num_categories = df.iloc[:,-1].nunique()

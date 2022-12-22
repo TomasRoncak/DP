@@ -18,6 +18,8 @@ creates dataset suitable for training according to extracted features (on data w
 """
 def merge_features_to_dataset(window_size, with_attacks):
     protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
+    if with_attacks:
+        protocol_features['all'] = ['Label_sum']
 
     DATASET_PATH = const.EXTRACTED_ATTACK_DATASET_PATH if with_attacks else const.EXTRACTED_BENIGN_DATASET_PATH
     TIME_PATH = const.TS_BENIGN_DATASET_PATH.format(window_size, list(protocol_features.keys())[0])
@@ -44,9 +46,10 @@ def merge_features_to_dataset(window_size, with_attacks):
     data.to_csv(DATASET_PATH.format(window_size), index=False)
 
 
-def merge_features_to_attack_cat_dataset(window_size):
+def merge_features_to_dataset_by_attacks(window_size):
     Path(const.EXTRACTED_DATASETS_FOLDER.format(window_size)).mkdir(parents=True, exist_ok=True)
     protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
+    protocol_features['all'] = ['Label_sum']
     TIME_PATH = const.TS_BENIGN_DATASET_PATH.format(window_size, list(protocol_features.keys())[0])
     time = pd.read_csv(TIME_PATH, usecols = [const.TIME], squeeze=True).apply(lambda x: x[:-2] + '00')  # delete seconds from time
 
@@ -65,7 +68,7 @@ def merge_features_to_attack_cat_dataset(window_size):
 
 def remove_outliers(data, upper):
     for column in data.columns:
-        if column == const.TIME:
+        if column in(const.TIME, 'Label_all'):
             continue
         median = data[column].median()
         if upper:
@@ -79,8 +82,10 @@ def remove_outliers(data, upper):
 def interpolate_data(data):
     # fill zeroes with interpolate values + rand value to not be a straight line
     for index, row in data.iterrows():
-        for col in data.columns:
-            if row[col] != row[col]:    # if is NaN
-                mean = data[col].mean()
-                data.loc[index, col] = mean + random.uniform(-mean/8, mean/8)
+        for column in data.columns:
+            if column in(const.TIME, 'Label_all'):
+                continue
+            if row[column] != row[column]:    # if is NaN
+                mean = data[column].mean()
+                data.loc[index, column] = mean + random.uniform(-mean/8, mean/8)
     return data
