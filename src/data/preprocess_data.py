@@ -77,8 +77,6 @@ def format_data(df, istrain=False):
 
     if const.TIME in df:
         df = df.drop(const.TIME, axis=1)
-    if istrain:
-        df = df[df['attack_cat'] != 'Normal']
 
     x = df.iloc[:,:-1]
     y = label_encoder.fit_transform(df.iloc[:,-1])
