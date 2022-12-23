@@ -62,7 +62,14 @@ class Prediction:
         test_inversed = self.inverse_transform(test_data)
         predict_inversed = self.inverse_transform(benign_predict)
 
-        self.save_benign_ts_plots(train_inversed, test_inversed, predict_inversed, self.ts_handler.time, show_full_data=False)
+        self.calculate_regression_metrics(test_inversed, predict_inversed, is_test_set=True)
+        self.save_benign_ts_plots(
+            train_inversed, 
+            test_inversed, 
+            predict_inversed, 
+            self.ts_handler.time, 
+            show_full_data=False
+        )
 
 
     def predict_attacks_ts(self):
@@ -88,10 +95,13 @@ class Prediction:
 
         attack_predict = np.array(attack_predict)
         
-        self.calculate_regression_metrics(attack_real, attack_predict)
+        attack_real_inversed = self.inverse_transform(attack_real, attack_data=True)
+        attack_predict_inversed = self.inverse_transform(attack_predict, attack_data=True)
+
+        self.calculate_regression_metrics(attack_real_inversed, attack_predict_inversed, is_test_set=False)
         self.save_plots(
-                self.inverse_transform(attack_real, True), 
-                self.inverse_transform(attack_predict, True), 
+                attack_real_inversed, 
+                attack_predict_inversed, 
                 time, 
                 is_attack=True
         )
@@ -167,9 +177,15 @@ class Prediction:
 
 
     ## Metrics ##
-    def calculate_regression_metrics(self, real_data, predict_data):
+    def calculate_regression_metrics(self, real_data, predict_data, is_test_set):
+        if is_test_set:
+            METRICS_PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH
+        else:
+            METRICS_PATH = const.MODEL_REGRESSION_WINDOW_METRICS_PATH
+
         real_data = real_data[0:len(predict_data)]  # slice data, if predicted data are shorter (detected anomaly stops prediction)
-        with open(const.MODEL_REGRESSION_METRICS_PATH.format(self.model_number), 'w') as f:
+        
+        with open(METRICS_PATH.format(self.model_number), 'w') as f:
             for i in range(len(self.ts_handler.features)):
                 mape_score = mape(real_data[:,i], predict_data[:,i])
                 mse_score = mse(real_data[:,i], predict_data[:,i])
