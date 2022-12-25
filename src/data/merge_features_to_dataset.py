@@ -95,7 +95,7 @@ def interpolate_data(data):
                 continue
             if row[column] != row[column]:  # if is NaN
                 mean = data[column].mean()
-                data.loc[index, column] = mean + random.uniform(-mean/8, mean/8)
+                data.loc[index, column] = mean + random.uniform(-mean/2, mean/4)
     return data
 
 
