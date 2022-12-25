@@ -23,8 +23,6 @@ process_cat_data = False
 train_cat = False
 predict_cat = False
 
-ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split, attack_cat=attack_category)
-
 if process_an_data:
     preprocess_whole_data()
 
@@ -44,6 +42,7 @@ if process_cat_data:
     preprocess_cat_data('test')
 
 if train_an or predict_an:
+    ts_handler = TimeseriesHandler(conf.use_real_data, conf.window_size, conf.dataset_split, attack_cat=attack_category)
     ts_handler.generate_time_series(conf.n_steps)
 
 if train_an:
@@ -90,7 +89,7 @@ if train_cat:
         )
     else:
         run_sweep(
-            ts_handler,
+            None,
             conf.cat_model_name,
             conf.n_steps, 
             conf.patience, 
@@ -111,7 +110,7 @@ if predict_an or predict_cat:
     )
 
     if predict_an:
-        predict.predict_benign_ts()
+        #predict.predict_benign_ts()
         predict.predict_attacks_ts()
 
     if predict_cat:

@@ -265,7 +265,6 @@ class Prediction:
 
 
     def save_benign_ts_plots(self, train_data, test_data, prediction_data, time, show_full_data):
-        time = time.str[5:16]     # slice year and seconds from time
         if not show_full_data:                              # display only half of the train data
             train_len = len(train_data)
             train_data = train_data[int(train_len/3)*2:]    
