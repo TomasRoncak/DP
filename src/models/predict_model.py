@@ -187,13 +187,13 @@ class Prediction:
         
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
             for i in range(len(self.ts_handler.features)):
+                mae_score = mae(real_data[:,i], predict_data[:,i])
                 mape_score = mape(real_data[:,i], predict_data[:,i])
                 mse_score = mse(real_data[:,i], predict_data[:,i])
-                mae_score = mae(real_data[:,i], predict_data[:,i])
 
                 f.write(self.ts_handler.features[i] + '\n')
-                f.write('MAPE score:  {:.2f}\n'.format(mape_score))
                 f.write('MAE score:   {:.2f}\n'.format(mae_score))
+                f.write('MAPE score:  {:.2f}\n'.format(mape_score))
                 f.write('MSE score:   {:.2f}\n'.format(mse_score))
                 f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
 
