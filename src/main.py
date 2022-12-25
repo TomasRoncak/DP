@@ -14,7 +14,7 @@ attack_category = 'All_attacks'
 start_sweep = False
 
 ## Anomaly ##
-process_an_data = True
+process_an_data = False
 train_an = False
 predict_an = False 
 
@@ -24,18 +24,18 @@ train_cat = False
 predict_cat = False
 
 if process_an_data:
-    # preprocess_whole_data()
+    preprocess_whole_data()
 
-    # ts_data_get = TimeSeriesDataCreator(window_length=conf.window_size)
-    # ts_data_get.create_ts_dataset_by_protocols(include_attacks=True)
-    # ts_data_get.create_ts_dataset_by_protocols(include_attacks=False)
-    # ts_data_get.create_ts_dataset_by_attacks()
+    ts_data_get = TimeSeriesDataCreator(window_length=conf.window_size)
+    ts_data_get.create_ts_dataset_by_protocols(include_attacks=True)
+    ts_data_get.create_ts_dataset_by_protocols(include_attacks=False)
+    ts_data_get.create_ts_dataset_by_attacks()
 
-    # select_features_for_an(conf.window_size, print_steps=False)
+    select_features_for_an(conf.window_size, print_steps=False)
 
-    # merge_features_to_dataset(conf.window_size, with_attacks=False)
-    # merge_features_to_dataset(conf.window_size, with_attacks=True)
-    # merge_features_to_dataset_by_attacks(conf.window_size)
+    merge_features_to_dataset(conf.window_size, with_attacks=False)
+    merge_features_to_dataset(conf.window_size, with_attacks=True)
+    merge_features_to_dataset_by_attacks(conf.window_size)
     plot_merged_dataset(conf.window_size)
 
 if process_cat_data:
@@ -111,7 +111,7 @@ if predict_an or predict_cat:
     )
 
     if predict_an:
-        #predict.predict_benign_ts()
+        predict.predict_benign_ts()
         predict.predict_attacks_ts()
 
     if predict_cat:
