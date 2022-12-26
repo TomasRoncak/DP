@@ -36,7 +36,7 @@ def merge_features_to_dataset(window_size, with_attacks):
         protocol_data.columns = protocol_data.columns.str.replace('_sum', '_{0}'.format(protocol))
         data = pd.concat([data, protocol_data], axis=1)
     
-    data = handle_outliers(data, with_attacks)
+    data = handle_outliers(data, with_attacks, remove_from_dataset=True)
     data.to_csv(DATASET_PATH.format(window_size), index=False)
 
 
@@ -53,7 +53,10 @@ def merge_features_to_dataset_by_attacks(window_size):
         for protocol in protocol_features: 
             benign_protocol_data = pd.read_csv(const.TS_BENIGN_DATASET_PATH.format(window_size, protocol), usecols = protocol_features[protocol])
             attack_protocol_data = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), usecols = protocol_features[protocol])
-            combined_data = remove_outliers(benign_protocol_data, upper=True) + attack_protocol_data
+            if protocol_features[protocol] == ['Label_sum']:
+                combined_data = attack_protocol_data
+            else:
+                combined_data = handle_outliers(benign_protocol_data, with_attacks=True) + attack_protocol_data
             combined_data.columns = combined_data.columns.str.replace('_sum', '_{0}'.format(protocol))
 
             data = pd.concat([data, combined_data], axis=1)
@@ -61,12 +64,12 @@ def merge_features_to_dataset_by_attacks(window_size):
         data.to_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_type), index=False)
 
 
-def handle_outliers(data, with_attacks):
+def handle_outliers(data, with_attacks, remove_from_dataset=False):
     data.replace(0, np.NaN, inplace=True)
     data = remove_outliers(data, upper=(not with_attacks))  # if data contains attacks dont cut upper outliers
     data = interpolate_data(data)
 
-    if with_attacks:
+    if remove_from_dataset:
         if conf.remove_benign_outlier:  # removal of benign outliers from attack dataset
             data.drop(range(98, 103), inplace=True)
         if conf.remove_first_attacks:
