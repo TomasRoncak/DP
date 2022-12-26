@@ -28,8 +28,8 @@ class TimeseriesHandler:
             self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat))
 
             if attack_cat == 'All_attacks':
-                self.attack_labels = self.attack_df['Label_all']
-                self.attack_df.drop('Label_all', axis=1, inplace=True)
+               self.attack_labels = self.attack_df['Label_all']
+               self.attack_df.drop('Label_all', axis=1, inplace=True)
 
         self.features = self.df.columns.tolist()
         self.features.remove(const.TIME)    # time is not considered a feature
@@ -38,36 +38,53 @@ class TimeseriesHandler:
         self.numeric_cols = self.df.columns[self.df.dtypes.apply(lambda c: np.issubdtype(c, np.number))].to_list()
 
 
-    def normalize_data(self):
-        self.df[self.numeric_cols] = self.minmax_scaler.fit_transform(self.df[self.numeric_cols])
-        self.attack_df[self.numeric_cols] = self.attack_minmax_scaler.fit_transform(self.attack_df[self.numeric_cols])
+    def normalize_benign_data(self, df):
+        df[self.numeric_cols] = self.minmax_scaler.fit_transform(df[self.numeric_cols])
+        return df
 
 
-    def scale_data(self):
-        self.df[self.numeric_cols] = self.stand_scaler.fit_transform(self.df[self.numeric_cols])
-        self.attack_df[self.numeric_cols] = self.attack_stand_scaler.fit_transform(self.attack_df[self.numeric_cols])
+    def normalize_attack_data(self, attack_df):
+        attack_df[self.numeric_cols] = self.attack_minmax_scaler.fit_transform(attack_df[self.numeric_cols])
+        return attack_df
 
 
-    def split_dataset(self):
-        train_size = int(len(self.df) * self.data_split)
-        train, test = self.df[:train_size], self.df[train_size:]
-        return train, test
+    def scale_benign_data(self, df):
+        df[self.numeric_cols] = self.stand_scaler.fit_transform(df[self.numeric_cols])
+        return df
+
+
+    def scale_attack_data(self, attack_df):
+        attack_df[self.numeric_cols] = self.attack_stand_scaler.fit_transform(attack_df[self.numeric_cols])
+        return attack_df
+
+
+    def split_dataset(self, df):
+        train_size = int(len(df) * self.data_split)
+        return df[:train_size], df[train_size:]
 
 
     def generate_time_series(self, n_input):
-        self.normalize_data()
-        self.scale_data()
-        
-        self.time = self.df['time']
-        self.attack_time = self.attack_df['time']
+        self.time = self.df['time'][n_input:].to_numpy()
+        self.attack_time = self.attack_df['time'][n_input:].to_numpy()
+
         self.df.drop('time', axis=1, inplace=True)
         self.attack_df.drop('time', axis=1, inplace=True)
 
-        self.df = self.df.to_numpy()
-        self.attack_df = self.attack_df.to_numpy()
+        train, test = self.split_dataset(self.df)
 
-        train, test = self.split_dataset()
+        train_norm = self.normalize_benign_data(train)
+        train_scaled = self.scale_benign_data(train_norm)
 
-        self.benign_train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train, train, length=n_input, batch_size=1)
-        self.benign_test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test, test, length=n_input, batch_size=1)
-        self.attack_data_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(self.attack_df, self.attack_df, length=n_input, batch_size=1)
+        test_norm = self.normalize_benign_data(test)
+        test_scaled = self.scale_benign_data(test_norm)
+
+        attack_norm = self.normalize_attack_data(self.attack_df)
+        attack_scaled = self.scale_attack_data(attack_norm)
+
+        train_scaled = train_scaled.to_numpy()
+        test_scaled = test_scaled.to_numpy()
+        attack_scaled = attack_scaled.to_numpy()
+
+        self.benign_train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train_scaled, train_scaled, length=n_input, batch_size=1)
+        self.benign_test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test_scaled, test_scaled, length=n_input, batch_size=1)
+        self.attack_data_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(attack_scaled, attack_scaled, length=n_input, batch_size=1)

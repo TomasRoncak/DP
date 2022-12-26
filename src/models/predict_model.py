@@ -291,7 +291,7 @@ class Prediction:
             predict_feature = [item[i] for item in prediction_data]
 
             plt.rcParams["figure.figsize"] = (45, 15)
-            plt.plot(time.iloc[:len(train_feature)], train_feature, label ='Realita', color="#017b92", linewidth=3)
+            plt.plot(time[:len(train_feature)], train_feature, label ='Realita', color="#017b92", linewidth=3)
             plt.plot(predict_feature, label ='Predikcia', color="#f97306", linewidth=3) 
 
             plt.xticks(time[::30], rotation='vertical', fontsize=30)
