@@ -2,14 +2,14 @@ import config as conf
 from data.create_windowed_data import TimeSeriesDataCreator
 from data.handle_time_series import TimeseriesHandler
 from data.merge_features_to_dataset import (
-    merge_features_to_dataset_by_attacks, merge_features_to_dataset, plot_merged_dataset)
+    merge_features_to_dataset, merge_features_to_dataset)
 from data.preprocess_data import preprocess_cat_data, preprocess_whole_data
 from features.feature_selection_an import select_features_for_an
 from models.predict_model import Prediction
 from models.train_model import run_sweep, train_anomaly, train_categorical
 
-models_number = 0
-attack_category = 'All_attacks'
+models_number = 4
+attack_category = 'All'
 
 start_sweep = False
 
@@ -27,16 +27,10 @@ if process_an_data:
     preprocess_whole_data()
 
     ts_data_get = TimeSeriesDataCreator(window_length=conf.window_size)
-    ts_data_get.create_ts_dataset_by_protocols(include_attacks=True)
-    ts_data_get.create_ts_dataset_by_protocols(include_attacks=False)
-    ts_data_get.create_ts_dataset_by_attacks()
+    ts_data_get.create_time_series_dataset()
 
     select_features_for_an(conf.window_size, print_steps=False)
-
-    merge_features_to_dataset(conf.window_size, with_attacks=False)
-    merge_features_to_dataset(conf.window_size, with_attacks=True)
-    merge_features_to_dataset_by_attacks(conf.window_size)
-    plot_merged_dataset(conf.window_size)
+    merge_features_to_dataset(conf.window_size)
 
 if process_cat_data:
     preprocess_cat_data('train')

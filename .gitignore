@@ -4,6 +4,7 @@ __pycache__
 venv
 wandb
 
+extracted_datasets
 original
 preprocessed_category
 processed_anomaly

@@ -24,12 +24,12 @@ class TimeseriesHandler:
             self.df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
             self.df.dropna(inplace=True)
         else:
-            self.df = pd.read_csv(const.EXTRACTED_BENIGN_DATASET_PATH.format(window_size))
+            self.df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, 'Normal'))
             self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat))
 
-            if attack_cat == 'All_attacks':
-               self.attack_labels = self.attack_df['Label_all']
-               self.attack_df.drop('Label_all', axis=1, inplace=True)
+            self.attack_labels = self.attack_df['Label_all']
+            self.attack_df.drop('Label_all', axis=1, inplace=True)
+            self.df.drop('Label_all', axis=1, inplace=True)
 
         self.features = self.df.columns.tolist()
         self.features.remove(const.TIME)    # time is not considered a feature
@@ -64,11 +64,11 @@ class TimeseriesHandler:
 
 
     def generate_time_series(self, n_input):
-        self.time = self.df['time'][n_input:].to_numpy()
-        self.attack_time = self.attack_df['time'][n_input:].to_numpy()
+        self.time = self.df[const.TIME][n_input:].to_numpy()
+        self.attack_time = self.attack_df[const.TIME][n_input:].to_numpy()
 
-        self.df.drop('time', axis=1, inplace=True)
-        self.attack_df.drop('time', axis=1, inplace=True)
+        self.df.drop(const.TIME, axis=1, inplace=True)
+        self.attack_df.drop(const.TIME, axis=1, inplace=True)
 
         train, test = self.split_dataset(self.df)
 
