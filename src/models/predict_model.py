@@ -29,7 +29,7 @@ import constants as const
 
 
 class Prediction:
-    def __init__(self, ts_handler, an_model_name, cat_model_name, patience_limit, model_number):
+    def __init__(self, ts_handler, an_model_name, cat_model_name, patience_limit, model_number, window_size):
         self.anomaly_model = load_best_model(model_number, an_model_name, model_type='an')
         self.category_model = load_best_model(model_number, cat_model_name, model_type='cat')
         self.ts_handler = ts_handler
@@ -39,6 +39,7 @@ class Prediction:
         self.normal = 0
         self.point_anomaly_detected = False
         self.anomaly_detection_time = ()
+        self.window_size = window_size
 
         Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
         Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
@@ -82,15 +83,18 @@ class Prediction:
             x, _ = data_generator[i]
             curr_time = time[i] 
 
-            pred = self.anomaly_model.predict(x)
+            pred = self.anomaly_model.predict(x, verbose = 0)
             attack_predict.append(pred[0])
 
             if self.detect_anomaly_ts(attack_real, pred, i, curr_time):
-                detection_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
-                lookbehind_time = detection_time - datetime.timedelta(minutes=3)
-                self.anomaly_detection_time = (lookbehind_time, detection_time)
-
-                print('Anomaly detected at {0} !'.format(detection_time.strftime(const.PRETTY_TIME_FORMAT)))
+                start_time = datetime.datetime.strptime(self.first_anomaly_detection_time, const.TIME_FORMAT)
+                stop_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
+                
+                print('\033[91m\033[1mUpozornenie\033[0m: Kolektívna anomália detegovaná medzi {0} a {1} !'.format(
+                    start_time.strftime(const.PRETTY_TIME_FORMAT),
+                    stop_time.strftime(const.PRETTY_TIME_FORMAT)
+                    )
+                )
                 break
 
         attack_predict = np.array(attack_predict)
@@ -114,15 +118,23 @@ class Prediction:
         treshold = self.calculate_anomaly_threshold(real, i)
         err = mse(real[i], pred[0])
 
-        if err > treshold:
+        if err <= treshold:
+            print('Okno {0} - chyba {1:.2f} \033[92mOK\033[0m'.format(curr_time, err))
+            if self.point_anomaly_detected:
+                self.normal += 1
+        elif err > treshold:
+            if self.exceeding == 0:
+                self.first_anomaly_detection_time = curr_time
             self.exceeding += 1
             self.point_anomaly_detected = True
-            print("Point anomaly detected at {0}, err {1:.2f} exceeded treshold {2:.2f} ! (patience={3}/{4})"
-            .format(curr_time, err, treshold, self.exceeding, self.patience_limit))
-        elif self.point_anomaly_detected:
-            self.normal += 1
-        
-        if self.normal == 10 and self.exceeding != 0:     # if after last exceeding comes 10 normals, reset exceeding to 0
+
+            curr_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
+            window_end_time = (curr_time + datetime.timedelta(seconds=self.window_size)).strftime(const.PRETTY_TIME_FORMAT)
+            curr_time = curr_time.strftime(const.PRETTY_TIME_FORMAT)
+            print('\033[93mBodová anomália detegovaná v časovom okne {0} - {1} \033[0m'.format(curr_time, window_end_time), end='- ')
+            print('chyba {0:.2f} prekročila prah {1:.2f} (trpezlivosť={2}/{3})'.format(err, treshold, self.exceeding, self.patience_limit))
+
+        if self.normal == 5 and self.exceeding != 0:  # if after last exceeding comes 5 normals, reset exceeding to 0
             self.point_anomaly_detected = False
             self.exceeding = 0
             self.normal = 0
@@ -131,7 +143,7 @@ class Prediction:
 
     
     def calculate_anomaly_threshold(self, data, i):
-        q1, q3 = np.percentile(data[:i],[25,95]) # mozno nie attack_real ale attack_predict ?
+        q1, q3 = np.percentile(data[:i],[25,95])  # mozno nie attack_real ale attack_predict ?
         iqr = q3 - q1
         upper_bound = q3 + (1.5 * iqr) 
         return upper_bound

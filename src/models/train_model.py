@@ -59,7 +59,7 @@ performs training on a specified neural network and saves trained model
 :param optimizer: string specifying type of optimizer
 :param patience: integer specifying dropout patience
 :param epochs: integer specifying number of epochs to be trained
-:param dropout_rate: integer specifying the probability of neurons dropout
+:param dropout: integer specifying the probability of neurons dropout
 :param blocks: number of blocks to be used in sequential neural networks
 """
 def train_anomaly(
@@ -76,19 +76,20 @@ def train_anomaly(
     activation,
     momentum
 ):
-    Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)   
+    Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
 
     n_features = ts_handler.n_features
 
     model = Sequential()
     if model_name == 'CNN':
-        model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
+        model.add(Conv1D(filters=32, padding='same', kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
         model.add(MaxPooling1D(pool_size=2))
         model.add(Dropout(dropout)),
         model.add(Flatten())
-        model.add(Dense(50, activation=activation))
+        model.add(Dense(25, activation=activation))
     elif model_name == 'LSTM':
-        model.add(LSTM(blocks, input_shape=(n_steps, n_features)))
+        model.add(LSTM(16, input_shape=(n_steps, n_features), return_sequences=True))
+        model.add(LSTM(8))
     elif model_name == 'GRU':
         model.add(GRU(blocks, input_shape=(n_steps, n_features)))
     model.add(Dense(n_features))

@@ -1,14 +1,13 @@
 import config as conf
 from data.create_windowed_data import TimeSeriesDataCreator
 from data.handle_time_series import TimeseriesHandler
-from data.merge_features_to_dataset import (
-    merge_features_to_dataset, merge_features_to_dataset)
+from data.merge_features_to_dataset import merge_features_to_dataset
 from data.preprocess_data import preprocess_cat_data, preprocess_whole_data
 from features.feature_selection_an import select_features_for_an
 from models.predict_model import Prediction
 from models.train_model import run_sweep, train_anomaly, train_categorical
 
-models_number = 4
+models_number = 1
 attack_category = 'All'
 
 start_sweep = False
@@ -101,7 +100,8 @@ if predict_an or predict_cat:
         conf.an_model_name,
         conf.cat_model_name,
         conf.patience_anomaly_limit,
-        model_number=models_number
+        model_number=models_number,
+        window_size=conf.window_size
     )
 
     if predict_an:
