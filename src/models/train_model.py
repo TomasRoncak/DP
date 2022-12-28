@@ -82,7 +82,7 @@ def train_anomaly(
 
     model = Sequential()
     if model_name == 'CNN':
-        model.add(Conv1D(filters=32, padding='same', kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
+        model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
         model.add(MaxPooling1D(pool_size=2))
         model.add(Dropout(dropout)),
         model.add(Flatten())

@@ -39,22 +39,22 @@ class TimeseriesHandler:
 
 
     def normalize_benign_data(self, df):
-        df[self.numeric_cols] = self.minmax_scaler.fit_transform(df[self.numeric_cols])
+        df.loc[:, self.numeric_cols] = self.minmax_scaler.fit_transform(df.loc[:, self.numeric_cols])
         return df
 
 
     def normalize_attack_data(self, attack_df):
-        attack_df[self.numeric_cols] = self.attack_minmax_scaler.fit_transform(attack_df[self.numeric_cols])
+        attack_df.loc[:, self.numeric_cols] = self.attack_minmax_scaler.fit_transform(attack_df.loc[:, self.numeric_cols])
         return attack_df
 
 
     def scale_benign_data(self, df):
-        df[self.numeric_cols] = self.stand_scaler.fit_transform(df[self.numeric_cols])
+        df.loc[:, self.numeric_cols] = self.stand_scaler.fit_transform(df.loc[:, self.numeric_cols])
         return df
 
 
     def scale_attack_data(self, attack_df):
-        attack_df[self.numeric_cols] = self.attack_stand_scaler.fit_transform(attack_df[self.numeric_cols])
+        attack_df.loc[:, self.numeric_cols] = self.attack_stand_scaler.fit_transform(attack_df.loc[:, self.numeric_cols])
         return attack_df
 
 

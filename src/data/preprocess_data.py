@@ -79,6 +79,8 @@ def format_data(df):
         df = df.drop(const.TIME, axis=1)
     if 'service' in df:
         df = df.drop('service', axis=1)
+    if 'Label' in df:
+        df = df.drop('Label', axis=1)
 
     x = df.iloc[:,:-1]
     y = label_encoder.fit_transform(df.iloc[:,-1])

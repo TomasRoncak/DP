@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from keras.models import load_model
+from matplotlib.ticker import FuncFormatter
 from sklearn.metrics import (accuracy_score, auc, classification_report,
                              confusion_matrix, f1_score)
 from sklearn.metrics import mean_absolute_error as mae
@@ -87,10 +88,11 @@ class Prediction:
             attack_predict.append(pred[0])
 
             if self.detect_anomaly_ts(attack_real, pred, i, curr_time):
-                start_time = datetime.datetime.strptime(self.first_anomaly_detection_time, const.TIME_FORMAT)
-                stop_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
-                
-                print('\033[91m\033[1mUpozornenie\033[0m: Kolektívna anomália detegovaná medzi {0} a {1} !'.format(
+                start_time = datetime.datetime.strptime('2015-' + self.first_anomaly_detection_time+ ':00', const.FULL_TIME_FORMAT)
+                stop_time = datetime.datetime.strptime('2015-' + curr_time + ':00', const.FULL_TIME_FORMAT)
+                self.anomaly_detection_time = (start_time, stop_time)
+
+                print('\033[91m\033[1mUpozornenie\033[0m: Kolektívna anomália detegovaná v okne {0} až {1}!'.format(
                     start_time.strftime(const.PRETTY_TIME_FORMAT),
                     stop_time.strftime(const.PRETTY_TIME_FORMAT)
                     )
@@ -164,18 +166,19 @@ class Prediction:
         _, trainY = format_data(train_df)
         x = np.asarray(x).astype('float32')
 
-        prob = self.category_model.predict(x)
+        prob = self.category_model.predict(x, verbose=0)
         self.calculate_classification_metrics(trainY, y, prob, is_test_set=False)
 
         res_list = list(Counter(np.argmax(prob, axis=-1)).items())
         res_list.sort(key=lambda a: a[1], reverse=True)
         res = [(classes[x[0]], x[1]) for x in res_list]
 
-        print("Detected attacks:")
+        print('\033[91m\033[1mUpozornenie\033[0m: Časové okno obsahuje útoky na sieť!')
+        print('\033[1mDetegované kategórie útokov\033[0m:')
         for x in res:
             if x[0] == 'Normal':
                 continue
-            print(x)
+            print('{0} ({1}x)'.format(x[0], x[1]))
 
 
     def categorize_attacks_on_test(self):
@@ -222,8 +225,8 @@ class Prediction:
 
         y_pred = np.argmax(prob, axis=-1)
         all_classes = get_classes()
-        pred_classes_values = np.unique(y_pred)
-        present_classes = [all_classes[x] for x in pred_classes_values]
+        classes_values = np.unique(y)
+        present_classes = [all_classes[x] for x in classes_values]
 
         if (y == 0).all():
             print('Selected window contains only benign traffic !')
@@ -232,11 +235,12 @@ class Prediction:
             print('Prediction contains only benign traffic !')
             return
 
+        labels = np.unique(y_pred)
         accuracy = accuracy_score(y, y_pred)
-        precision = precision_score(y, y_pred, average='weighted')
-        recall = recall_score(y, y_pred, average='weighted')
-        f1 = f1_score(y, y_pred, average='weighted')
-        report = classification_report(y, y_pred, target_names=present_classes)
+        precision = precision_score(y, y_pred, average='weighted', labels=labels)
+        recall = recall_score(y, y_pred, average='weighted', labels=labels)
+        f1 = f1_score(y, y_pred, average='weighted', labels=labels)
+        report = classification_report(y, y_pred, labels=labels)
 
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
             f.write('Accuracy:   {:.2f}\n'.format(accuracy))
@@ -302,14 +306,16 @@ class Prediction:
             train_feature = [item[i] for item in train_data]
             predict_feature = [item[i] for item in prediction_data]
 
+            ax=plt.gca()
+            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: format(int(x), ',')))
+
             plt.rcParams["figure.figsize"] = (45, 15)
             plt.plot(time[:len(train_feature)], train_feature, label ='Realita', color="#017b92", linewidth=3)
             plt.plot(predict_feature, label ='Predikcia', color="#f97306", linewidth=3) 
-
-            plt.xticks(time[::30], rotation='vertical', fontsize=30)
-            plt.yticks(fontsize=30)
+            plt.xticks(time[::30], rotation='vertical', fontsize=40)
+            plt.yticks(fontsize=40)
             plt.tight_layout()
-            plt.title(self.ts_handler.features[i], fontsize=40)
+            plt.title(self.ts_handler.features[i], fontsize=50)
             plt.legend(fontsize=40)
             plt.savefig(fig.format(self.model_number) + self.ts_handler.features[i], dpi=400, bbox_inches='tight')
             plt.close()

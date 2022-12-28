@@ -9,13 +9,14 @@ from models.train_model import run_sweep, train_anomaly, train_categorical
 
 models_number = 1
 attack_category = 'All'
+ts_handler = None
 
 start_sweep = False
 
 ## Anomaly ##
 process_an_data = False
 train_an = False
-predict_an = False 
+predict_an = False
 
 ## Category ##
 process_cat_data = False
