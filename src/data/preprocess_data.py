@@ -29,6 +29,7 @@ def preprocess_whole_data():
     data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
 
+    data = data[~data.attack_cat.isin(const.TO_DELETE)]
     data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
     data.to_csv(const.WHOLE_DATASET, index=False)
     
@@ -45,31 +46,14 @@ def preprocess_cat_data(dataset_type):
         PATH = const.CAT_TEST_DATASET
     
     data["attack_cat"].fillna('Normal', inplace=True)
-    data["attack_cat"].replace('Backdoors','Backdoor', inplace=True)
+    data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
 
+    data = data[~data.attack_cat.isin(const.TO_DELETE)]
     data.drop(columns=const.USELESS_FEATURES_FOR_CATEGORIZE, inplace=True)
     data.to_csv(PATH, index=False)
+
     
-
-# def clamp_numeric_data(df, cols):
-#     for feature in cols:
-#         max = df[feature].max()
-#         median = df[feature].median()
-#         quantile = df[feature].quantile(0.95)
-#         if max > 10 and max > median * 10:
-#             df[feature] = np.where(df[feature] < quantile, df[feature], quantile)
-
-            
-# def log_numeric_data(df, cols):
-#     for feature in cols:
-#         if df[feature].nunique() > 50:
-#             if df[feature].min() == 0:
-#                 df[feature] = np.log(df[feature] + 1)
-#             else:
-#                 df[feature] = np.log(df[feature])
-
-
 def format_data(df):
     label_encoder = LabelEncoder()
     minmax_scaler = MinMaxScaler(feature_range=(0, 1))
@@ -102,4 +86,13 @@ def get_classes():
             7: 'Reconnaissance', 
             8: 'Shellcode',
             9: 'Worms'  
+            }
+
+def get_filtered_classes():
+    return {0: 'DoS', 
+            1: 'Exploits', 
+            2: 'Fuzzers', 
+            3: 'Generic', 
+            4: 'Normal', 
+            5: 'Reconnaissance'
             }

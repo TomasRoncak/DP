@@ -15,7 +15,7 @@ METRICS_FOLDER = 'metrics/'
 
 ## CSV FILENAMES ##
 DATASET_FILENAME = 'dataset.csv'
-CONFUSION_MATRIX_FILENAME = 'confusion_matrix'
+CONFUSION_MATRIX_FILENAME = 'confusion_matrix_window'
 CONFUSION_TEST_MATRIX_FILENAME = 'confusion_matrix_test'
 EXTRACTED_ATTACK_CAT_DATA_FILENAME = '{1}_dataset.csv'
 METRICS_CLASSIFICATION_WINDOW_FILENAME = 'metrics_classification_window.txt'
@@ -88,6 +88,7 @@ USELESS_FEATURES_FOR_CATEGORIZE = ['id', 'label', 'rate', 'dur', 'state', 'proto
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 ATTACK_CATEGORIES = ['Analysis', 'Backdoor', 'DoS', 'Exploits', 'Fuzzers', 'Generic', 'Reconnaissance', 'Shellcode', 'Worms', 'Normal', 'All']
+TO_DELETE = ['Analysis', 'Backdoor', 'Shellcode', 'Worms']
 
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
 REAL_DATASET_FEATURES = ['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']
