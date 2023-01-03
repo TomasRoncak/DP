@@ -11,12 +11,11 @@ import pandas as pd
 import seaborn as sns
 from keras.models import load_model
 from matplotlib.ticker import FuncFormatter
-from sklearn.metrics import (accuracy_score, auc, classification_report,
-                             confusion_matrix, f1_score)
+from sklearn.metrics import auc, classification_report, confusion_matrix
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
-from sklearn.metrics import precision_score, recall_score, roc_curve
+from sklearn.metrics import roc_curve
 from sklearn.preprocessing import LabelBinarizer
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
@@ -42,7 +41,8 @@ class Prediction:
 
         Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
         Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
-        Path(const.METRICS_FOLDER.format(model_number)).mkdir(parents=True, exist_ok=True)
+        Path(const.METRICS_CLASSIFICATION_FOLDER_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
+        Path(const.METRICS_REGRESSION_FOLDER_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
     
 
     ## Anomaly model prediction ##
@@ -233,19 +233,8 @@ class Prediction:
             print('Prediction contains only benign traffic !')
             return
 
-        labels = np.unique(y_pred)
-        accuracy = accuracy_score(y, y_pred)
-        precision = precision_score(y, y_pred, average='weighted', labels=labels)
-        recall = recall_score(y, y_pred, average='weighted', labels=labels)
-        f1 = f1_score(y, y_pred, average='weighted', labels=labels)
-        report = classification_report(y, y_pred, labels=labels)
-
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
-            f.write('Accuracy:   {:.2f}\n'.format(accuracy))
-            f.write('Precision:  {:.2f}\n'.format(precision))
-            f.write('Recall:     {:.2f}\n'.format(recall))
-            f.write('F1 score:   {:.2f}\n\n'.format(f1))
-            f.write(report)
+           f.write(classification_report(y, y_pred, labels=np.unique(y_pred), target_names=present_classes))
 
         plt.figure(figsize=(8, 5))
         cm = confusion_matrix(y, y_pred)

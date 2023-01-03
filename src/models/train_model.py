@@ -32,8 +32,8 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
     return switcher.get(optimizer)
 
 
-def get_callbacks(model_number, model_type, patience):
-    checkpoint_path = 'models/models_' + str(model_number) + '/savings/' + model_type + '/model_loss-{loss:03f}.ckpt'
+def get_callbacks(model_number, model_arch, model_type, patience):
+    checkpoint_path = 'models/models_' + str(model_number) + '/' + model_type + 'savings/' + model_arch + '/model_loss-{loss:03f}.ckpt'
     smallest_val_Loss = None
 
     cp_callback = ModelCheckpoint(filepath=checkpoint_path,
@@ -76,7 +76,7 @@ def train_anomaly(
     activation,
     momentum
 ):
-    Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
+    Path(const.WHOLE_ANOMALY_MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
 
     n_features = ts_handler.n_features
 
@@ -103,7 +103,7 @@ def train_anomaly(
         ts_handler.benign_train_generator,
         epochs=epochs,
         verbose=0,
-        callbacks=[get_callbacks(model_number, 'anomaly_' + model_name.lower(), patience)]
+        callbacks=[get_callbacks(model_number, model_name.lower(), const.ANOMALY_MODEL_PATH, patience)]
     )
 
     #model.save(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name) + 'model.h5')
@@ -122,7 +122,7 @@ def train_categorical(
     activation,
     momentum
 ):
-    Path(const.MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)   
+    Path(const.WHOLE_CLASSIFICATION_MODEL_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)   
 
     df = pd.read_csv(const.CAT_TRAIN_DATASET)
     trainX, trainY = format_data(df)
@@ -150,7 +150,7 @@ def train_categorical(
             batch_size=batch_size,
             epochs=epochs,
             validation_data=(valX, valY),
-            callbacks=[get_callbacks(model_number, 'category_' + model_name.lower(), patience)],
+            callbacks=[get_callbacks(model_number, model_name.lower(), const.CLASSIFICATION_MODEL_PATH, patience)],
             verbose=1
     )
 
