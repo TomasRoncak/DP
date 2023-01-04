@@ -26,7 +26,7 @@ def merge_features_to_dataset(window_size):
             if attack_type != 'Normal':
                 protocol_data = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), usecols = protocol_features[protocol])
                 if any(x in protocol_features[protocol] for x in ['Label_sum', const.TIME]):
-                    combined_data = protocol_data   # labels and time don't have benign data to append
+                    combined_data = protocol_data   # Labels and time don't have benign data to append
                 else:
                     combined_data = benign_protocol_data + protocol_data
             else:
@@ -34,7 +34,7 @@ def merge_features_to_dataset(window_size):
             combined_data.columns = combined_data.columns.str.replace('_sum', '_{0}'.format(protocol))
             data = pd.concat([data, combined_data], axis=1)
 
-        if conf.remove_benign_outlier:  # removal of benign outliers from attack dataset
+        if conf.remove_benign_outlier:  # Removal of benign outliers from attack dataset
             data.drop(range(98, 103), inplace=True)
         if conf.remove_first_attacks:
             data = data.iloc[40:]
@@ -47,14 +47,14 @@ def merge_features_to_dataset(window_size):
 
 def handle_outliers(data, with_attacks=True):
     data.replace(0, np.NaN, inplace=True)
-    data = remove_outliers(data, upper=(not with_attacks))  # if data contains attacks dont cut upper outliers
+    data = remove_outliers(data, upper=(not with_attacks))  # If data contains attacks dont cut upper outliers
     data = interpolate_data(data)
     return data
 
 
 def remove_outliers(data, upper):
     for column in data.columns:
-        if column in(const.TIME, 'Label_sum'):
+        if column in (const.TIME, 'Label_sum'):
             continue
         median = data[column].median()
         if upper:
@@ -66,12 +66,12 @@ def remove_outliers(data, upper):
 
 
 def interpolate_data(data):
-    # fill zeroes(nan) with interpolate values + rand value to not be a straight line
+    # Fill zeroes(nan) with interpolate values + rand value to not be a straight line
     for index, row in data.iterrows():
         for column in data.columns:
-            if column in(const.TIME, 'Label_sum'):
+            if column in (const.TIME, 'Label_sum'):
                 continue
-            if row[column] != row[column]:  # if is NaN
+            if row[column] != row[column]:  # If is NaN
                 mean = data[column].mean()
                 data.loc[index, column] = mean + random.uniform(-mean/6, mean/6)
     return data
@@ -87,7 +87,7 @@ def plot_merged_dataset(window_size):
             if feature == const.TIME:
                 continue
             pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
-            plt.legend('', frameon=False)   # hide legend
+            plt.legend('', frameon=False)   # Hide legend
             plt.tight_layout()
             plt.xlabel('Čas', fontsize=15)
             plt.ylabel('Počet', fontsize=15)

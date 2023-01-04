@@ -9,7 +9,10 @@ original
 preprocessed_category
 processed_anomaly
 real
+
 mlp.ipynb
-models
+
+anomaly_model
+classification_model
 
 correlations

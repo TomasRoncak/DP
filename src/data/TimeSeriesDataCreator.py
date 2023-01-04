@@ -21,6 +21,8 @@ class TimeSeriesDataCreator:
         self.current_protocol = None
         self.attack_cat = None
 
+        self.create_time_series_dataset()
+
     def get_relevant_protocols(self, dataset):
         relevant_protocols = ['all']
         services = dataset.service.unique()
@@ -30,10 +32,8 @@ class TimeSeriesDataCreator:
                 relevant_protocols.append(protocol)
         return relevant_protocols
 
-
     def time_from_string(self, time_str):
         return datetime.datetime.strptime(time_str, const.FULL_TIME_FORMAT)
-
 
     def create_csv(self, data):
         Path(const.PROCESSED_PROTOCOL_FOLDER.format(self.window_length, self.attack_cat, self.current_protocol)).mkdir(parents=True, exist_ok=True)
@@ -42,23 +42,21 @@ class TimeSeriesDataCreator:
 
         with open(PROCESSED_DATA_PATH, 'a') as csv_file:                                                  
             writer = csv.writer(csv_file)
-            if stat(PROCESSED_DATA_PATH).st_size == 0:  # if folder is empty, insert column names first
+            if stat(PROCESSED_DATA_PATH).st_size == 0:  # If folder is empty, insert column names first
                 writer.writerow([x + '_sum' if x != const.TIME else x for x in self.column_names])
             writer.writerow(data)
 
-
     def compute_window_statistics(self, data, curr_time):    
-        # data is content of one sliding window (x rows)
-        # calculate statistics across columns or if time, take first time (one row)
+        # Data is content of one sliding window (x rows)
+        # Calculate statistics across columns or if time, take first time (one row)
         size = data.columns.size + 1  # 1 -> connections column
         if not data.empty:
             data_row_stats = [data[column].sum() if column != const.TIME else curr_time for column in data]  
-            data_row_stats.append(len(data))  # number of connections
+            data_row_stats.append(len(data))  # Number of connections
         else:
-            data_row_stats = np.zeros(size, dtype=object)  # if no data in window found, fill with empty array
-            data_row_stats[len(data_row_stats)-2] = str(curr_time)  # time
+            data_row_stats = np.zeros(size, dtype=object)  # If no data in window found, fill with empty array
+            data_row_stats[len(data_row_stats)-2] = str(curr_time)  # Time
         self.create_csv(data_row_stats)
-
 
     def perform_sliding_window(self, data):  
         window_length = datetime.timedelta(seconds=self.window_length)
@@ -66,16 +64,15 @@ class TimeSeriesDataCreator:
         current_time = self.time_from_string('2015-01-22 11:45:00')
         end_time = self.time_from_string('2015-02-18 12:20:00')
 
-        tmp_1 = self.time_from_string('2015-01-23  01:00:00')   # specific for UNSW-NB15 dataset
+        tmp_1 = self.time_from_string('2015-01-23  01:00:00')   # Specific for UNSW-NB15 dataset
         tmp_2 = self.time_from_string('2015-02-18  00:00:00')
 
         while current_time < end_time:
-            if current_time > tmp_1 and current_time < tmp_2:   # skip days where wasn't any traffic
+            if current_time > tmp_1 and current_time < tmp_2:   # Skip days where wasn't any traffic
                 current_time = self.time_from_string('2015-02-18  00:25:00')
             sliding_window = data[(data[const.TIME] >= current_time) & (data[const.TIME] <= current_time + window_length)]
             self.compute_window_statistics(sliding_window, current_time)
             current_time += window_length
-
     
     def create_time_series_dataset(self):
         for attack in const.ATTACK_CATEGORIES:
@@ -83,9 +80,9 @@ class TimeSeriesDataCreator:
             data = self.dataset.copy()
 
             if attack == 'All':
-                attack_data = data.loc[data['attack_cat'] != 'Normal']  # get all kinds of attacks except normal
+                attack_data = data.loc[data['attack_cat'] != 'Normal']  # Get all kinds of attacks except normal
             else:
-                attack_data = data.loc[data['attack_cat'] == attack]    # get specific kind of attack
+                attack_data = data.loc[data['attack_cat'] == attack]    # Get specific kind of attack
 
             for protocol in self.relevant_protocols:
                 self.current_protocol = protocol
@@ -97,7 +94,6 @@ class TimeSeriesDataCreator:
 
         self.save_ts_plots(const.ATTACK_CATEGORIES)
 
-
     def save_ts_plots(self, attack_cat): 
         for attack in attack_cat:
             for protocol in self.relevant_protocols:
@@ -105,16 +101,15 @@ class TimeSeriesDataCreator:
                 PLOTS_PATH = const.PROTOCOL_PLOTS_FOLDER.format(self.window_length, attack, protocol)
                 self.plot(PLOTS_PATH, DATASET_FILE_NAME)
 
-
     def plot(self, path, dataset_file_name):
         Path(path).mkdir(parents=True, exist_ok=True)
         data = pd.read_csv(dataset_file_name)
 
         for feature in data.columns:
-            if feature == const.TIME or (data[feature] == 0).all():   # if column contains only zeroes
+            if feature == const.TIME or (data[feature] == 0).all():   # If column contains only zeroes
                 continue
             pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
-            plt.legend('', frameon=False)   # hide legend
+            plt.legend('', frameon=False)   # Hide legend
             plt.tight_layout()
             plt.xlabel('Čas', fontsize=15)
             plt.ylabel('Počet', fontsize=15)
