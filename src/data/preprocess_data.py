@@ -1,4 +1,3 @@
-import constants as const
 import sys
 from pathlib import Path
 
@@ -8,6 +7,7 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
+import constants as const
 
 def preprocess_whole_data():
     Path(const.DATA_FOLDER + const.PREPROCESSED_CATEGORY_FOLDER).mkdir(exist_ok=True)
