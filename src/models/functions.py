@@ -93,7 +93,7 @@ def plot_roc_auc_multiclass(y_test, y_score, model_number, is_test_set):
     tpr = dict()
     roc_auc = dict()
 
-    train_df = pd.read_csv(const.CAT_TRAIN_DATASET)
+    train_df = pd.read_csv(const.CAT_TRAIN_DATASET_PATH)
     _, trainY = format_data(train_df)
 
     label_binarizer = LabelBinarizer().fit(trainY)

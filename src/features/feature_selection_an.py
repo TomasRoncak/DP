@@ -1,6 +1,6 @@
 import json
-import IPython
 
+import IPython
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -122,8 +122,8 @@ def peak_value_cutoff(df):
 
 
 def select_features(protocol, window_size, print_steps):
-    df_attack = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, 'All', protocol))  # Only attacks traffic
-    df_benign = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, 'Normal', protocol))  # Only benign traffic
+    df_attack = pd.read_csv(const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, 'All', protocol))  # Only attacks traffic
+    df_benign = pd.read_csv(const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, 'Normal', protocol))  # Only benign traffic
     labels = df_attack['Label_sum'].copy()
 
     df_benign.drop(columns=[const.TIME, 'Label_sum'], inplace=True)

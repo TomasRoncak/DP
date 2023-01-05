@@ -13,7 +13,7 @@ import config as conf
 import constants as const
 
 def merge_features_to_dataset(window_size):
-    Path(const.EXTRACTED_DATASETS_FOLDER.format(window_size)).mkdir(parents=True, exist_ok=True)
+    Path(const.EXTRACTED_DATASETS_PATH.format(window_size)).mkdir(parents=True, exist_ok=True)
     protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
     protocol_features['all'] = ['Label_sum', const.TIME]
 
@@ -21,14 +21,14 @@ def merge_features_to_dataset(window_size):
         data = pd.DataFrame()
         for protocol in protocol_features:
             benign_protocol_data = pd.read_csv(
-                                        const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, 'Normal', protocol), 
+                                        const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, 'Normal', protocol), 
                                         usecols = protocol_features[protocol]
                                    )
             benign_protocol_data = handle_outliers(benign_protocol_data, with_attacks=False)
 
             if attack_type != 'Normal':
                 protocol_data = pd.read_csv(
-                                    const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), 
+                                    const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, attack_type, protocol), 
                                     usecols = protocol_features[protocol]
                                 )
                 if any(x in protocol_features[protocol] for x in ['Label_sum', const.TIME]):
@@ -85,7 +85,7 @@ def interpolate_data(data):
 
 def plot_merged_dataset(window_size):
     for attack in const.ATTACK_CATEGORIES:
-        path = const.EXTRACTED_DATASETS_PLOTS_FOLDER.format(window_size, attack)
+        path = const.EXTRACTED_DATASETS_PLOTS_PATH.format(window_size, attack)
         Path(path).mkdir(parents=True, exist_ok=True)
         data = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack))
         

@@ -83,7 +83,7 @@ class AnomalyModel:
             callbacks=[get_callbacks(
                 self.model_number, 
                 self.model_name, 
-                const.ANOMALY_MODEL_PATH, 
+                const.ANOMALY_MODEL_FOLDER, 
                 early_stop_patience
                 )]
         )

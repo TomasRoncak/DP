@@ -11,10 +11,10 @@ import constants as const
 
 def preprocess_whole_data():
     Path(const.DATA_FOLDER + const.PREPROCESSED_CATEGORY_FOLDER).mkdir(exist_ok=True)
-    data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_PARTIAL_CSV.format(1),
-                                       const.UNPROCESSED_PARTIAL_CSV.format(2),
-                                       const.UNPROCESSED_PARTIAL_CSV.format(3),
-                                       const.UNPROCESSED_PARTIAL_CSV.format(4)]), ignore_index=True)
+    data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_PARTIAL_CSV_PATH.format(1),
+                                       const.UNPROCESSED_PARTIAL_CSV_PATH.format(2),
+                                       const.UNPROCESSED_PARTIAL_CSV_PATH.format(3),
+                                       const.UNPROCESSED_PARTIAL_CSV_PATH.format(4)]), ignore_index=True)
 
     data[const.TIME] = pd.to_datetime(data['Stime'], unit='s')
     data['tc_flw_http_mthd'].fillna(value=data.tc_flw_http_mthd.mean(), inplace=True)
@@ -29,19 +29,19 @@ def preprocess_whole_data():
 
     data = data[~data.attack_cat.isin(const.TO_DELETE)]
     data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
-    data.to_csv(const.WHOLE_DATASET, index=False)
+    data.to_csv(const.WHOLE_DATASET_PATH, index=False)
 
 
 def preprocess_train_test_data():
-    Path(const.PREPROCESSED_CAT_FOLDER).mkdir(parents=True, exist_ok=True)
+    Path(const.PREPROCESSED_CAT_PATH).mkdir(parents=True, exist_ok=True)
 
     for dataset_type in ['train', 'test']:
         if dataset_type == 'train':
-            data = pd.read_csv(const.UNPROCESSED_TRAINING_SET)
-            PATH = const.CAT_TRAIN_DATASET
+            data = pd.read_csv(const.UNPROCESSED_TRAINING_SET_PATH)
+            PATH = const.CAT_TRAIN_DATASET_PATH
         elif dataset_type == 'test':
-            data = pd.read_csv(const.UNPROCESSED_TESTING_SET)
-            PATH = const.CAT_TEST_DATASET
+            data = pd.read_csv(const.UNPROCESSED_TESTING_SET_PATH)
+            PATH = const.CAT_TEST_DATASET_PATH
 
         data["attack_cat"].fillna('Normal', inplace=True)
         data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)

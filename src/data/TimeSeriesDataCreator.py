@@ -12,7 +12,7 @@ import constants as const
 
 class TimeSeriesDataCreator:
     def __init__(self, window_length):
-        self.dataset = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
+        self.dataset = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME])
         self.relevant_protocols = self.get_relevant_protocols(self.dataset)
         self.column_names = self.dataset.drop(columns=['service', 'attack_cat']).columns.values.tolist()
         self.column_names.append('connections')
@@ -36,10 +36,10 @@ class TimeSeriesDataCreator:
         return datetime.datetime.strptime(time_str, const.FULL_TIME_FORMAT)
 
     def create_csv(self, data):
-        Path(const.PROCESSED_PROTOCOL_FOLDER \
+        Path(const.PROCESSED_ANOMALY_PROTOCOL_PATH \
             .format(self.window_length, self.attack_cat, self.current_protocol)) \
             .mkdir(parents=True, exist_ok=True)
-        PATH = const.TS_ATTACK_CATEGORY_DATASET_PATH \
+        PATH = const.TS_DATASET_BY_CATEGORY_PATH \
             .format(self.window_length, self.attack_cat, self.current_protocol)
         PROCESSED_DATA_PATH = PATH.format(self.window_length, self.current_protocol)
 
@@ -102,8 +102,8 @@ class TimeSeriesDataCreator:
     def save_ts_plots(self, attack_cat): 
         for attack in attack_cat:
             for protocol in self.relevant_protocols:
-                DATASET_FILE_NAME = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, attack, protocol) 
-                PLOTS_PATH = const.PROTOCOL_PLOTS_FOLDER.format(self.window_length, attack, protocol)
+                DATASET_FILE_NAME = const.TS_DATASET_BY_CATEGORY_PATH.format(self.window_length, attack, protocol) 
+                PLOTS_PATH = const.PROTOCOL_PLOTS_PATH.format(self.window_length, attack, protocol)
                 self.plot(PLOTS_PATH, DATASET_FILE_NAME)
 
     def plot(self, path, dataset_file_name):

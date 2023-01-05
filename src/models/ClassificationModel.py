@@ -44,7 +44,7 @@ class ClassificationModel:
         momentum
     ):
 
-        df = pd.read_csv(const.CAT_TRAIN_DATASET)
+        df = pd.read_csv(const.CAT_TRAIN_DATASET_PATH)
         trainX, trainY = format_data(df)
         trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
 
@@ -73,7 +73,7 @@ class ClassificationModel:
                 callbacks=[get_callbacks(
                             self.model_number, 
                             self.model_name, 
-                            const.CLASSIFICATION_MODEL_PATH, 
+                            const.CLASSIFICATION_MODEL_FOLDER, 
                             patience
                            )],
                 verbose=1
@@ -84,13 +84,13 @@ class ClassificationModel:
 
     def categorize_attacks(self, on_test_set, an_detect_time):
         if on_test_set:
-            test_df = pd.read_csv(const.CAT_TEST_DATASET)
+            test_df = pd.read_csv(const.CAT_TEST_DATASET_PATH)
             x, y = format_data(test_df)
         elif not an_detect_time:
             print('No window found to classify on!')
             return
         else:
-            df = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
+            df = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME])
             windowed_data = df[(df[const.TIME] >= an_detect_time[0]) & (df[const.TIME] <= an_detect_time[1])]
             x, y = format_data(windowed_data)
         

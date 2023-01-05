@@ -11,7 +11,7 @@ from models.ClassificationModel import ClassificationModel
 ## Data processing ##
 preprocess_data = False
 create_time_series_data = False
-select_features = True
+select_features = False
 
 ## Anomaly model ##
 anomaly_model = None
@@ -35,7 +35,7 @@ if create_time_series_data:
 
 if select_features:
     select_features_for_an(conf.window_size, print_steps=True)
-    #merge_features_to_dataset(conf.window_size)
+    merge_features_to_dataset(conf.window_size)
 
 
 if train_an or predict_an:
