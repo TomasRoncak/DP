@@ -17,7 +17,8 @@ def remove_nonunique_columns(df, print_steps):
             to_remove.append(df.columns[i])
     
     if print_steps:
-        print('removed {0} features by Nonuniqueness test:'.format(len(to_remove)), ', '.join(to_remove), end='\n\n')
+        print('removed {0} features by Nonuniqueness test:' \
+            .format(len(to_remove)), ', '.join(to_remove), end='\n\n')
     df.drop(columns=to_remove, inplace=True)
 
 
@@ -28,9 +29,11 @@ def remove_unaffected_columns(df_attacks, df_benign, print_steps):
     for j in range(df_attacks.shape[1]):
         column = df_attacks.iloc[:, j]
         parallel_column = df_benign[column._name]
-        cs_att = cosine_similarity(column.values.reshape(1, -1), parallel_column.values.reshape(1, -1))
-        if cs_att > max_similarity or parallel_column.values.size == len(parallel_column.values[parallel_column.values == 0]): #column contains only zeroes:
-            sim_cols.add(df_attacks.columns.values[j])
+        par_col_values = parallel_column.values
+        cs_att = cosine_similarity(column.values.reshape(1, -1), par_col_values.reshape(1, -1))
+        if cs_att > max_similarity or \
+                par_col_values.size == len(par_col_values[par_col_values == 0]): # Column contains only zeroes:
+                    sim_cols.add(df_attacks.columns.values[j])
     
     if print_steps:    
         print('removed {0} features by Cosine similarity test:'\
@@ -49,7 +52,8 @@ def adfueller_test(df, print_steps):
             #if (dftest[1] < 0.05):
             #    print(col)
     if print_steps:
-        print('removed {0} features by Augmented Dickey Fuller test:'.format(len(failed_columns)), ', '.join(failed_columns), end='\n\n')
+        print('removed {0} features by Augmented Dickey Fuller test:' \
+            .format(len(failed_columns)), ', '.join(failed_columns), end='\n\n')
     df.drop(columns=failed_columns, inplace=True)
 
 
@@ -61,7 +65,8 @@ def randomness_test(df, print_steps):
             if all(p > 0.05 for p in res.lb_pvalue): 
                 to_remove.append(col)
     if print_steps:
-        print('removed {0} features by Ljung-Box test:'.format(len(to_remove)), ', '.join(to_remove), end='\n\n')
+        print('removed {0} features by Ljung-Box test:' \
+            .format(len(to_remove)), ', '.join(to_remove), end='\n\n')
     df.drop(columns=to_remove, inplace=True)
 
 
@@ -85,7 +90,8 @@ def remove_colinearity(df, protocol, labels, window_size, print_steps):
             to_delete.add(columns[0])
 
     if print_steps:
-        print('removed {0} features by Collinearity test:'.format(len(to_delete)), ', '.join(to_delete), end='\n\n')
+        print('removed {0} features by Collinearity test:' \
+            .format(len(to_delete)), ', '.join(to_delete), end='\n\n')
     df.drop(columns=to_delete, inplace=True)
 
     #if not path.exists(const.CORELLATIONS_FILE_PATH.format(window_size)):
@@ -103,8 +109,8 @@ def peak_value_cutoff(df):
 
 
 def select_features(protocol, window_size, print_steps):
-    df_attack = pd.read_csv(const.TS_ATTACK_DATASET_PATH.format(window_size, protocol))
-    df_benign = pd.read_csv(const.TS_BENIGN_DATASET_PATH.format(window_size, protocol))
+    df_attack = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, 'All', protocol))
+    df_benign = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, 'Normal', protocol))
 
     labels = df_benign['Label_sum'].copy()
 

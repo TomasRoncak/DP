@@ -44,7 +44,8 @@ class TimeSeriesDataHandler:
         return df
 
     def normalize_attack_data(self, attack_df):
-        attack_df.loc[:, self.numeric_cols] = self.attack_minmax_scaler.fit_transform(attack_df.loc[:, self.numeric_cols])
+        attack_df.loc[:, self.numeric_cols] = \
+            self.attack_minmax_scaler.fit_transform(attack_df.loc[:, self.numeric_cols])
         return attack_df
 
     def scale_benign_data(self, df):
@@ -52,7 +53,8 @@ class TimeSeriesDataHandler:
         return df
 
     def scale_attack_data(self, attack_df):
-        attack_df.loc[:, self.numeric_cols] = self.attack_stand_scaler.fit_transform(attack_df.loc[:, self.numeric_cols])
+        attack_df.loc[:, self.numeric_cols] = \
+            self.attack_stand_scaler.fit_transform(attack_df.loc[:, self.numeric_cols])
         return attack_df
     
     def inverse_transform(self, predict, attack_data=False):
@@ -89,6 +91,9 @@ class TimeSeriesDataHandler:
         test_scaled = test_scaled.to_numpy()
         attack_scaled = attack_scaled.to_numpy()
 
-        self.benign_train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(train_scaled, train_scaled, length=n_input, batch_size=1)
-        self.benign_test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(test_scaled, test_scaled, length=n_input, batch_size=1)
-        self.attack_data_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(attack_scaled, attack_scaled, length=n_input, batch_size=1)
+        self.benign_train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(
+            train_scaled, train_scaled, length=n_input, batch_size=1)
+        self.benign_test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(
+            test_scaled, test_scaled, length=n_input, batch_size=1)
+        self.attack_data_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(
+            attack_scaled, attack_scaled, length=n_input, batch_size=1)

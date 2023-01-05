@@ -46,7 +46,8 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
 
 
 def get_callbacks(model_number, model_arch, model_type, patience):
-    checkpoint_path = 'models/models_' + str(model_number) + '/' + model_type + 'savings/' + model_arch + '/model_loss-{loss:03f}.ckpt'
+    checkpoint_path = 'models/models_' + str(model_number) + '/' + model_type + \
+                      'savings/' + model_arch + '/model_loss-{loss:03f}.ckpt'
     smallest_val_Loss = None
 
     cp_callback = ModelCheckpoint(filepath=checkpoint_path,
@@ -105,7 +106,8 @@ def plot_roc_auc_multiclass(y_test, y_score, model_number, is_test_set):
 
     plt.figure(figsize=(10, 5))
     for i in range(n_classes):
-        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], label='{0} (AUC = {1:0.2f})'.format(classes[i], roc_auc[i]))
+        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], 
+                 label='{0} (AUC = {1:0.2f})'.format(classes[i], roc_auc[i]))
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -136,6 +138,7 @@ def pretty_print_detected_attacks(prob):
 
     print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + ': Časové okno obsahuje útoky na sieť!')
     print(bcolors.BOLD + 'Detegované kategórie útokov:' + bcolors.ENDC)
+    
     for x in res:
         if x[0] == 'Normal':
             continue
@@ -144,18 +147,20 @@ def pretty_print_detected_attacks(prob):
 
 def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding, patience_limit):
     curr_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
-    window_end_time = (curr_time + datetime.timedelta(seconds=window_size)).strftime(const.PRETTY_TIME_FORMAT)
+    window_end_time = (curr_time + datetime.timedelta(seconds=window_size)) \
+                      .strftime(const.PRETTY_TIME_FORMAT)
     curr_time = curr_time.strftime(const.PRETTY_TIME_FORMAT)
 
-    print(bcolors.WARNING + 'Bodová anomália detegovaná v časovom okne {0} - {1}'.format(curr_time, window_end_time) + bcolors.ENDC, end='- ')
-    print('chyba {0:.2f} prekročila prah {1:.2f} (trpezlivosť={2}/{3})'.format(err, threshold, exceeding, patience_limit))
+    print(bcolors.WARNING + 'Bodová anomália detegovaná v časovom okne {0} - {1}' \
+            .format(curr_time, window_end_time) + bcolors.ENDC, end='- ')
+    print('chyba {0:.2f} prekročila prah {1:.2f} (trpezlivosť={2}/{3})' \
+            .format(err, threshold, exceeding, patience_limit))
 
 
 def pretty_print_collective_anomaly(start_time, stop_time):
-    print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + ': Kolektívna anomália detegovaná v okne {0} až {1}!'.format(
-        start_time.strftime(const.PRETTY_TIME_FORMAT),
-        stop_time.strftime(const.PRETTY_TIME_FORMAT)
-        )
+    print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + 
+        ': Kolektívna anomália detegovaná v okne {0} až {1}!' \
+        .format(start_time.strftime(const.PRETTY_TIME_FORMAT), stop_time.strftime(const.PRETTY_TIME_FORMAT))
     )
 
 

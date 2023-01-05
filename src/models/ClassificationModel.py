@@ -70,23 +70,28 @@ class ClassificationModel:
                 batch_size=batch_size,
                 epochs=epochs,
                 validation_data=(valX, valY),
-                callbacks=[get_callbacks(self.model_number, self.model_name, const.CLASSIFICATION_MODEL_PATH, patience)],
+                callbacks=[get_callbacks(
+                            self.model_number, 
+                            self.model_name, 
+                            const.CLASSIFICATION_MODEL_PATH, 
+                            patience
+                           )],
                 verbose=1
         )
 
         #model.save(const.SAVE_CAT_MODEL_PATH.format(self.model_number, model_name) + 'model.h5')
         run.finish()
 
-    def categorize_attacks(self, on_test_set, anomaly_detection_time):
+    def categorize_attacks(self, on_test_set, an_detect_time):
         if on_test_set:
             test_df = pd.read_csv(const.CAT_TEST_DATASET)
             x, y = format_data(test_df)
-        elif not anomaly_detection_time:
+        elif not an_detect_time:
             print('No window found to classify on!')
             return
         else:
             df = pd.read_csv(const.WHOLE_DATASET, parse_dates=[const.TIME])
-            windowed_data = df[(df[const.TIME] >= anomaly_detection_time[0]) & (df[const.TIME] <= anomaly_detection_time[1])]
+            windowed_data = df[(df[const.TIME] >= an_detect_time[0]) & (df[const.TIME] <= an_detect_time[1])]
             x, y = format_data(windowed_data)
         
         prob = self.model.predict(x, verbose=0)
@@ -108,7 +113,8 @@ class ClassificationModel:
         classes_values = np.unique(y)
         present_classes = [all_classes[x] for x in classes_values]
 
-        METRICS_PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if on_test_set else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
+        METRICS_PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if on_test_set \
+                       else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
            f.write(classification_report(y, y_pred, labels=np.unique(y_pred), target_names=present_classes))
         plot_confusion_matrix(y, y_pred, self.model_number, on_test_set, present_classes)

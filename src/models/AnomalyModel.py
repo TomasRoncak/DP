@@ -80,7 +80,12 @@ class AnomalyModel:
             self.ts_handler.benign_train_generator,
             epochs=epochs,
             verbose=0,
-            callbacks=[get_callbacks(self.model_number, self.model_name, const.ANOMALY_MODEL_PATH, early_stop_patience)]
+            callbacks=[get_callbacks(
+                self.model_number, 
+                self.model_name, 
+                const.ANOMALY_MODEL_PATH, 
+                early_stop_patience
+                )]
         )
 
         #model.save(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name) + 'model.h5')
@@ -183,7 +188,8 @@ class AnomalyModel:
         return upper_bound
 
     def calculate_regression_metrics(self, real_data, predict_data, on_test_set):
-        METRICS_PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
+        METRICS_PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set \
+                       else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
         real_data = real_data[0:len(predict_data)]  # Slice data, if predicted data are shorter (detected anomaly stops prediction)
         
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
@@ -218,7 +224,8 @@ class AnomalyModel:
 
     def save_plots(self, train_data, prediction_data, time, is_attack):
         print('Ukladám grafy ...')
-        fig = const.MODEL_PREDICTIONS_ATTACK_PATH if is_attack else const.MODEL_PREDICTIONS_BENIGN_PATH
+        fig = const.MODEL_PREDICTIONS_ATTACK_PATH if is_attack \
+              else const.MODEL_PREDICTIONS_BENIGN_PATH
     
         for i in range(self.ts_handler.n_features): 
             train_feature = [item[i] for item in train_data]

@@ -36,8 +36,11 @@ class TimeSeriesDataCreator:
         return datetime.datetime.strptime(time_str, const.FULL_TIME_FORMAT)
 
     def create_csv(self, data):
-        Path(const.PROCESSED_PROTOCOL_FOLDER.format(self.window_length, self.attack_cat, self.current_protocol)).mkdir(parents=True, exist_ok=True)
-        PATH = const.TS_ATTACK_CATEGORY_DATASET_PATH.format(self.window_length, self.attack_cat, self.current_protocol)
+        Path(const.PROCESSED_PROTOCOL_FOLDER \
+            .format(self.window_length, self.attack_cat, self.current_protocol)) \
+            .mkdir(parents=True, exist_ok=True)
+        PATH = const.TS_ATTACK_CATEGORY_DATASET_PATH \
+            .format(self.window_length, self.attack_cat, self.current_protocol)
         PROCESSED_DATA_PATH = PATH.format(self.window_length, self.current_protocol)
 
         with open(PROCESSED_DATA_PATH, 'a') as csv_file:                                                  
@@ -61,18 +64,18 @@ class TimeSeriesDataCreator:
     def perform_sliding_window(self, data):  
         window_length = datetime.timedelta(seconds=self.window_length)
         #current_time, end_time = data[const.TIME].agg(['min', 'max'])[['min', 'max']]
-        current_time = self.time_from_string('2015-01-22 11:45:00')
+        curr_time = self.time_from_string('2015-01-22 11:45:00')
         end_time = self.time_from_string('2015-02-18 12:20:00')
 
         tmp_1 = self.time_from_string('2015-01-23  01:00:00')   # Specific for UNSW-NB15 dataset
         tmp_2 = self.time_from_string('2015-02-18  00:00:00')
 
-        while current_time < end_time:
-            if current_time > tmp_1 and current_time < tmp_2:   # Skip days where wasn't any traffic
-                current_time = self.time_from_string('2015-02-18  00:25:00')
-            sliding_window = data[(data[const.TIME] >= current_time) & (data[const.TIME] <= current_time + window_length)]
-            self.compute_window_statistics(sliding_window, current_time)
-            current_time += window_length
+        while curr_time < end_time:
+            if curr_time > tmp_1 and curr_time < tmp_2:   # Skip days where wasn't any traffic
+                curr_time = self.time_from_string('2015-02-18  00:25:00')
+            sliding_window = data[(data[const.TIME] >= curr_time) & (data[const.TIME] <= curr_time + window_length)]
+            self.compute_window_statistics(sliding_window, curr_time)
+            curr_time += window_length
     
     def create_time_series_dataset(self):
         for attack in const.ATTACK_CATEGORIES:

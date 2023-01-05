@@ -20,11 +20,17 @@ def merge_features_to_dataset(window_size):
     for attack_type in const.ATTACK_CATEGORIES:
         data = pd.DataFrame()
         for protocol in protocol_features:
-            benign_protocol_data = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, 'Normal', protocol), usecols = protocol_features[protocol])
+            benign_protocol_data = pd.read_csv(
+                                        const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, 'Normal', protocol), 
+                                        usecols = protocol_features[protocol]
+                                   )
             benign_protocol_data = handle_outliers(benign_protocol_data, with_attacks=False)
 
             if attack_type != 'Normal':
-                protocol_data = pd.read_csv(const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), usecols = protocol_features[protocol])
+                protocol_data = pd.read_csv(
+                                    const.TS_ATTACK_CATEGORY_DATASET_PATH.format(window_size, attack_type, protocol), 
+                                    usecols = protocol_features[protocol]
+                                )
                 if any(x in protocol_features[protocol] for x in ['Label_sum', const.TIME]):
                     combined_data = protocol_data   # Labels and time don't have benign data to append
                 else:
@@ -86,7 +92,8 @@ def plot_merged_dataset(window_size):
         for feature in data.columns:
             if feature == const.TIME:
                 continue
-            pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
+            pd.DataFrame(data, columns=[const.TIME, feature]) \
+                .plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
             plt.legend('', frameon=False)   # Hide legend
             plt.tight_layout()
             plt.xlabel('Čas', fontsize=15)

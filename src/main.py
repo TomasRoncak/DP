@@ -33,9 +33,19 @@ if process_cat_data:
 
 if train_an or predict_an:
     ts_handler = TimeSeriesDataHandler(
-        conf.use_real_data, conf.window_size, conf.dataset_split, conf.n_steps, conf.attack_category)
-    anomaly_model = AnomalyModel(ts_handler, conf.models_number,
-                                 conf.an_model_name, conf.window_size, conf.patience_anomaly_limit)
+        conf.use_real_data, 
+        conf.window_size, 
+        conf.dataset_split,
+        conf.n_steps, 
+        conf.attack_category
+    )
+    anomaly_model = AnomalyModel(
+        ts_handler, 
+        conf.models_number,
+        conf.an_model_name, 
+        conf.window_size, 
+        conf.patience_anomaly_limit
+    )
 
     if train_an:
         if not conf.run_wandb_sweep:
