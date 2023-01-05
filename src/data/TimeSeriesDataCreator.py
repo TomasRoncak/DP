@@ -78,6 +78,7 @@ class TimeSeriesDataCreator:
             curr_time += window_length
     
     def create_time_series_dataset(self):
+        print("Vytváram dáta časových radov.")
         for attack in const.ATTACK_CATEGORIES:
             self.attack_cat = attack
             data = self.dataset.copy()
@@ -94,6 +95,7 @@ class TimeSeriesDataCreator:
                     data = data.loc[data['service'] == protocol]
                 data.drop(columns=['service', 'attack_cat'], inplace=True)
                 self.perform_sliding_window(data)
+        print("Vytvorenie dokončené !")
 
         self.save_ts_plots(const.ATTACK_CATEGORIES)
 

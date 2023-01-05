@@ -1,4 +1,7 @@
+import os 
 import sys
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'    # Hide info messages in terminal
 
 import numpy as np
 import pandas as pd

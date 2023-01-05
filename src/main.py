@@ -1,35 +1,42 @@
-from data.TimeSeriesDataCreator import TimeSeriesDataCreator
-from data.TimeSeriesDataHandler import TimeSeriesDataHandler
-
 import config as conf
 from data.merge_features_to_dataset import merge_features_to_dataset
-from data.preprocess_data import preprocess_data_flows, preprocess_whole_data
+from data.preprocess_data import (preprocess_train_test_data,
+                                  preprocess_whole_data)
+from data.TimeSeriesDataCreator import TimeSeriesDataCreator
+from data.TimeSeriesDataHandler import TimeSeriesDataHandler
 from features.feature_selection_an import select_features_for_an
 from models.AnomalyModel import AnomalyModel
 from models.ClassificationModel import ClassificationModel
 
-## Anomaly ##
+## Data processing ##
+preprocess_data = False
+create_time_series_data = False
+select_features = True
+
+## Anomaly model ##
 anomaly_model = None
-process_an_data = False
 train_an = False
-predict_an = True
+predict_an = False
 
-## Category ##
+## Category model ##
 category_model = None
-process_cat_data = False
 train_cat = False
-predict_cat = True
+predict_cat = False
 
-if process_an_data:
+
+if preprocess_data:
     preprocess_whole_data()
+    preprocess_train_test_data()
 
-    TimeSeriesDataCreator(window_length=conf.window_size)
 
-    select_features_for_an(conf.window_size, print_steps=False)
-    merge_features_to_dataset(conf.window_size)
+if create_time_series_data:
+    TimeSeriesDataCreator(window_length=conf.window_size)   # Creates time series datasets
 
-if process_cat_data:
-    preprocess_data_flows()
+
+if select_features:
+    select_features_for_an(conf.window_size, print_steps=True)
+    #merge_features_to_dataset(conf.window_size)
+
 
 if train_an or predict_an:
     ts_handler = TimeSeriesDataHandler(

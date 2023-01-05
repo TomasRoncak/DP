@@ -84,7 +84,7 @@ MODEL_PREDICTIONS_ATTACK_PATH = WHOLE_ANOMALY_MODEL_PATH + PREDICTIONS_ATTACK
 
 ## OTHERS ##
 USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', \
-                                     'dur', 'state', 'proto', 'ct_ftp_cmd'] # ct_ftp_cmd is mainly empty
+                                     'dur', 'state', 'proto', 'ct_ftp_cmd']  # ct_ftp_cmd is mainly empty
 USELESS_FEATURES_FOR_CATEGORIZE = ['id', 'label', 'rate', 'dur', 'state', 'proto', 'service', 'ct_ftp_cmd']
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
@@ -94,7 +94,7 @@ TO_DELETE = ['Analysis', 'Backdoor', 'Shellcode', 'Worms']
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
 REAL_DATASET_FEATURES = ['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', 'http_count_uid_in', 'ssl_count_uid_in']
 
-CORELLATIONS_FILE_PATH = DATA_FOLDER + PROCESSED_ANOMALY_FOLDER + '{0}/correlations/'
+CORELLATIONS_FILE_PATH = DATA_FOLDER + PROCESSED_ANOMALY_FOLDER + '{0}/Correlations/'
 CORELLATIONS_PNG_FILE = CORELLATIONS_FILE_PATH + '{1}_matrix.png'
 
 SELECTED_FEATURES_JSON = DATA_FOLDER + PROCESSED_ANOMALY_FOLDER + '{0}/' + SELECTED_FEATURES_FILENAME

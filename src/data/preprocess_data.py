@@ -32,7 +32,7 @@ def preprocess_whole_data():
     data.to_csv(const.WHOLE_DATASET, index=False)
 
 
-def preprocess_data_flows():
+def preprocess_train_test_data():
     Path(const.PREPROCESSED_CAT_FOLDER).mkdir(parents=True, exist_ok=True)
 
     for dataset_type in ['train', 'test']:
