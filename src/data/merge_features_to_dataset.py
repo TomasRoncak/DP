@@ -13,9 +13,10 @@ import config as conf
 import constants as const
 
 def merge_features_to_dataset(window_size):
+    print("Vytváram finálny dataset podľa vybraných atribútov.")
     Path(const.EXTRACTED_DATASETS_PATH.format(window_size)).mkdir(parents=True, exist_ok=True)
     protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
-    protocol_features['all'] = ['Label_sum', const.TIME]
+    protocol_features['all'] = [const.LABEL_SUM, const.TIME]
 
     for attack_type in const.ATTACK_CATEGORIES:
         data = pd.DataFrame()
@@ -31,7 +32,7 @@ def merge_features_to_dataset(window_size):
                                     const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, attack_type, protocol), 
                                     usecols = protocol_features[protocol]
                                 )
-                if any(x in protocol_features[protocol] for x in ['Label_sum', const.TIME]):
+                if any(x in protocol_features[protocol] for x in [const.LABEL_SUM, const.TIME]):
                     combined_data = protocol_data   # Labels and time don't have benign data to append
                 else:
                     combined_data = benign_protocol_data + protocol_data
@@ -48,6 +49,7 @@ def merge_features_to_dataset(window_size):
         data[const.TIME] = data[const.TIME].apply(lambda x: x[5:16])
         data.to_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_type), index=False)
     
+    print("Vytvorenie dokončené !")
     plot_merged_dataset(window_size)
 
 
@@ -60,7 +62,7 @@ def handle_outliers(data, with_attacks=True):
 
 def remove_outliers(data, upper):
     for column in data.columns:
-        if column in (const.TIME, 'Label_sum'):
+        if column in (const.TIME, const.LABEL_SUM):
             continue
         median = data[column].median()
         if upper:
@@ -75,7 +77,7 @@ def interpolate_data(data):
     # Fill zeroes(nan) with interpolate values + rand value to not be a straight line
     for index, row in data.iterrows():
         for column in data.columns:
-            if column in (const.TIME, 'Label_sum'):
+            if column in (const.TIME, const.LABEL_SUM):
                 continue
             if row[column] != row[column]:  # If is NaN
                 mean = data[column].mean()
@@ -84,6 +86,7 @@ def interpolate_data(data):
 
 
 def plot_merged_dataset(window_size):
+    print('Ukladám grafy ...')
     for attack in const.ATTACK_CATEGORIES:
         path = const.EXTRACTED_DATASETS_PLOTS_PATH.format(window_size, attack)
         Path(path).mkdir(parents=True, exist_ok=True)
@@ -101,3 +104,4 @@ def plot_merged_dataset(window_size):
             plt.title(feature, fontsize=15)
             plt.savefig(path + feature, bbox_inches='tight')
             plt.close()
+    print('Ukladanie hotové !')

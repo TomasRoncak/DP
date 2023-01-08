@@ -87,7 +87,7 @@ class ClassificationModel:
             test_df = pd.read_csv(const.CAT_TEST_DATASET_PATH)
             x, y = format_data(test_df)
         elif not an_detect_time:
-            print('No window found to classify on!')
+            print('Časové okno pre klasifikáciu nebolo nájdené !')
             return
         else:
             df = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME])
@@ -103,10 +103,10 @@ class ClassificationModel:
     def calculate_classification_metrics(self, y, prob, on_test_set):
         y_pred = np.argmax(prob, axis=-1)
         if (y == 0).all():
-            print('Selected window contains only benign traffic !')
+            print('Vybrané okno(á) obsahuje(ú) iba benígnu prevádzku !')
             return
         elif (y_pred == 0).all():
-            print('Prediction contains only benign traffic !')
+            print('Predikcia obsahuje len benígnu prevádzku !')
             return
 
         all_classes = get_filtered_classes()

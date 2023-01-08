@@ -29,6 +29,7 @@ def preprocess_whole_data():
 
     data = data[~data.attack_cat.isin(const.TO_DELETE)]
     data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
+    data.rename(columns=lambda x: x.lower(), inplace=True)
     data.to_csv(const.WHOLE_DATASET_PATH, index=False)
 
 
@@ -49,6 +50,7 @@ def preprocess_train_test_data():
 
         data = data[~data.attack_cat.isin(const.TO_DELETE)]
         data.drop(columns=const.USELESS_FEATURES_FOR_CATEGORIZE, inplace=True)
+        data.rename(columns=lambda x: x.lower(), inplace=True)
         data.to_csv(PATH, index=False)
 
 
@@ -61,8 +63,8 @@ def format_data(df):
         df = df.drop(const.TIME, axis=1)
     if 'service' in df:
         df = df.drop('service', axis=1)
-    if 'Label' in df:
-        df = df.drop('Label', axis=1)
+    if 'label' in df:
+        df = df.drop('label', axis=1)
 
     x = df.iloc[:, :-1]
     y = label_encoder.fit_transform(df.iloc[:, -1])

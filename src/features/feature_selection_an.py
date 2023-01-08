@@ -124,10 +124,10 @@ def peak_value_cutoff(df):
 def select_features(protocol, window_size, print_steps):
     df_attack = pd.read_csv(const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, 'All', protocol))  # Only attacks traffic
     df_benign = pd.read_csv(const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, 'Normal', protocol))  # Only benign traffic
-    labels = df_attack['Label_sum'].copy()
+    labels = df_attack[const.LABEL_SUM].copy()
 
-    df_benign.drop(columns=[const.TIME, 'Label_sum'], inplace=True)
-    df_attack.drop(columns=[const.TIME, 'Label_sum'], inplace=True)
+    df_benign.drop(columns=[const.TIME, const.LABEL_SUM], inplace=True)
+    df_attack.drop(columns=[const.TIME, const.LABEL_SUM], inplace=True)
     df_attack = df_attack.add(df_benign, fill_value=0)  # Combine benign and attacks traffic
 
     remove_nonunique_features(df_attack, print_steps)

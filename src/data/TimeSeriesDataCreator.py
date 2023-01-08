@@ -100,11 +100,13 @@ class TimeSeriesDataCreator:
         self.save_ts_plots(const.ATTACK_CATEGORIES)
 
     def save_ts_plots(self, attack_cat): 
+        print('Ukladám grafy ...')
         for attack in attack_cat:
             for protocol in self.relevant_protocols:
                 DATASET_FILE_NAME = const.TS_DATASET_BY_CATEGORY_PATH.format(self.window_length, attack, protocol) 
                 PLOTS_PATH = const.PROTOCOL_PLOTS_PATH.format(self.window_length, attack, protocol)
                 self.plot(PLOTS_PATH, DATASET_FILE_NAME)
+        print('Ukladanie hotové !')
 
     def plot(self, path, dataset_file_name):
         Path(path).mkdir(parents=True, exist_ok=True)

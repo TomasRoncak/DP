@@ -30,9 +30,9 @@ class TimeSeriesDataHandler:
             self.df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, 'Normal'))
             self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat))
 
-            self.attack_labels = self.attack_df['Label_all']
-            self.attack_df.drop('Label_all', axis=1, inplace=True)
-            self.df.drop('Label_all', axis=1, inplace=True)
+            self.attack_labels = self.attack_df['label_all']
+            self.attack_df.drop('label_all', axis=1, inplace=True)
+            self.df.drop('label_all', axis=1, inplace=True)
 
         self.features = self.df.columns.tolist()
         self.features.remove(const.TIME)  # Time is not considered a feature
