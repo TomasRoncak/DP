@@ -1,8 +1,13 @@
+import csv
 import math
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+# import plotly
+# import plotly.express as px
+# import plotly.graph_objects as go
 
 import wandb
 
@@ -22,7 +27,8 @@ import constants as const
 from models.functions import (format_date, get_callbacks, get_optimizer,
                               get_y_from_generator, load_best_model,
                               pretty_print_collective_anomaly,
-                              pretty_print_point_anomaly, pretty_print_window_ok)
+                              pretty_print_point_anomaly,
+                              pretty_print_window_ok)
 
 
 class AnomalyModel:
@@ -115,6 +121,7 @@ class AnomalyModel:
         predict_inversed = self.ts_handler.inverse_transform(data_pred)
 
         self.calculate_regression_metrics(test_inversed, predict_inversed, on_test_set=True)
+        self.create_radar_plot(on_test_set=True)
         self.save_benign_ts_plots(
             train_inversed, 
             test_inversed, 
@@ -148,6 +155,7 @@ class AnomalyModel:
         attack_predict_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
 
         self.calculate_regression_metrics(attack_real_inversed, attack_predict_inversed, on_test_set=False)
+        self.create_radar_plot(on_test_set=False)
         self.save_plots(
                 attack_real_inversed, 
                 attack_predict_inversed, 
@@ -193,16 +201,80 @@ class AnomalyModel:
         real_data = real_data[0:len(predict_data)]  # Slice data, if predicted data are shorter (detected anomaly stops prediction)
         
         with open(METRICS_PATH.format(self.model_number), 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(['feature', 'mae', 'mape', 'mse', 'rmse'])   # Header
             for i in range(len(self.ts_handler.features)):
                 mae_score = mae(real_data[:,i], predict_data[:,i])
                 mape_score = mape(real_data[:,i], predict_data[:,i])
                 mse_score = mse(real_data[:,i], predict_data[:,i])
 
-                f.write(self.ts_handler.features[i] + '\n')
-                f.write('MAE score:   {:.2f}\n'.format(mae_score))
-                f.write('MAPE score:  {:.2f}\n'.format(mape_score))
-                f.write('MSE score:   {:.2f}\n'.format(mse_score))
-                f.write('RMSE score:  {:.2f}\n\n'.format(math.sqrt(mse_score)))
+                writer.writerow([
+                    self.ts_handler.features[i], 
+                    round(mae_score, 2), 
+                    round(mape_score, 2), 
+                    round(mse_score, 2), 
+                    round(math.sqrt(mse_score), 2)
+                ])
+
+    def create_radar_plot(self, on_test_set):
+        #TODO presunut do functions.py lebo to nema nic spolocne s touto triedou
+        PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
+        features = self.ts_handler.features.copy()
+        angles = np.linspace(0,2*np.pi,len(features), endpoint=False)
+        angles = np.concatenate((angles,[angles[0]]))
+
+        # fig = go.Figure()
+        # model_number = 1
+        # while True:
+        #     METRICS_PATH = PATH.format(model_number)
+        #     try:
+        #         metrics = pd.read_csv(METRICS_PATH)
+        #     except:
+        #         break
+            
+        #     metrics = metrics['mape'].to_list()
+        #     fig.add_trace(go.Scatterpolar(
+        #         r=metrics,
+        #         theta=features,
+        #         fill='toself',
+        #         name='Product A'
+        #     ))
+
+        #     model_number += 1
+
+        # fig.update_layout(
+        #     polar=dict(
+        #         radialaxis=dict(
+        #         visible=True,
+        #         range=[0, 0.6]
+        #         )),
+        #     showlegend=False
+        # )
+
+        # fig.write_image(const.MODEL_REGRESSION_RADAR_CHART_PATH.format('test.png'))
+
+        features.append(features[0])
+        model_number = 1
+        fig = plt.figure(figsize=(6, 10))
+        ax = fig.add_subplot(polar=True)
+        while True:
+            METRICS_PATH = PATH.format(model_number)
+            try:
+                metrics = pd.read_csv(METRICS_PATH)
+            except:
+                break
+            metrics = metrics['mape'].to_list()
+            metrics.append(metrics[0])
+
+            ax.plot(angles, metrics, label=self.model_name)
+            model_number += 1
+        
+        ax.set_thetagrids(angles * 180/np.pi, features)
+        var = 'test' if on_test_set else 'window'
+        plt.tight_layout()
+        plt.legend(bbox_to_anchor = (1.4, 0.6), loc='center right')
+        plt.title('MAPE skóre', fontsize=15)
+        plt.savefig(const.MODEL_REGRESSION_RADAR_CHART_PATH.format(var), bbox_inches='tight')
 
     def save_benign_ts_plots(self, train_data, test_data, prediction_data, time, show_full_data):
         if not show_full_data:                              # Display only half of the train data
