@@ -12,7 +12,7 @@ PREDICTIONS_BENIGN_FOLDER = 'predictions_benign/'
 PREDICTIONS_ATTACK_FOLDER = 'predictions_attack/'
 PREPROCESSED_CATEGORY_FOLDER = 'preprocessed_category/'
 PROCESSED_ANOMALY_FOLDER = 'processed_anomaly/'
-SAVINGS_FOLDER = 'savings/'
+SAVINGS_FOLDER = 'savings_{1}/'
 
 
 ## FILES ##

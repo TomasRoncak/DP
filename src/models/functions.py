@@ -47,7 +47,7 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
 
 def get_callbacks(model_number, model_arch, model_type, patience):
     checkpoint_path = 'models/models_' + str(model_number) + '/' + model_type + \
-                      'savings/' + 'model_loss-{loss:03f}.ckpt'
+                      'savings_' + model_arch + '/model_loss-{loss:03f}.ckpt'
     smallest_val_Loss = None
 
     cp_callback = ModelCheckpoint(filepath=checkpoint_path,
@@ -170,3 +170,69 @@ def format_date(time):
 
 def pretty_print_window_ok(curr_time, err):
     print('Okno {0} - chyba {1:.2f} '.format(curr_time, err) + bcolors.OKGREEN + 'OK' + bcolors.ENDC)
+
+def create_radar_plot(features, on_test_set):
+        PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
+        angles = np.linspace(0,2*np.pi,len(features), endpoint=False)
+        angles = np.concatenate((angles,[angles[0]]))
+
+        # fig = go.Figure()
+        # model_number = 1
+        # while True:
+        #     METRICS_PATH = PATH.format(model_number)
+        #     try:
+        #         metrics = pd.read_csv(METRICS_PATH)
+        #     except:
+        #         break
+            
+        #     metrics = metrics['mape'].to_list()
+        #     fig.add_trace(go.Scatterpolar(
+        #         r=metrics,
+        #         theta=features,
+        #         fill='toself',
+        #         name='Product A'
+        #     ))
+
+        #     model_number += 1
+
+        # fig.update_layout(
+        #     polar=dict(
+        #         radialaxis=dict(
+        #         visible=True,
+        #         range=[0, 0.6]
+        #         )),
+        #     showlegend=False
+        # )
+
+        # fig.write_image(const.MODEL_REGRESSION_RADAR_CHART_PATH.format('test.png'))
+
+        features.append(features[0])
+        model_number = 1
+        fig = plt.figure(figsize=(6, 10))
+        ax = fig.add_subplot(polar=True)
+        while True:
+            METRICS_PATH = PATH.format(model_number)
+            try:
+                metrics = pd.read_csv(METRICS_PATH)
+            except:
+                break
+
+            path = os.path.dirname(const.WHOLE_ANOMALY_MODEL_PATH.format(model_number))
+            arch_type = None
+            for f_name in os.listdir(path):
+                if f_name.startswith('savings_'):
+                    arch_type = f_name.split('_')[1]
+                    break
+                
+            metrics = metrics['mape'].to_list()
+            metrics.append(metrics[0])
+
+            ax.plot(angles, metrics, label=arch_type)
+            model_number += 1
+        
+        ax.set_thetagrids(angles * 180/np.pi, features)
+        var = 'test' if on_test_set else 'window'
+        plt.tight_layout()
+        plt.legend(bbox_to_anchor = (1.4, 0.6), loc='center right')
+        plt.title('MAPE skóre', fontsize=15)
+        plt.savefig(const.MODEL_REGRESSION_RADAR_CHART_PATH.format(var), bbox_inches='tight')
