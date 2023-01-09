@@ -171,6 +171,7 @@ def format_date(time):
 def pretty_print_window_ok(curr_time, err):
     print('Okno {0} - chyba {1:.2f} '.format(curr_time, err) + bcolors.OKGREEN + 'OK' + bcolors.ENDC)
 
+
 def create_radar_plot(features, on_test_set):
         PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
         angles = np.linspace(0,2*np.pi,len(features), endpoint=False)
