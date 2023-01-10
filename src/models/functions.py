@@ -6,6 +6,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import seaborn as sns
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.models import load_model
@@ -21,6 +22,7 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data')
 from preprocess_data import format_data, get_filtered_classes
 
 import constants as const
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -172,45 +174,15 @@ def pretty_print_window_ok(curr_time, err):
     print('Okno {0} - chyba {1:.2f} '.format(curr_time, err) + bcolors.OKGREEN + 'OK' + bcolors.ENDC)
 
 
-def create_radar_plot(features, on_test_set):
+def create_radar_plot(features, on_test_set, format):
         PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
+        var = 'test' if on_test_set else 'window'
         angles = np.linspace(0,2*np.pi,len(features), endpoint=False)
         angles = np.concatenate((angles,[angles[0]]))
-
-        # fig = go.Figure()
-        # model_number = 1
-        # while True:
-        #     METRICS_PATH = PATH.format(model_number)
-        #     try:
-        #         metrics = pd.read_csv(METRICS_PATH)
-        #     except:
-        #         break
-            
-        #     metrics = metrics['mape'].to_list()
-        #     fig.add_trace(go.Scatterpolar(
-        #         r=metrics,
-        #         theta=features,
-        #         fill='toself',
-        #         name='Product A'
-        #     ))
-
-        #     model_number += 1
-
-        # fig.update_layout(
-        #     polar=dict(
-        #         radialaxis=dict(
-        #         visible=True,
-        #         range=[0, 0.6]
-        #         )),
-        #     showlegend=False
-        # )
-
-        # fig.write_image(const.MODEL_REGRESSION_RADAR_CHART_PATH.format('test.png'))
-
         features.append(features[0])
+
+        fig = go.Figure()
         model_number = 1
-        fig = plt.figure(figsize=(6, 10))
-        ax = fig.add_subplot(polar=True)
         while True:
             METRICS_PATH = PATH.format(model_number)
             try:
@@ -224,16 +196,53 @@ def create_radar_plot(features, on_test_set):
                 if f_name.startswith('savings_'):
                     arch_type = f_name.split('_')[1]
                     break
-                
+            
             metrics = metrics['mape'].to_list()
             metrics.append(metrics[0])
+            fig.add_trace(go.Scatterpolar(
+                r=metrics,
+                theta=features,
+                name=arch_type
+            ))
 
-            ax.plot(angles, metrics, label=arch_type)
             model_number += 1
+
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                visible=True
+                )),
+            showlegend=True,
+            title_text='MAPE {0} skóre'.format(var),
+            title_x=0.5
+        )
+
+        fig.write_image(const.MODEL_REGRESSION_RADAR_CHART_PATH.format(var + format))
+
+        # fig = plt.figure(figsize=(6, 10))
+        # ax = fig.add_subplot(polar=True)
+        # while True:
+        #     METRICS_PATH = PATH.format(model_number)
+        #     try:
+        #         metrics = pd.read_csv(METRICS_PATH)
+        #     except:
+        #         break
+
+        #     path = os.path.dirname(const.WHOLE_ANOMALY_MODEL_PATH.format(model_number))
+        #     arch_type = None
+        #     for f_name in os.listdir(path):
+        #         if f_name.startswith('savings_'):
+        #             arch_type = f_name.split('_')[1]
+        #             break
+                
+        #     metrics = metrics['mape'].to_list()
+        #     metrics.append(metrics[0])
+
+        #     ax.plot(angles, metrics, label=arch_type)
+        #     model_number += 1
         
-        ax.set_thetagrids(angles * 180/np.pi, features)
-        var = 'test' if on_test_set else 'window'
-        plt.tight_layout()
-        plt.legend(bbox_to_anchor = (1.4, 0.6), loc='center right')
-        plt.title('MAPE skóre', fontsize=15)
-        plt.savefig(const.MODEL_REGRESSION_RADAR_CHART_PATH.format(var), bbox_inches='tight')
+        # ax.set_thetagrids(angles * 180/np.pi, features)
+        # plt.tight_layout()
+        # plt.legend(bbox_to_anchor = (1.4, 0.6), loc='center right')
+        # plt.title('MAPE skóre', fontsize=15)
+        # plt.savefig(const.MODEL_REGRESSION_RADAR_CHART_PATH.format(var), bbox_inches='tight')

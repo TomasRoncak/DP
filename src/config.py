@@ -13,6 +13,7 @@ models_number = 1
 an_model_name = 'cnn'
 an_epochs = 300
 an_activation = 'relu'
+radar_plot_format = '.svg'
 
 ## CATEGORY MODEL CONFIG ##
 cat_model_name = 'mlp'

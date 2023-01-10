@@ -7,6 +7,7 @@ from data.TimeSeriesDataHandler import TimeSeriesDataHandler
 from features.feature_selection_an import select_features_for_an
 from models.AnomalyModel import AnomalyModel
 from models.ClassificationModel import ClassificationModel
+from models.functions import create_radar_plot
 
 ## Data processing ##
 preprocess_data = False
@@ -17,6 +18,7 @@ select_features = False
 anomaly_model = None
 train_an = False
 predict_an = False
+radar_plot = False
 
 ## Category model ##
 category_model = None
@@ -38,7 +40,7 @@ if select_features:
     merge_features_to_dataset(conf.window_size)
 
 
-if train_an or predict_an:
+if train_an or predict_an or radar_plot:
     ts_handler = TimeSeriesDataHandler(
         conf.use_real_data, 
         conf.window_size, 
@@ -77,6 +79,10 @@ if train_an or predict_an:
     if predict_an:
         anomaly_model.predict_on_benign_ts()
         anomaly_model.predict_on_attack_ts()
+    
+    if radar_plot:
+        create_radar_plot(ts_handler.features, on_test_set=True, format=conf.radar_plot_format)
+        create_radar_plot(ts_handler.features, on_test_set=False, format=conf.radar_plot_format)
 
 
 if train_cat or predict_cat:

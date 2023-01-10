@@ -20,7 +20,7 @@ from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
 
 import constants as const
-from models.functions import (create_radar_plot, format_date, get_callbacks,
+from models.functions import (format_date, get_callbacks,
                               get_optimizer, get_y_from_generator,
                               load_best_model, pretty_print_collective_anomaly,
                               pretty_print_point_anomaly,
@@ -117,7 +117,6 @@ class AnomalyModel:
         predict_inversed = self.ts_handler.inverse_transform(data_pred)
 
         self.calculate_regression_metrics(test_inversed, predict_inversed, on_test_set=True)
-        create_radar_plot(self.ts_handler.features, on_test_set=True)
         self.save_benign_ts_plots(
             train_inversed, 
             test_inversed, 
@@ -151,7 +150,6 @@ class AnomalyModel:
         attack_predict_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
 
         self.calculate_regression_metrics(attack_real_inversed, attack_predict_inversed, on_test_set=False)
-        create_radar_plot(self.ts_handler.features, on_test_set=False)
         self.save_plots(
                 attack_real_inversed, 
                 attack_predict_inversed, 
