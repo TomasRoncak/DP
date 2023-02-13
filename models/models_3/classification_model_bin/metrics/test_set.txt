@@ -1,0 +1,8 @@
+              precision    recall  f1-score   support
+
+     Benígne       0.97      0.67      0.79     37000
+     Malígne       0.78      0.98      0.87     43650
+
+    accuracy                           0.84     80650
+   macro avg       0.87      0.83      0.83     80650
+weighted avg       0.87      0.84      0.84     80650

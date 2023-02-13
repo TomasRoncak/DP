@@ -23,7 +23,7 @@ radar_plot = False
 ## Category model ##
 category_model = None
 train_cat = False
-predict_cat = False
+predict_cat = True
 
 
 if preprocess_data:
@@ -87,7 +87,11 @@ if train_an or predict_an or radar_plot:
 
 if train_cat or predict_cat:
     category_model = ClassificationModel(
-        conf.models_number, conf.cat_model_name)
+        conf.models_number, 
+        conf.cat_model_name, 
+        conf.is_cat_multiclass
+    )
+
     if train_cat:
         if not conf.run_wandb_sweep:
             category_model.train_categorical_model(
@@ -109,10 +113,10 @@ if train_cat or predict_cat:
     if predict_cat:
         category_model.categorize_attacks(
             on_test_set=True,
-            anomaly_detection_time=None
+            an_detect_time=None
         )
         if anomaly_model is not None:
             category_model.categorize_attacks(
                 on_test_set=False,
-                anomaly_detection_time=anomaly_model.anomaly_detection_time
+                an_detect_time=anomaly_model.anomaly_detection_time
             )

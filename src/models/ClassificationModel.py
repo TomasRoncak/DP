@@ -25,13 +25,13 @@ from models.functions import (get_callbacks, get_filtered_classes,
 
 
 class ClassificationModel:
-    def __init__(self, model_number, model_name):
-        self.model = load_best_model(model_number, model_name, model_type='cat')
+    def __init__(self, model_number, model_name, is_cat_multiclass):
         self.model_number = model_number
         self.model_name = model_name
-
-        Path(const.METRICS_CLASSIFICATION_FOLDER_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
-
+        self.is_cat_multiclass = is_cat_multiclass
+        self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
+                          if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
+        
     def train_categorical_model(
         self,
         learning_rate,
@@ -45,10 +45,11 @@ class ClassificationModel:
     ):
 
         df = pd.read_csv(const.CAT_TRAIN_DATASET_PATH)
-        trainX, trainY = format_data(df)
+        trainX, trainY = format_data(df, self.is_cat_multiclass)
         trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
 
         num_categories = df.iloc[:,-1].nunique()
+        model_folder = const.CLASSIFICATION_MODEL_MULTICLASS_FOLDER if self.is_cat_multiclass else const.CLASSIFICATION_MODEL_BINARY_FOLDER
 
         model = Sequential()
         if self.model_name == 'mlp':
@@ -73,7 +74,7 @@ class ClassificationModel:
                 callbacks=[get_callbacks(
                             self.model_number, 
                             self.model_name, 
-                            const.CLASSIFICATION_MODEL_FOLDER, 
+                            model_folder, 
                             patience
                            )],
                 verbose=1
@@ -83,9 +84,11 @@ class ClassificationModel:
         run.finish()
 
     def categorize_attacks(self, on_test_set, an_detect_time):
+        self.model = load_best_model(self.model_number, self.model_name, self.is_cat_multiclass, model_type='cat')
+
         if on_test_set:
             test_df = pd.read_csv(const.CAT_TEST_DATASET_PATH)
-            x, y = format_data(test_df)
+            x, y = format_data(test_df, self.is_cat_multiclass)
         elif not an_detect_time:
             print('Časové okno pre klasifikáciu nebolo nájdené !')
             return
@@ -101,6 +104,7 @@ class ClassificationModel:
             pretty_print_detected_attacks(prob)
 
     def calculate_classification_metrics(self, y, prob, on_test_set):
+        Path(const.METRICS_CLASSIFICATION_FOLDER_PATH.format(self.model_path)).mkdir(parents=True, exist_ok=True)
         y_pred = np.argmax(prob, axis=-1)
         if (y == 0).all():
             print('Vybrané okno(á) obsahuje(ú) iba benígnu prevádzku !')
@@ -109,16 +113,22 @@ class ClassificationModel:
             print('Predikcia obsahuje len benígnu prevádzku !')
             return
 
-        all_classes = get_filtered_classes()
-        classes_values = np.unique(y)
-        present_classes = [all_classes[x] for x in classes_values]
+        if self.is_cat_multiclass:  # Multiclass classification
+            all_classes = get_filtered_classes()
+            classes_values = np.unique(y)
+            present_classes = [all_classes[x] for x in classes_values]
+        else:
+            present_classes = ['Benígne', 'Malígne']  # Binary classification
 
-        METRICS_PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if on_test_set \
-                       else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
-        with open(METRICS_PATH.format(self.model_number), 'w') as f:
+        PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if on_test_set else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
+        with open(PATH.format(self.model_path), 'w') as f:
            f.write(classification_report(y, y_pred, labels=np.unique(y_pred), target_names=present_classes))
-        plot_confusion_matrix(y, y_pred, self.model_number, on_test_set, present_classes)
-        plot_roc_auc_multiclass(y, prob, self.model_number, on_test_set)
+        
+        PATH = const.MODEL_CONF_TEST_MATRIX_PATH if on_test_set else const.MODEL_CONF_MATRIX_PATH
+        plot_confusion_matrix(y, y_pred, self.model_number, present_classes, PATH.format(self.model_path))
+        
+        PATH = const.MODEL_METRICS_ROC_TEST_PATH if on_test_set else const.MODEL_METRICS_ROC_PATH 
+        plot_roc_auc_multiclass(y, prob, self.model_number, self.is_cat_multiclass, PATH.format(self.model_path))
 
     def run_sweep(
         self,
@@ -133,7 +143,7 @@ class ClassificationModel:
                 count=40
             )
 
-    def wandb_train(self,early_stop_patience):
+    def wandb_train(self, early_stop_patience):
         run = wandb.init(project='dp_categorical', entity='tomasroncak')
         self.train_categorical_model(
                     wandb.config.learning_rate,

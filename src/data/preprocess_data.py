@@ -54,7 +54,7 @@ def preprocess_train_test_data():
         data.to_csv(PATH, index=False)
 
 
-def format_data(df):
+def format_data(df, is_cat_multiclass):
     label_encoder = LabelEncoder()
     minmax_scaler = MinMaxScaler(feature_range=(0, 1))
     standard_scaler = StandardScaler()
@@ -63,8 +63,11 @@ def format_data(df):
         df = df.drop(const.TIME, axis=1)
     if 'service' in df:
         df = df.drop('service', axis=1)
-    if 'label' in df:
+
+    if is_cat_multiclass and 'label' in df:
         df = df.drop('label', axis=1)
+    elif not is_cat_multiclass and 'attack_cat' in df:
+        df = df.drop('attack_cat', axis=1)
 
     x = df.iloc[:, :-1]
     y = label_encoder.fit_transform(df.iloc[:, -1])

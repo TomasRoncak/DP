@@ -7,7 +7,7 @@ remove_first_attacks = True
 remove_benign_outlier = True
 attack_category = 'All'
 
-models_number = 1
+models_number = 3
 
 ## ANOMALY MODEL CONFIG ##
 an_model_name = 'cnn'
@@ -20,6 +20,7 @@ cat_model_name = 'mlp'
 cat_epochs = 40
 cat_batch_size = 64
 cat_activation = 'relu'
+is_cat_multiclass = False
 
 ## OTHERS ##
 learning_rate = 0.001

@@ -65,18 +65,22 @@ def get_callbacks(model_number, model_arch, model_type, patience):
     return [cp_callback, early_stopping, wandb_callback]
 
 
-def load_best_model(model_number, model_name, model_type):
+def load_best_model(model_number, model_name, is_cat_multiclass, model_type):
     if model_type == 'an':
         dir = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name)
     elif model_type == 'cat':
-        dir = const.SAVE_CAT_MODEL_PATH.format(model_number, model_name)
+        if is_cat_multiclass:
+            dir = const.SAVE_CAT_MULTICLASS_MODEL_PATH.format(model_number, model_name)
+        else:
+            dir = const.SAVE_CAT_BINARY_MODEL_PATH.format(model_number, model_name)
 
     if os.path.exists(dir):
         sub_dirs = os.listdir(dir)
         sub_dirs.sort()
         return load_model(dir + sub_dirs[0])
-    return None
-
+    else:
+        print('{0} model s číslom {1} nebol nájdený!'.format('Viactriedny' if is_cat_multiclass else 'Binárny', model_number))
+        quit()
 
 def get_y_from_generator(n_features, gen):
     y = None
@@ -86,41 +90,47 @@ def get_y_from_generator(n_features, gen):
     return y.reshape((-1, n_features))    
 
 
-def plot_roc_auc_multiclass(y_test, y_score, model_number, is_test_set):
-    PATH = const.MODEL_METRICS_ROC_TEST_PATH if is_test_set else const.MODEL_METRICS_ROC_PATH 
+def plot_roc_auc_multiclass(y_test, y_score, model_number, is_cat_multiclass, path):
     sns.set_style('darkgrid')        
     deep_colors = sns.color_palette('deep')
-    classes = get_filtered_classes()
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
 
     train_df = pd.read_csv(const.CAT_TRAIN_DATASET_PATH)
-    _, trainY = format_data(train_df)
+    _, trainY = format_data(train_df, is_cat_multiclass)
 
     label_binarizer = LabelBinarizer().fit(trainY)
     y_onehot_test = label_binarizer.transform(y_test)
     n_classes = y_onehot_test.shape[1]
 
-    for i in range(n_classes):
-        fpr[i], tpr[i], _ = roc_curve(y_onehot_test[:, i], y_score[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
+    if n_classes == 1:
+        y_pred = np.argmax(y_score, axis=-1)
+        fpr, tpr, _ = roc_curve(y_onehot_test, y_pred)
+        roc_auc = auc(fpr, tpr)
 
-    plt.figure(figsize=(10, 5))
-    for i in range(n_classes):
-        plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], 
-                 label='{0} (AUC = {1:0.2f})'.format(classes[i], roc_auc[i]))
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+        plt.figure(figsize=(10, 5))
+        plt.plot(fpr, tpr, lw=2, color = deep_colors[0], label='AUC = {0:0.2f}'.format(roc_auc))
+    else:
+        classes = get_filtered_classes()
+        for i in range(n_classes):
+            fpr[i], tpr[i], _ = roc_curve(y_onehot_test[:, i], y_score[:, i])
+            roc_auc[i] = auc(fpr[i], tpr[i])
+
+        plt.figure(figsize=(10, 5))
+        for i in range(n_classes):
+            plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], 
+                label='{0} (AUC = {1:0.2f})'.format(classes[i], roc_auc[i]))
+        plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Falošne pozitívne')
     plt.ylabel('Správne pozitívne')
     plt.legend(loc="lower right")
-    plt.savefig(PATH.format(model_number))
+    plt.savefig(path.format(model_number))
 
 
-def plot_confusion_matrix(y, y_pred, model_number, is_test_set, present_classes):
-    PATH = const.MODEL_CONF_TEST_MATRIX_PATH if is_test_set else const.MODEL_CONF_MATRIX_PATH
+def plot_confusion_matrix(y, y_pred, model_number, present_classes, path):
     plt.figure(figsize=(8, 5))
     cm = confusion_matrix(y, y_pred)
     ax = sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
@@ -129,7 +139,7 @@ def plot_confusion_matrix(y, y_pred, model_number, is_test_set, present_classes)
     plt.xlabel('Predikované', fontsize=15)
     plt.ylabel('Skutočné', fontsize=15)
     plt.tight_layout()
-    plt.savefig(PATH.format(model_number), dpi=400)
+    plt.savefig(path.format(model_number), dpi=400)
 
 
 def pretty_print_detected_attacks(prob):
