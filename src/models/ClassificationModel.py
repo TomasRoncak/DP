@@ -90,6 +90,8 @@ class ClassificationModel:
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
+        else:
+            raise Exception('Nepodporovaný typ modelu !')
 
         optimizer = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
         model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
@@ -135,7 +137,7 @@ class ClassificationModel:
             pretty_print_detected_attacks(prob)
 
     def calculate_classification_metrics(self, y, prob, on_test_set):
-        Path(const.METRICS_CLASSIFICATION_FOLDER_PATH.format(self.model_path)).mkdir(parents=True, exist_ok=True)
+        Path(const.METRICS_CLASSIFICATION_FOLDER_PATH.format(self.model_path, self.model_name)).mkdir(parents=True, exist_ok=True)
 
         if self.is_cat_multiclass:
             # Pre multiclass pouzivame Softmax aktivacnu funkciu, ktora vrati pravdepodobnost pre kazdu triedu
@@ -160,14 +162,14 @@ class ClassificationModel:
             present_classes = ['Benígne', 'Malígne']  # Binary classification
 
         PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if on_test_set else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
-        with open(PATH.format(self.model_path), 'w') as f:
+        with open(PATH.format(self.model_path, self.model_name), 'w') as f:
            f.write(classification_report(y, y_pred, labels=np.unique(y_pred), target_names=present_classes))
         
         PATH = const.MODEL_CONF_TEST_MATRIX_PATH if on_test_set else const.MODEL_CONF_MATRIX_PATH
-        plot_confusion_matrix(y, y_pred, self.model_number, present_classes, PATH.format(self.model_path))
+        plot_confusion_matrix(y, y_pred, self.model_number, present_classes, PATH.format(self.model_path, self.model_name))
         
         PATH = const.MODEL_METRICS_ROC_TEST_PATH if on_test_set else const.MODEL_METRICS_ROC_PATH 
-        plot_roc_auc(y, prob, self.model_number, self.is_cat_multiclass, PATH.format(self.model_path))
+        plot_roc_auc(y, prob, self.model_number, self.is_cat_multiclass, PATH.format(self.model_path, self.model_name))
 
     def run_sweep(
         self,

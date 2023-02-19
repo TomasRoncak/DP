@@ -49,7 +49,7 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
 
 def get_callbacks(model_number, model_arch, model_type, patience):
     checkpoint_path = 'models/models_' + str(model_number) + '/' + model_type + \
-                      'savings_' + model_arch + '/model_loss-{loss:03f}.ckpt'
+                       model_arch + '/savings' + '/loss-{loss:03f}.ckpt'
     smallest_val_Loss = None
 
     cp_callback = ModelCheckpoint(filepath=checkpoint_path,

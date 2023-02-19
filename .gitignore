@@ -13,6 +13,7 @@ real
 mlp.ipynb
 
 anomaly_model
-classification_model
+classification_model_mult
+classification_model_bin
 
 correlations
