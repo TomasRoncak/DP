@@ -78,9 +78,17 @@ class ClassificationModel:
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'lstm':
             model.add(LSTM(blocks, input_dim=trainX.shape[2]))
+            model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'gru':
             model.add(GRU(blocks, input_dim=trainX.shape[2]))
+            model.add(Dropout(dropout))
+            model.add(Dense(num_categories, activation=last_activation))
+        elif self.model_name == 'cnn_lstm':
+            model.add(Conv1D(filters=64, padding="same", kernel_size=2, activation=activation, input_shape=(trainX.shape[1], 1)))
+            model.add(MaxPooling1D(pool_size=2))
+            model.add(LSTM(blocks))
+            model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
 
         optimizer = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
