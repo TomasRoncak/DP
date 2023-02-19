@@ -54,7 +54,7 @@ def preprocess_train_test_data():
         data.to_csv(PATH, index=False)
 
 
-def format_data(df, is_cat_multiclass):
+def format_data(df, is_cat_multiclass, is_model_reccurent=False):
     label_encoder = LabelEncoder()
     minmax_scaler = MinMaxScaler(feature_range=(0, 1))
     standard_scaler = StandardScaler()
@@ -74,6 +74,9 @@ def format_data(df, is_cat_multiclass):
 
     x = minmax_scaler.fit_transform(x)
     x = standard_scaler.fit_transform(x)
+
+    if is_model_reccurent:  # Reshape -> [samples, time steps, features]
+        x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
 
     return x, y
 

@@ -23,7 +23,7 @@ radar_plot = False
 ## Category model ##
 category_model = None
 train_cat = False
-predict_cat = True
+predict_cat = False
 
 
 if preprocess_data:
@@ -102,7 +102,8 @@ if train_cat or predict_cat:
                 conf.cat_batch_size,
                 conf.dropout_rate,
                 conf.cat_activation,
-                conf.momentum
+                conf.momentum,
+                conf.blocks
             )
         else:
             category_model.run_sweep(

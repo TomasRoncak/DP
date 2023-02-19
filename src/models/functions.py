@@ -90,7 +90,7 @@ def get_y_from_generator(n_features, gen):
     return y.reshape((-1, n_features))    
 
 
-def plot_roc_auc_multiclass(y_test, y_score, model_number, is_cat_multiclass, path):
+def plot_roc_auc(y_test, y_score, model_number, is_cat_multiclass, path):
     sns.set_style('darkgrid')        
     deep_colors = sns.color_palette('deep')
     fpr = dict()
@@ -105,7 +105,7 @@ def plot_roc_auc_multiclass(y_test, y_score, model_number, is_cat_multiclass, pa
     n_classes = y_onehot_test.shape[1]
 
     if n_classes == 1:
-        y_pred = np.argmax(y_score, axis=-1)
+        y_pred = np.round(y_score, 0)
         fpr, tpr, _ = roc_curve(y_onehot_test, y_pred)
         roc_auc = auc(fpr, tpr)
 
