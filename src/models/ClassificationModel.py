@@ -52,7 +52,6 @@ class ClassificationModel:
         trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
 
         num_categories = df.iloc[:,-1].nunique()
-        model_folder = const.CLASSIFICATION_MODEL_MULTICLASS_FOLDER if self.is_cat_multiclass else const.CLASSIFICATION_MODEL_BINARY_FOLDER
 
         if num_categories > 2:  
             loss = SparseCategoricalCrossentropy()
@@ -77,7 +76,8 @@ class ClassificationModel:
             model.add(Flatten())
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'lstm':
-            model.add(LSTM(blocks, input_dim=trainX.shape[2]))
+            model.add(LSTM(20, return_sequences=True, input_dim=trainX.shape[2]))
+            model.add(LSTM(20, input_dim=trainX.shape[2]))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'gru':
@@ -107,7 +107,7 @@ class ClassificationModel:
                 callbacks=[get_callbacks(
                             self.model_number, 
                             self.model_name, 
-                            model_folder, 
+                            self.is_cat_multiclass, 
                             patience
                            )],
                 verbose=1
@@ -117,7 +117,7 @@ class ClassificationModel:
         run.finish()
 
     def categorize_attacks(self, on_test_set, an_detect_time):
-        self.model = load_best_model(self.model_number, self.model_name, self.is_cat_multiclass, model_type='cat')
+        self.model = load_best_model(self.model_number, self.model_name, model_type='cat', is_cat_multiclass=self.is_cat_multiclass)
 
         if on_test_set:
             test_df = pd.read_csv(const.CAT_TEST_DATASET_PATH)

@@ -47,25 +47,28 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
     return switcher.get(optimizer)
 
 
-def get_callbacks(model_number, model_arch, model_type, patience):
-    checkpoint_path = 'models/models_' + str(model_number) + '/' + model_type + \
-                       model_arch + '/savings' + '/loss-{loss:03f}.ckpt'
-    smallest_val_Loss = None
+def get_callbacks(model_number, model_arch, is_cat_multiclass, patience):
+    if is_cat_multiclass is None:
+        PATH = const.SAVE_ANOMALY_MODEL_PATH.format(str(model_number), model_arch)
+    elif is_cat_multiclass:
+        PATH = const.SAVE_CAT_MULTICLASS_MODEL_PATH.format(str(model_number), model_arch)
+    else:
+        PATH = const.SAVE_CAT_BINARY_MODEL_PATH.format(str(model_number), model_arch)
 
-    cp_callback = ModelCheckpoint(filepath=checkpoint_path,
+    cp_callback = ModelCheckpoint(filepath=PATH + 'loss-{loss:03f}.ckpt',
                                   monitor='loss',
                                   verbose=1,
                                   save_best_only=True,
                                   mode='min',
                                   period=1,
-                                  initial_value_threshold=smallest_val_Loss)
+                                  initial_value_threshold=None)
     early_stopping = EarlyStopping(monitor='loss', patience=patience)
     wandb_callback = wandb.keras.WandbCallback()
 
     return [cp_callback, early_stopping, wandb_callback]
 
 
-def load_best_model(model_number, model_name, is_cat_multiclass, model_type):
+def load_best_model(model_number, model_name, model_type, is_cat_multiclass=None):
     if model_type == 'an':
         dir = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name)
     elif model_type == 'cat':
@@ -79,7 +82,13 @@ def load_best_model(model_number, model_name, is_cat_multiclass, model_type):
         sub_dirs.sort()
         return load_model(dir + sub_dirs[0])
     else:
-        print('{0} model s číslom {1} nebol nájdený!'.format('Viactriedny' if is_cat_multiclass else 'Binárny', model_number))
+        if model_type == 'an':
+            model_type = 'Anomalytický'
+        elif is_cat_multiclass:
+            model_type = 'Viactriedny'
+        else:
+            model_type = 'Binárny'
+        print('{0} model s číslom {1} nebol nájdený!'.format(model_type, model_number))
         quit()
 
 def get_y_from_generator(n_features, gen):

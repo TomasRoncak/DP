@@ -31,7 +31,6 @@ class AnomalyModel:
     def __init__(self, ts_handler, model_number, model_name, window_size, patience_limit):
         self.ts_handler = ts_handler
         self.n_features = ts_handler.n_features
-        self.model = load_best_model(model_number, model_name, model_type='an')
         self.model_number = model_number
         self.model_name = model_name
         self.patience_limit = patience_limit
@@ -41,9 +40,9 @@ class AnomalyModel:
         self.exceeding = 0
         self.normal = 0
 
-        Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
-        Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
-        Path(const.METRICS_REGRESSION_FOLDER_PATH.format(model_number)).mkdir(parents=True, exist_ok=True)
+        Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
+        Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
+        Path(const.METRICS_REGRESSION_FOLDER_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
         
     def train_anomaly_model(
         self,
@@ -85,7 +84,7 @@ class AnomalyModel:
             callbacks=[get_callbacks(
                 self.model_number, 
                 self.model_name, 
-                const.ANOMALY_MODEL_FOLDER, 
+                None, 
                 early_stop_patience
                 )]
         )
@@ -94,6 +93,7 @@ class AnomalyModel:
         run.finish()
 
     def predict_on_benign_ts(self):
+        self.model = load_best_model(self.model_number, self.model_name, model_type='an')
         data_real = get_y_from_generator(self.n_features, self.ts_handler.benign_test_generator)
         data_generator = self.ts_handler.benign_test_generator
         data_pred = []
@@ -126,6 +126,7 @@ class AnomalyModel:
         )
 
     def predict_on_attack_ts(self):
+        self.model = load_best_model(self.model_number, self.model_name, model_type='an')
         data_real = get_y_from_generator(self.n_features, self.ts_handler.attack_data_generator)
         data_pred = []
         data_generator = self.ts_handler.attack_data_generator
@@ -194,7 +195,7 @@ class AnomalyModel:
                        else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
         real_data = real_data[0:len(predict_data)]  # Slice data, if predicted data are shorter (detected anomaly stops prediction)
         
-        with open(METRICS_PATH.format(self.model_number), 'w') as f:
+        with open(METRICS_PATH.format(self.model_number, self.model_name), 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['feature', 'mae', 'mape', 'mse', 'rmse'])   # Header
             for i in range(len(self.ts_handler.features)):
@@ -248,7 +249,7 @@ class AnomalyModel:
             plt.tight_layout()
             plt.title(self.ts_handler.features[i], fontsize=50)
             plt.legend(fontsize=40)
-            plt.savefig(fig.format(self.model_number) + self.ts_handler.features[i], dpi=400, bbox_inches='tight')
+            plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i], dpi=400, bbox_inches='tight')
             plt.close()
         print('Ukladanie hotové !')
 
