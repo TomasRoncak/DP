@@ -137,7 +137,18 @@ class ClassificationModel:
             pretty_print_detected_attacks(prob)
 
     def calculate_classification_metrics(self, y, prob, on_test_set):
-        Path(const.METRICS_CLASSIFICATION_FOLDER_PATH.format(self.model_path, self.model_name)).mkdir(parents=True, exist_ok=True)
+        if on_test_set:
+            METRICS_PATH = const.METRICS_CLASSIFICATION_TEST_FOLDER_PATH
+            REPORT_PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH
+            CONFUSION_MATRIX_PATH = const.MODEL_CONF_TEST_MATRIX_PATH
+            ROC_AUC_PATH = const.MODEL_METRICS_ROC_TEST_PATH
+        else:
+            METRICS_PATH = const.METRICS_CLASSIFICATION_WINDOW_FOLDER_PATH
+            REPORT_PATH = const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
+            CONFUSION_MATRIX_PATH = const.MODEL_CONF_MATRIX_PATH
+            ROC_AUC_PATH = const.MODEL_METRICS_ROC_PATH
+        
+        Path(METRICS_PATH.format(self.model_path, self.model_name)).mkdir(parents=True, exist_ok=True)
 
         if self.is_cat_multiclass:
             # Pre multiclass pouzivame Softmax aktivacnu funkciu, ktora vrati pravdepodobnost pre kazdu triedu
@@ -161,15 +172,11 @@ class ClassificationModel:
         else:
             present_classes = ['Benígne', 'Malígne']  # Binary classification
 
-        PATH = const.MODEL_CLASSIFICATION_METRICS_TEST_PATH if on_test_set else const.MODEL_CLASSIFICATION_METRICS_WINDOW_PATH
-        with open(PATH.format(self.model_path, self.model_name), 'w') as f:
+        with open(REPORT_PATH.format(self.model_path, self.model_name), 'w') as f:
            f.write(classification_report(y, y_pred, labels=np.unique(y_pred), target_names=present_classes))
         
-        PATH = const.MODEL_CONF_TEST_MATRIX_PATH if on_test_set else const.MODEL_CONF_MATRIX_PATH
-        plot_confusion_matrix(y, y_pred, self.model_number, present_classes, PATH.format(self.model_path, self.model_name))
-        
-        PATH = const.MODEL_METRICS_ROC_TEST_PATH if on_test_set else const.MODEL_METRICS_ROC_PATH 
-        plot_roc_auc(y, prob, self.model_number, self.is_cat_multiclass, PATH.format(self.model_path, self.model_name))
+        plot_confusion_matrix(y, y_pred, self.model_number, present_classes, CONFUSION_MATRIX_PATH.format(self.model_path, self.model_name))
+        plot_roc_auc(y, prob, self.model_number, self.is_cat_multiclass, ROC_AUC_PATH.format(self.model_path, self.model_name))
 
     def run_sweep(
         self,

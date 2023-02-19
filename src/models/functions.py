@@ -60,7 +60,7 @@ def get_callbacks(model_number, model_arch, is_cat_multiclass, patience):
                                   verbose=1,
                                   save_best_only=True,
                                   mode='min',
-                                  period=1,
+                                  save_freq=1,
                                   initial_value_threshold=None)
     early_stopping = EarlyStopping(monitor='loss', patience=patience)
     wandb_callback = wandb.keras.WandbCallback()
