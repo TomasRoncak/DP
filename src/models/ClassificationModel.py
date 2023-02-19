@@ -10,7 +10,7 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 from pathlib import Path
 
-from keras.layers import (LSTM, Conv1D, Dense, Dropout, Flatten,
+from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
                           MaxPooling1D)
 from keras.losses import SparseCategoricalCrossentropy, BinaryCrossentropy
 from keras.models import Sequential
@@ -30,7 +30,7 @@ class ClassificationModel:
         self.model_number = model_number
         self.model_name = model_name
         self.is_cat_multiclass = is_cat_multiclass
-        self.is_model_reccurent = self.model_name in ['lstm', 'rnn']
+        self.is_model_reccurent = self.model_name in ['lstm', 'gru']
         self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
                           if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
         
@@ -78,6 +78,9 @@ class ClassificationModel:
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'lstm':
             model.add(LSTM(blocks, input_dim=trainX.shape[2]))
+            model.add(Dense(num_categories, activation=last_activation))
+        elif self.model_name == 'gru':
+            model.add(GRU(blocks, input_dim=trainX.shape[2]))
             model.add(Dense(num_categories, activation=last_activation))
 
         optimizer = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
