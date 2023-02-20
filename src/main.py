@@ -81,8 +81,8 @@ if train_an or predict_an or radar_plot:
         anomaly_model.predict_on_attack_ts()
     
     if radar_plot:
-        create_radar_plot(ts_handler.features, on_test_set=True, format=conf.radar_plot_format)
-        create_radar_plot(ts_handler.features, on_test_set=False, format=conf.radar_plot_format)
+        create_radar_plot(ts_handler.features, conf.models_number, on_test_set=True, pic_format=conf.radar_plot_format)
+        create_radar_plot(ts_handler.features, conf.models_number, on_test_set=False, pic_format=conf.radar_plot_format)
 
 
 if train_cat or predict_cat:

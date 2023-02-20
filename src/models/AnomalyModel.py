@@ -42,8 +42,9 @@ class AnomalyModel:
 
         Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
         Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
-        Path(const.METRICS_REGRESSION_FOLDER_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
-        
+        Path(const.anomaly_metrics[True].format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
+        Path(const.anomaly_metrics[False].format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
+
     def train_anomaly_model(
         self,
         learning_rate,
@@ -84,7 +85,6 @@ class AnomalyModel:
             callbacks=[get_callbacks(
                 self.model_number, 
                 self.model_name, 
-                None, 
                 early_stop_patience
                 )]
         )
@@ -191,11 +191,9 @@ class AnomalyModel:
         return upper_bound
 
     def calculate_regression_metrics(self, real_data, predict_data, on_test_set):
-        METRICS_PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set \
-                       else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
         real_data = real_data[0:len(predict_data)]  # Slice data, if predicted data are shorter (detected anomaly stops prediction)
         
-        with open(METRICS_PATH.format(self.model_number, self.model_name), 'w') as f:
+        with open(const.anomaly_metrics[on_test_set].format(self.model_number, self.model_name) + const.REPORT_FILE, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['feature', 'mae', 'mape', 'mse', 'rmse'])   # Header
             for i in range(len(self.ts_handler.features)):

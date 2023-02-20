@@ -7,13 +7,13 @@ remove_first_attacks = True
 remove_benign_outlier = True
 attack_category = 'All'
 
-models_number = 3
+models_number = 2
 
 ## ANOMALY MODEL CONFIG ##
 an_model_name = 'cnn'
 an_epochs = 300
 an_activation = 'relu'
-radar_plot_format = '.svg'
+radar_plot_format = 'svg'
 
 ## CATEGORY MODEL CONFIG ##
 cat_model_name = 'mlp'

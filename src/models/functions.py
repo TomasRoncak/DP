@@ -47,15 +47,9 @@ def get_optimizer(learning_rate, optimizer, momentum = 0):
     return switcher.get(optimizer)
 
 
-def get_callbacks(model_number, model_arch, is_cat_multiclass, patience):
-    if is_cat_multiclass is None:
-        PATH = const.SAVE_ANOMALY_MODEL_PATH.format(str(model_number), model_arch)
-    elif is_cat_multiclass:
-        PATH = const.SAVE_CAT_MULTICLASS_MODEL_PATH.format(str(model_number), model_arch)
-    else:
-        PATH = const.SAVE_CAT_BINARY_MODEL_PATH.format(str(model_number), model_arch)
-
-    cp_callback = ModelCheckpoint(filepath=PATH + 'loss-{loss:03f}.ckpt',
+def get_callbacks(model_number, model_name, patience, is_cat_multiclass=None):
+    file_path = const.save_model[is_cat_multiclass].format(model_number, model_name) + 'loss-{loss:03f}.ckpt'
+    cp_callback = ModelCheckpoint(filepath=file_path,
                                   monitor='loss',
                                   verbose=1,
                                   save_best_only=True,
@@ -69,26 +63,15 @@ def get_callbacks(model_number, model_arch, is_cat_multiclass, patience):
 
 
 def load_best_model(model_number, model_name, model_type, is_cat_multiclass=None):
-    if model_type == 'an':
-        dir = const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name)
-    elif model_type == 'cat':
-        if is_cat_multiclass:
-            dir = const.SAVE_CAT_MULTICLASS_MODEL_PATH.format(model_number, model_name)
-        else:
-            dir = const.SAVE_CAT_BINARY_MODEL_PATH.format(model_number, model_name)
+    dir = const.save_model[is_cat_multiclass].format(model_number, model_name)
 
     if os.path.exists(dir):
         sub_dirs = os.listdir(dir)
         sub_dirs.sort()
         return load_model(dir + sub_dirs[0])
     else:
-        if model_type == 'an':
-            model_type = 'Anomalytický'
-        elif is_cat_multiclass:
-            model_type = 'Viactriedny'
-        else:
-            model_type = 'Binárny'
-        print('{0} model s číslom {1} nebol nájdený!'.format(model_type, model_number))
+        model_type = {None: 'Anomalytický', True: 'Viactriedny', False: 'Binárny'}
+        print('{0} model s číslom {1} nebol nájdený!'.format(model_type[is_cat_multiclass], model_number))
         quit()
 
 def get_y_from_generator(n_features, gen):
@@ -193,75 +176,37 @@ def pretty_print_window_ok(curr_time, err):
     print('Okno {0} - chyba {1:.2f} '.format(curr_time, err) + bcolors.OKGREEN + 'OK' + bcolors.ENDC)
 
 
-def create_radar_plot(features, on_test_set, format):
-        PATH = const.MODEL_REGRESSION_TEST_METRICS_PATH if on_test_set else const.MODEL_REGRESSION_WINDOW_METRICS_PATH
-        var = 'test' if on_test_set else 'window'
-        angles = np.linspace(0,2*np.pi,len(features), endpoint=False)
-        angles = np.concatenate((angles,[angles[0]]))
-        features.append(features[0])
+def create_radar_plot(features, model_number, on_test_set, pic_format):
+    var = 'test' if on_test_set else 'window'
+    features.append(features[0])
+    fig = go.Figure()
 
-        fig = go.Figure()
-        model_number = 1
-        while True:
-            METRICS_PATH = PATH.format(model_number)
-            try:
-                metrics = pd.read_csv(METRICS_PATH)
-            except:
-                break
+    for model_name in os.listdir(const.WHOLE_ANOMALY_MODEL_PATH.format(model_number)):
+        if model_name.startswith('radar'):
+            continue
+        try:
+            metrics = pd.read_csv(const.anomaly_metrics[on_test_set].format(model_number, model_name) + const.REPORT_FILE)
+        except:
+            print('Report pre {0} nebol nájdený !'.format(var))
+            return
 
-            path = os.path.dirname(const.WHOLE_ANOMALY_MODEL_PATH.format(model_number))
-            arch_type = None
-            for f_name in os.listdir(path):
-                if f_name.startswith('savings_'):
-                    arch_type = f_name.split('_')[1]
-                    break
-            
-            metrics = metrics['mape'].to_list()
-            metrics.append(metrics[0])
-            fig.add_trace(go.Scatterpolar(
-                r=metrics,
-                theta=features,
-                name=arch_type
-            ))
+        metrics = metrics['mape'].to_list()
+        metrics.append(metrics[0])
 
-            model_number += 1
+        fig.add_trace(go.Scatterpolar(
+            r=metrics,
+            theta=features,
+            name=model_name
+        ))
 
         fig.update_layout(
-            polar=dict(
-                radialaxis=dict(
-                visible=True
-                )),
+            polar=dict(radialaxis=dict(visible=True)),
             showlegend=True,
             title_text='MAPE {0} skóre'.format(var),
             title_x=0.5
         )
 
-        fig.write_image(const.MODEL_REGRESSION_RADAR_CHART_PATH.format(var + format))
-
-        # fig = plt.figure(figsize=(6, 10))
-        # ax = fig.add_subplot(polar=True)
-        # while True:
-        #     METRICS_PATH = PATH.format(model_number)
-        #     try:
-        #         metrics = pd.read_csv(METRICS_PATH)
-        #     except:
-        #         break
-
-        #     path = os.path.dirname(const.WHOLE_ANOMALY_MODEL_PATH.format(model_number))
-        #     arch_type = None
-        #     for f_name in os.listdir(path):
-        #         if f_name.startswith('savings_'):
-        #             arch_type = f_name.split('_')[1]
-        #             break
-                
-        #     metrics = metrics['mape'].to_list()
-        #     metrics.append(metrics[0])
-
-        #     ax.plot(angles, metrics, label=arch_type)
-        #     model_number += 1
-        
-        # ax.set_thetagrids(angles * 180/np.pi, features)
-        # plt.tight_layout()
-        # plt.legend(bbox_to_anchor = (1.4, 0.6), loc='center right')
-        # plt.title('MAPE skóre', fontsize=15)
-        # plt.savefig(const.MODEL_REGRESSION_RADAR_CHART_PATH.format(var), bbox_inches='tight')
+        fig.write_image(
+            const.MODEL_REGRESSION_RADAR_CHART_PATH.format(model_number, var + '.' + pic_format), 
+            format=pic_format
+        )
