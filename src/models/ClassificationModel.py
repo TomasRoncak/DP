@@ -105,10 +105,10 @@ class ClassificationModel:
                 epochs=epochs,
                 validation_data=(valX, valY),
                 callbacks=[get_callbacks(
-                            self.model_number, 
-                            self.model_name, 
-                            self.is_cat_multiclass, 
-                            patience
+                            self.model_number,
+                            self.model_name,
+                            patience,
+                            self.is_cat_multiclass
                            )],
                 verbose=1
         )
