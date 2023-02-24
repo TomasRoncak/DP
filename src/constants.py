@@ -75,7 +75,6 @@ MODEL_PREDICTIONS_ATTACK_PATH = WHOLE_ANOMALY_MODEL_PATH + '{1}/' + PREDICTIONS_
 ## OTHERS ##
 USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', \
                                      'dur', 'state', 'proto', 'ct_ftp_cmd']  # ct_ftp_cmd is mainly empty
-USELESS_FEATURES_FOR_CATEGORIZE = ['id', 'rate', 'dur', 'state', 'proto', 'service', 'ct_ftp_cmd']
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 ATTACK_CATEGORIES = ['Analysis', 'Backdoor', 'DoS', 'Exploits', 'Fuzzers', 'Generic', \

@@ -49,7 +49,7 @@ def preprocess_train_test_data():
         data['attack_cat'] = data['attack_cat'].str.strip()
 
         data = data[~data.attack_cat.isin(const.TO_DELETE)]
-        data.drop(columns=const.USELESS_FEATURES_FOR_CATEGORIZE, inplace=True)
+        data.drop(columns=['id'], inplace=True)
         data.rename(columns=lambda x: x.lower(), inplace=True)
         data.to_csv(PATH, index=False)
 
@@ -59,19 +59,28 @@ def format_data(df, is_cat_multiclass, is_model_reccurent=False):
     minmax_scaler = MinMaxScaler(feature_range=(0, 1))
     standard_scaler = StandardScaler()
 
-    if const.TIME in df:
+    if const.TIME in df:  # whole_dataset.csv obsahuje aj cas pre potreby anomaly dat, tu ho netreba
         df = df.drop(const.TIME, axis=1)
-    if 'service' in df:
-        df = df.drop('service', axis=1)
-
-    if is_cat_multiclass and 'label' in df:
+    if is_cat_multiclass:
         df = df.drop('label', axis=1)
-    elif not is_cat_multiclass and 'attack_cat' in df:
+    else:
         df = df.drop('attack_cat', axis=1)
+
+    df_numeric = df.select_dtypes(include=[np.number])
+    df_cat = df.select_dtypes(exclude=[np.number])
+
+    for feature in df_numeric.columns:  # Clamp extreme Values
+        if df_numeric[feature].max() > 10 * df_numeric[feature].median() and df_numeric[feature].max() > 10:
+            df_numeric[feature] = np.where(df_numeric[feature] < df_numeric[feature].quantile(0.95), df_numeric[feature], df_numeric[feature].quantile(0.95))
+
+    for feature in df_cat.columns:  # Reduce the labels in categorical features
+        if df_cat[feature].nunique() > 6:
+            df[feature] = np.where(df[feature].isin(df[feature].value_counts().head().index), df[feature], '-')
 
     x = df.iloc[:, :-1]
     y = label_encoder.fit_transform(df.iloc[:, -1])
 
+    x = pd.get_dummies(x, columns = ['service', 'state', 'proto'])  # One hot encoding
     x = minmax_scaler.fit_transform(x)
     x = standard_scaler.fit_transform(x)
 

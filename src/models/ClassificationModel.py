@@ -49,9 +49,9 @@ class ClassificationModel:
 
         df = pd.read_csv(const.CAT_TRAIN_DATASET_PATH)
         trainX, trainY = format_data(df, self.is_cat_multiclass, self.is_model_reccurent)
-        trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=42)
+        trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=0, stratify=trainY)
 
-        num_categories = df.iloc[:,-1].nunique()
+        num_categories = len(np.unique(trainY))
 
         if num_categories > 2:  
             loss = SparseCategoricalCrossentropy()
@@ -77,8 +77,7 @@ class ClassificationModel:
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'lstm':
             model.add(LSTM(20, return_sequences=True, input_dim=trainX.shape[2]))
-            model.add(LSTM(20, input_dim=trainX.shape[2]))
-            model.add(Dropout(dropout))
+            model.add(LSTM(20, return_sequences=True))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'gru':
             model.add(GRU(blocks, input_dim=trainX.shape[2]))
