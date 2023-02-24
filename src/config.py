@@ -7,7 +7,7 @@ remove_first_attacks = True
 remove_benign_outlier = True
 attack_category = 'All'
 
-models_number = 2
+models_number = 3
 
 ## ANOMALY MODEL CONFIG ##
 an_model_name = 'cnn'

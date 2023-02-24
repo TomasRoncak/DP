@@ -93,7 +93,7 @@ class TimeSeriesDataCreator:
                 data = attack_data.copy()
                 if protocol != 'all':
                     data = data.loc[data['service'] == protocol]
-                data.drop(columns=['service', 'attack_cat'], inplace=True)
+                data.drop(columns=const.USELESS_FEATURES_FOR_TIME_SERIES, inplace=True)
                 self.perform_sliding_window(data)
         print("Vytvorenie dokončené !")
 

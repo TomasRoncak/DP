@@ -23,7 +23,7 @@ radar_plot = False
 ## Category model ##
 category_model = None
 train_cat = False
-predict_cat = False
+predict_cat = True
 
 
 if preprocess_data:
