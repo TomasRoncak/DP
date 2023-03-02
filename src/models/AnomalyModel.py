@@ -20,7 +20,7 @@ from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
 
 import constants as const
-from models.functions import (format_date, get_callbacks,
+from models.functions import (get_callbacks,
                               get_optimizer, get_y_from_generator,
                               load_best_model, format_and_print_collective_anomaly,
                               pretty_print_point_anomaly,
@@ -97,10 +97,11 @@ class AnomalyModel:
         self.model = load_best_model(self.model_number, self.model_name, model_type='an')
         data_generator = self.ts_handler.benign_test_generator
         data_pred = []
+        time = self.ts_handler.time
         
         for i in range(len(data_generator)):
             x, y = data_generator[i]
-            curr_time = self.ts_handler.time[i]
+            curr_time = time[i]
             curr_pred = self.model.predict(x, verbose=0)
             
             err = mse(curr_pred, y)
@@ -120,7 +121,7 @@ class AnomalyModel:
             train_inversed, 
             test_inversed, 
             predict_inversed, 
-            self.ts_handler.time, 
+            time, 
             show_full_data=False
         )
 
@@ -142,14 +143,14 @@ class AnomalyModel:
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
                 break
 
-        attack_real_inversed = self.ts_handler.inverse_transform(data_real, attack_data=True)
+        attack_real_inversed = self.ts_handler.inverse_transform(self.whole_real_data[:i+1], attack_data=True)
         attack_predict_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
 
         self.calculate_regression_metrics(attack_real_inversed, attack_predict_inversed, on_test_set=False)
         self.save_plots(
                 attack_real_inversed, 
                 attack_predict_inversed, 
-                time, 
+                self.ts_handler.attack_time, 
                 is_attack=True
         )
 
