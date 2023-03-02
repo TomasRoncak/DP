@@ -23,7 +23,7 @@ radar_plot = False
 ## Category model ##
 category_model = None
 train_cat = False
-predict_cat = True
+predict_cat = False
 
 
 if preprocess_data:
@@ -119,5 +119,5 @@ if train_cat or predict_cat:
         if anomaly_model is not None:
             category_model.categorize_attacks(
                 on_test_set=False,
-                an_detect_time=anomaly_model.anomaly_detection_time
+                an_detect_time=anomaly_model.an_detection_time
             )
