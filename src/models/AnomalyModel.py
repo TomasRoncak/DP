@@ -160,25 +160,23 @@ class AnomalyModel:
         err = mse(curr_data_pred, curr_data_real)
 
         if err <= threshold:
+            self.normal += 1
             pretty_print_window_ok(curr_time, err)
-            if self.point_anomaly_detected:
-                self.normal += 1
         elif err > threshold:
-            if self.exceeding == 0:
+            if self.exceeding == 0:  # Zaznamenaj prvu bodovu anomaliu
                 self.first_an_detection_time = curr_time
+                self.normal = 0
             self.exceeding += 1
-            self.point_anomaly_detected = True
             self.ts_handler.attack_data_generator.data[i] = curr_data_pred
 
             pretty_print_point_anomaly(err, threshold, curr_time, self.window_size, self.exceeding, self.patience_limit)
 
-        if self.normal == 3 and self.exceeding != 0:  # If after last exceeding comes 3 normals, reset exceeding to 0
-            self.point_anomaly_detected = False
+        if self.normal >= 5:  # If after last exceeding comes 5 normals, reset exceeding to 0
             self.exceeding = 0
-            self.normal = 0
             
         if self.exceeding == self.patience_limit:
             self.exceeding = 0
+            self.normal = 0
             return True
     
     def calculate_anomaly_threshold(self, i):
@@ -262,10 +260,10 @@ class AnomalyModel:
                     ), 
                     fontsize=50
                 )
-                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i] + '_' + str(self.collective_anomaly_count), dpi=400, bbox_inches='tight')
+                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i] + '_' + str(self.collective_anomaly_count), bbox_inches='tight')
             else:
                 plt.title(self.ts_handler.features[i], fontsize=50)
-                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i], dpi=400, bbox_inches='tight')
+                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i], bbox_inches='tight')
             plt.close()
         print('Ukladanie hotové !')
 

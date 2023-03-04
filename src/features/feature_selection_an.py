@@ -113,7 +113,7 @@ def remove_colinearity(df, protocol, labels, window_size, print_steps):
     #fig, ax = plt.subplots(figsize=(8, 6))
     #svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt='.2f', cmap='YlGnBu')
     #figure = svm.get_figure()
-    #figure.savefig(const.CORELLATIONS_PNG_FILE.format(window_size, protocol), dpi=400)
+    #figure.savefig(const.CORELLATIONS_PNG_FILE.format(window_size, protocol))
 
 
 def peak_value_cutoff(df):

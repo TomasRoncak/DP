@@ -135,7 +135,7 @@ def plot_confusion_matrix(y, y_pred, model_number, present_classes, path):
     plt.xlabel('Predikované', fontsize=15)
     plt.ylabel('Skutočné', fontsize=15)
     plt.tight_layout()
-    plt.savefig(path.format(model_number), dpi=400)
+    plt.savefig(path.format(model_number))
 
 
 def pretty_print_detected_attacks(prob):
