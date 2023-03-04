@@ -77,6 +77,7 @@ def load_best_model(model_number, model_name, model_type, is_cat_multiclass=None
         print('{0} model s číslom {1} nebol nájdený!'.format(model_type[is_cat_multiclass], model_number))
         quit()
 
+
 def get_y_from_generator(n_features, gen):
     y = None
     for i in range(len(gen)):
@@ -153,30 +154,22 @@ def pretty_print_detected_attacks(prob):
 
 
 def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding, patience_limit):
-    curr_time = datetime.datetime.strptime(curr_time, const.TIME_FORMAT)
     window_end_time = (curr_time + datetime.timedelta(seconds=window_size)) \
                       .strftime(const.PRETTY_TIME_FORMAT)
     curr_time = curr_time.strftime(const.PRETTY_TIME_FORMAT)
 
     print(bcolors.WARNING + 'Bodová anomália detegovaná v časovom okne {0} - {1}' \
-            .format(curr_time, window_end_time) + bcolors.ENDC, end='- ')
+            .format(curr_time, window_end_time) + bcolors.ENDC, end=' - ')
     print('chyba {0:.2f} prekročila prah {1:.2f} (trpezlivosť={2}/{3})' \
             .format(err, threshold, exceeding, patience_limit))
 
 
-def format_and_print_collective_anomaly(first_an_detection_time, curr_time):
-    start_time = format_date(first_an_detection_time)
-    stop_time = format_date(curr_time)
-    
+def format_and_print_collective_anomaly(start_time, stop_time):
     print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + 
         ': Kolektívna anomália detegovaná v okne {0} až {1}!' \
         .format(start_time.strftime(const.PRETTY_TIME_FORMAT), stop_time.strftime(const.PRETTY_TIME_FORMAT))
     )
     return (start_time, stop_time)
-
-
-def format_date(time):
-    return datetime.datetime.strptime('2015-' + time + ':00', const.FULL_TIME_FORMAT)
 
 
 def pretty_print_window_ok(curr_time, err):

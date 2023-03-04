@@ -3,7 +3,11 @@ import math
 import sys
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.dates as mdates
+
 import numpy as np
+from copy import copy
 
 import wandb
 
@@ -37,6 +41,7 @@ class AnomalyModel:
         self.patience_limit = patience_limit
         self.window_size = window_size
         self.point_anomaly_detected = False
+        self.collective_anomaly_count = 0
         self.an_detection_time = ()
         self.exceeding = 0
         self.normal = 0
@@ -97,11 +102,10 @@ class AnomalyModel:
         self.model = load_best_model(self.model_number, self.model_name, model_type='an')
         data_generator = self.ts_handler.benign_test_generator
         data_pred = []
-        time = self.ts_handler.time
         
         for i in range(len(data_generator)):
             x, y = data_generator[i]
-            curr_time = time[i]
+            curr_time = self.ts_handler.time[i]
             curr_pred = self.model.predict(x, verbose=0)
             
             err = mse(curr_pred, y)
@@ -121,7 +125,7 @@ class AnomalyModel:
             train_inversed, 
             test_inversed, 
             predict_inversed, 
-            time, 
+            self.ts_handler.time, 
             show_full_data=False
         )
 
@@ -129,6 +133,7 @@ class AnomalyModel:
         self.model = load_best_model(self.model_number, self.model_name, model_type='an')
         data_generator = self.ts_handler.attack_data_generator  # Data from the beginnng of dataset
         data_pred = []
+        real_data_inversed = self.ts_handler.inverse_transform(self.whole_real_data, attack_data=True)
         
         for i in range(len(data_generator)):
             x, y = data_generator[i]
@@ -140,19 +145,12 @@ class AnomalyModel:
             data_pred.append(curr_pred[0])
 
             if self.is_anomaly_detected(curr_pred, y, curr_time, i):
+                self.collective_anomaly_count += 1
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
-                break
+                pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
+                self.save_plots(real_data_inversed, pred_data_inversed)
 
-        attack_real_inversed = self.ts_handler.inverse_transform(self.whole_real_data[:i+1], attack_data=True)
-        attack_predict_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
-
-        self.calculate_regression_metrics(attack_real_inversed, attack_predict_inversed, on_test_set=False)
-        self.save_plots(
-                attack_real_inversed, 
-                attack_predict_inversed, 
-                self.ts_handler.attack_time, 
-                is_attack=True
-        )
+        self.calculate_regression_metrics(real_data_inversed, pred_data_inversed, on_test_set=False)
 
     def is_anomaly_detected(self, curr_data_pred, curr_data_real, curr_time, i):
         if not i:  # No data yet to detect on
@@ -170,18 +168,21 @@ class AnomalyModel:
                 self.first_an_detection_time = curr_time
             self.exceeding += 1
             self.point_anomaly_detected = True
+            self.ts_handler.attack_data_generator.data[i] = curr_data_pred
 
             pretty_print_point_anomaly(err, threshold, curr_time, self.window_size, self.exceeding, self.patience_limit)
 
-        if self.normal == 5 and self.exceeding != 0:  # If after last exceeding comes 5 normals, reset exceeding to 0
+        if self.normal == 3 and self.exceeding != 0:  # If after last exceeding comes 3 normals, reset exceeding to 0
             self.point_anomaly_detected = False
             self.exceeding = 0
             self.normal = 0
             
-        return self.exceeding == self.patience_limit
+        if self.exceeding == self.patience_limit:
+            self.exceeding = 0
+            return True
     
     def calculate_anomaly_threshold(self, i):
-        q1, q3 = np.percentile(self.whole_real_data[:i], [25, 95])  # Calculate threshold according to whole data to the time point of "i"
+        q1, q3 = np.percentile(self.whole_real_data[:i], [25, 96])  # Calculate threshold according to whole data to the time point of "i"
         iqr = q3 - q1
         upper_bound = q3 + (1.5 * iqr)
         return upper_bound
@@ -221,29 +222,50 @@ class AnomalyModel:
         pred_data[:, :] = np.nan                            # First : stands for first and the second : for the second dimension
         pred_data[begin:end, :] = prediction_data           # Insert predicted values
 
-        self.save_plots(whole_data, pred_data, time, is_attack=False)
+        self.save_plots(whole_data, pred_data, time=time)
 
-    def save_plots(self, train_data, prediction_data, time, is_attack):
+    def save_plots(self, real_data, prediction_data, time=None):
         print('Ukladám grafy ...')
-        fig = const.MODEL_PREDICTIONS_ATTACK_PATH if is_attack \
-              else const.MODEL_PREDICTIONS_BENIGN_PATH
+        if self.an_detection_time != ():
+            fig = const.MODEL_PREDICTIONS_ATTACK_PATH
+            time = self.ts_handler.attack_time
+            start = mdates.date2num(self.an_detection_time[0])
+            end = mdates.date2num(self.an_detection_time[1])
+            width = end - start
+            rect = patches.Rectangle((start, 0), width, 5000, color='red')
+        else:
+            fig = const.MODEL_PREDICTIONS_BENIGN_PATH
     
         for i in range(self.ts_handler.n_features): 
-            train_feature = [item[i] for item in train_data]
+            real_feature = [item[i] for item in real_data]
             predict_feature = [item[i] for item in prediction_data]
 
             ax = plt.gca()
             ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: format(int(x), ',')))
+            if self.an_detection_time != ():
+                ax.add_patch(copy(rect))
+            ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=30))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H-%M'))
 
-            plt.rcParams["figure.figsize"] = (45, 15)
-            plt.plot(time[:len(train_feature)], train_feature, label ='Realita', color="#017b92", linewidth=3)
-            plt.plot(predict_feature, label ='Predikcia', color="#f97306", linewidth=3) 
-            plt.xticks(time[::30], rotation='vertical', fontsize=40)
+            plt.rcParams['figure.figsize'] = (45, 15)
+            plt.plot(time[:len(real_feature)], real_feature, label ='Realita', color="#017b92", linewidth=3)
+            plt.plot(time[:len(predict_feature)], predict_feature, label ='Predikcia', color="#f97306", linewidth=3) 
+            plt.xticks(rotation='vertical', fontsize=40)
             plt.yticks(fontsize=40)
             plt.tight_layout()
-            plt.title(self.ts_handler.features[i], fontsize=50)
             plt.legend(fontsize=40)
-            plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i], dpi=400, bbox_inches='tight')
+            if self.an_detection_time != ():
+                plt.title('{0} - ({1} - {2})'.format(
+                    self.ts_handler.features[i], 
+                    self.an_detection_time[0].strftime('%m-%d %H:%M'), 
+                    self.an_detection_time[1].strftime('%m-%d %H:%M')
+                    ), 
+                    fontsize=50
+                )
+                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i] + '_' + str(self.collective_anomaly_count), dpi=400, bbox_inches='tight')
+            else:
+                plt.title(self.ts_handler.features[i], fontsize=50)
+                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i], dpi=400, bbox_inches='tight')
             plt.close()
         print('Ukladanie hotové !')
 

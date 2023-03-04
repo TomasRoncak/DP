@@ -46,7 +46,6 @@ def merge_features_to_dataset(window_size):
         if conf.remove_first_attacks:
             data = data.iloc[40:]
         
-        data[const.TIME] = data[const.TIME].apply(lambda x: x[5:16])
         data.to_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_type), index=False)
     
     print("Vytvorenie dokončené !")

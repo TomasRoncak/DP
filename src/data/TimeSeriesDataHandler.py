@@ -1,5 +1,6 @@
 import os 
 import sys
+import datetime
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'    # Hide info messages in terminal
 
@@ -27,8 +28,8 @@ class TimeSeriesDataHandler:
             self.df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
             self.df.dropna(inplace=True)
         else:
-            self.df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, 'Normal'))
-            self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat))
+            self.df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, 'Normal'), parse_dates=[const.TIME])
+            self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat), parse_dates=[const.TIME])
 
             self.attack_labels = self.attack_df['label_all']
             self.attack_df.drop('label_all', axis=1, inplace=True)
@@ -73,8 +74,13 @@ class TimeSeriesDataHandler:
         return df[:train_size], df[train_size:]
 
     def generate_time_series(self, n_input):
-        self.time = self.df[const.TIME][n_input:].to_numpy()
-        self.attack_time = self.attack_df[const.TIME][n_input:].to_numpy()
+        self.time = list(self.df[const.TIME].to_list())[n_input:]
+        self.attack_time = self.attack_df[const.TIME][n_input:]
+
+        januar_time = list(filter(lambda x: x.month == 1, self.attack_time))
+        februar_time = list(filter(lambda x: x.month == 2, self.attack_time))
+        februar_time = [time.replace(month=1, day=23) + datetime.timedelta(minutes=38) for time in februar_time]
+        self.attack_time = januar_time + februar_time
 
         self.df.drop(const.TIME, axis=1, inplace=True)
         self.attack_df.drop(const.TIME, axis=1, inplace=True)
