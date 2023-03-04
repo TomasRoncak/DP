@@ -1,5 +1,6 @@
 import datetime
 import os
+import joblib
 import sys
 from collections import Counter
 
@@ -65,7 +66,9 @@ def get_callbacks(model_number, model_name, patience, is_cat_multiclass=None):
 def load_best_model(model_number, model_name, model_type, is_cat_multiclass=None):
     dir = const.save_model[is_cat_multiclass].format(model_number, model_name)
 
-    if os.path.exists(dir):
+    if model_name == 'rf':
+        return joblib.load(dir + const.RANDOM_FOREST_FILE)
+    elif os.path.exists(dir):
         sub_dirs = os.listdir(dir)
         sub_dirs.sort()
         return load_model(dir + sub_dirs[0])

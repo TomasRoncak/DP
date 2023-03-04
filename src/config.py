@@ -11,7 +11,7 @@ models_number = 3
 
 ## ANOMALY MODEL CONFIG ##
 an_model_name = 'cnn'
-an_epochs = 300
+an_epochs = 75
 an_activation = 'relu'
 radar_plot_format = 'svg'
 

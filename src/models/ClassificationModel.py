@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 import wandb
+import joblib
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
@@ -15,6 +16,7 @@ from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
 from keras.losses import BinaryCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Sequential
 from preprocess_data import format_data
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
@@ -89,6 +91,13 @@ class ClassificationModel:
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
+        elif self.model_name == 'rf':
+            rf = RandomForestRegressor(n_estimators = 1000, random_state = 42)
+            rf.fit(trainX, trainY)
+            path = const.save_model[self.is_cat_multiclass].format(self.model_number, self.model_name)
+            Path(path).mkdir(parents=True, exist_ok=True)
+            joblib.dump(rf, path + const.RANDOM_FOREST_FILE)
+            return
         else:
             raise Exception('Nepodporovaný typ modelu !')
 
@@ -129,7 +138,10 @@ class ClassificationModel:
             windowed_data = df[(df[const.TIME] >= an_detect_time[0]) & (df[const.TIME] <= an_detect_time[1])]
             x, y = format_data(windowed_data, self.is_model_reccurent)
         
-        prob = self.model.predict(x, verbose=0)
+        if self.model_name != 'rf':
+            prob = self.model.predict(x, verbose=0)
+        else:
+            prob = self.model.predict(x)
 
         self.calculate_classification_metrics(y, prob, on_test_set)
         if not on_test_set:
