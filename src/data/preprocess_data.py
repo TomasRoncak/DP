@@ -17,6 +17,8 @@ def preprocess_whole_data():
                                        const.UNPROCESSED_PARTIAL_CSV_PATH.format(4)]), ignore_index=True)
 
     data[const.TIME] = pd.to_datetime(data['Stime'], unit='s')
+    data[const.TIME] = data[const.TIME].dt.floor('Min')
+
     data['tc_flw_http_mthd'].fillna(value=data.tc_flw_http_mthd.mean(), inplace=True)
     data.rename(columns={'tc_flw_http_mthd': 'ct_flw_http_mthd'}, inplace=True)
 
@@ -24,7 +26,7 @@ def preprocess_whole_data():
     data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
 
     data['attack_cat'].fillna('Normal', inplace=True)
-    data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
+    data['attack_cat'].replace('Backdoors', 'Backdoor', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
 
     data = data[~data.attack_cat.isin(const.TO_DELETE)]
@@ -49,8 +51,8 @@ def preprocess_train_test_data():
         data['attack_cat'] = data['attack_cat'].str.strip()
 
         data = data[~data.attack_cat.isin(const.TO_DELETE)]
-        data.drop(columns=['id'], inplace=True)
-        data.rename(columns=lambda x: x.lower(), inplace=True)
+        data.drop(columns=const.USELESS_FEATURES_FOR_CLASSIFICATION, inplace=True)
+        data.rename(columns=lambda x: x.lower(), inplace=True) 
         data.to_csv(PATH, index=False)
 
 
@@ -66,6 +68,19 @@ def format_data(df, is_cat_multiclass, is_model_reccurent=False):
     else:
         df = df.drop('attack_cat', axis=1)
 
+    x = df.iloc[:, :-1]
+    x = minmax_scaler.fit_transform(x)
+    x = standard_scaler.fit_transform(x)
+
+    y = label_encoder.fit_transform(df.iloc[:, -1])
+
+    if is_model_reccurent:  # Reshape -> [samples, time steps, features]
+        x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
+
+    return x, y
+
+
+def clamp_and_reduce_values(df):
     df_numeric = df.select_dtypes(include=[np.number])
     df_cat = df.select_dtypes(exclude=[np.number])
 
@@ -76,18 +91,6 @@ def format_data(df, is_cat_multiclass, is_model_reccurent=False):
     for feature in df_cat.columns:  # Reduce the labels in categorical features
         if df_cat[feature].nunique() > 6:
             df[feature] = np.where(df[feature].isin(df[feature].value_counts().head().index), df[feature], '-')
-
-    x = df.iloc[:, :-1]
-    y = label_encoder.fit_transform(df.iloc[:, -1])
-
-    x = pd.get_dummies(x, columns = ['service', 'state', 'proto'])  # One hot encoding
-    x = minmax_scaler.fit_transform(x)
-    x = standard_scaler.fit_transform(x)
-
-    if is_model_reccurent:  # Reshape -> [samples, time steps, features]
-        x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
-
-    return x, y
 
 
 def get_classes():

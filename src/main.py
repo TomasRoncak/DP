@@ -56,35 +56,6 @@ if train_an or predict_an or radar_plot:
         conf.patience_anomaly_limit
     )
 
-    if train_an:
-        if not conf.run_wandb_sweep:
-            anomaly_model.train_anomaly_model(
-                conf.learning_rate,
-                conf.optimizer,
-                conf.early_stop_patience,
-                conf.an_epochs,
-                conf.dropout_rate,
-                conf.blocks,
-                conf.an_activation,
-                conf.momentum
-            )
-        else:
-            anomaly_model.run_sweep(
-                conf.an_model_name,
-                conf.n_steps,
-                conf.early_stop_patience,
-                conf.blocks,
-                conf.sweep_config_random
-            )
-    if predict_an:
-        anomaly_model.predict_on_benign_ts()
-        anomaly_model.predict_on_attack_ts()
-    
-    if radar_plot:
-        create_radar_plot(ts_handler.features, conf.models_number, on_test_set=True, pic_format=conf.radar_plot_format)
-        create_radar_plot(ts_handler.features, conf.models_number, on_test_set=False, pic_format=conf.radar_plot_format)
-
-
 if train_cat or predict_cat:
     category_model = ClassificationModel(
         conf.models_number, 
@@ -92,32 +63,60 @@ if train_cat or predict_cat:
         conf.is_cat_multiclass
     )
 
-    if train_cat:
-        if not conf.run_wandb_sweep:
-            category_model.train_categorical_model(
-                conf.learning_rate,
-                conf.optimizer,
-                conf.early_stop_patience,
-                conf.cat_epochs,
-                conf.cat_batch_size,
-                conf.dropout_rate,
-                conf.cat_activation,
-                conf.momentum,
-                conf.blocks
-            )
-        else:
-            category_model.run_sweep(
-                conf.cat_model_name,
-                conf.early_stop_patience,
-                conf.sweep_config_random
-            )
-    if predict_cat:
-        category_model.categorize_attacks(
-            on_test_set=True,
-            an_detect_time=None
+if train_an:
+    if not conf.run_wandb_sweep:
+        anomaly_model.train_anomaly_model(
+            conf.learning_rate,
+            conf.optimizer,
+            conf.early_stop_patience,
+            conf.an_epochs,
+            conf.dropout_rate,
+            conf.blocks,
+            conf.an_activation,
+            conf.momentum
         )
-        if anomaly_model is not None:
-            category_model.categorize_attacks(
-                on_test_set=False,
-                an_detect_time=anomaly_model.an_detection_time
-            )
+    else:
+        anomaly_model.run_sweep(
+            conf.an_model_name,
+            conf.n_steps,
+            conf.early_stop_patience,
+            conf.blocks,
+            conf.sweep_config_random
+        )
+if predict_an:
+    #anomaly_model.predict_on_benign_ts()
+    anomaly_model.predict_on_attack_ts()
+
+if radar_plot:
+    create_radar_plot(ts_handler.features, conf.models_number, on_test_set=True, pic_format=conf.radar_plot_format)
+    create_radar_plot(ts_handler.features, conf.models_number, on_test_set=False, pic_format=conf.radar_plot_format)
+
+if train_cat:
+    if not conf.run_wandb_sweep:
+        category_model.train_categorical_model(
+            conf.learning_rate,
+            conf.optimizer,
+            conf.early_stop_patience,
+            conf.cat_epochs,
+            conf.cat_batch_size,
+            conf.dropout_rate,
+            conf.cat_activation,
+            conf.momentum,
+            conf.blocks
+        )
+    else:
+        category_model.run_sweep(
+            conf.cat_model_name,
+            conf.early_stop_patience,
+            conf.sweep_config_random
+        )
+if predict_cat:
+    category_model.categorize_attacks(
+        on_test_set=True,
+        an_detect_time=None
+    )
+    if anomaly_model is not None:
+        category_model.categorize_attacks(
+            on_test_set=False,
+            an_detect_time=anomaly_model.an_detection_time
+        )

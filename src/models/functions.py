@@ -138,19 +138,23 @@ def plot_confusion_matrix(y, y_pred, model_number, present_classes, path):
     plt.savefig(path.format(model_number))
 
 
-def pretty_print_detected_attacks(prob):
-    classes = get_filtered_classes()
-    res_list = list(Counter(np.argmax(prob, axis=-1)).items())
-    res_list.sort(key=lambda a: a[1], reverse=True)
-    res = [(classes[x[0]], x[1]) for x in res_list]
-
+def pretty_print_detected_attacks(prob, is_multiclass):
     print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + ': Časové okno obsahuje útoky na sieť!')
-    print(bcolors.BOLD + 'Detegované kategórie útokov:' + bcolors.ENDC)
-    
-    for x in res:
-        if x[0] == 'Normal':
-            continue
-        print('{0} ({1}x)'.format(x[0], x[1]))
+    if is_multiclass:
+        classes = get_filtered_classes()
+        res_list = list(Counter(np.argmax(prob, axis=-1)).items())
+        res_list.sort(key=lambda a: a[1], reverse=True)
+        res = [(classes[x[0]], x[1]) for x in res_list]
+        
+        print(bcolors.BOLD + 'Detegované kategórie útokov:' + bcolors.ENDC)
+        for x in res:
+            if x[0] == 'Normal':
+                continue
+            print('{0} ({1}x)'.format(x[0], x[1]))
+    else:
+        y_pred = np.round(prob, 0)
+        print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + \
+            ': Bolo detegovaných {0} neznámych útokov!'.format((y_pred == 1).sum()))
 
 
 def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding, patience_limit):
@@ -174,6 +178,10 @@ def format_and_print_collective_anomaly(start_time, stop_time):
 
 def pretty_print_window_ok(curr_time, err):
     print('Okno {0} - chyba {1:.2f} '.format(curr_time, err) + bcolors.OKGREEN + 'OK' + bcolors.ENDC)
+
+
+def parse_date_as_timestamp(date):
+    return [pd.Timestamp(one_date) for one_date in date]
 
 
 def create_radar_plot(features, model_number, on_test_set, pic_format):

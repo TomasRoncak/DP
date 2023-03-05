@@ -23,6 +23,7 @@ from sklearn.model_selection import train_test_split
 import constants as const
 from models.functions import (get_callbacks, get_filtered_classes,
                               get_optimizer, load_best_model,
+                              parse_date_as_timestamp,
                               plot_confusion_matrix, plot_roc_auc,
                               pretty_print_detected_attacks)
 
@@ -35,7 +36,8 @@ class ClassificationModel:
         self.is_model_reccurent = self.model_name in ['lstm', 'gru']
         self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
                           if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
-        
+        self.whole_data = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
+
     def train_categorical_model(
         self,
         learning_rate,
@@ -134,8 +136,7 @@ class ClassificationModel:
             print('Časové okno pre klasifikáciu nebolo nájdené !')
             return
         else:
-            df = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME])
-            windowed_data = df[(df[const.TIME] >= an_detect_time[0]) & (df[const.TIME] <= an_detect_time[1])]
+            windowed_data = self.whole_data[(self.whole_data[const.TIME] >= an_detect_time[0]) & (self.whole_data[const.TIME] <= an_detect_time[1])]
             x, y = format_data(windowed_data, self.is_model_reccurent)
         
         if self.model_name != 'rf':
@@ -145,7 +146,7 @@ class ClassificationModel:
 
         self.calculate_classification_metrics(y, prob, on_test_set)
         if not on_test_set:
-            pretty_print_detected_attacks(prob)
+            pretty_print_detected_attacks(prob, self.is_cat_multiclass)
 
     def calculate_classification_metrics(self, y, prob, on_test_set):
         Path(const.metrics.path[on_test_set] \

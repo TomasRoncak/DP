@@ -74,7 +74,7 @@ class TimeSeriesDataHandler:
         return df[:train_size], df[train_size:]
 
     def generate_time_series(self, n_input):
-        self.time = list(self.df[const.TIME].to_list())[n_input:]
+        self.time = list(self.df[const.TIME])[n_input:]
         self.attack_time = self.attack_df[const.TIME][n_input:]
 
         januar_time = list(filter(lambda x: x.month == 1, self.attack_time))

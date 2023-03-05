@@ -74,8 +74,9 @@ MODEL_PREDICTIONS_ATTACK_PATH = WHOLE_ANOMALY_MODEL_PATH + '{1}/' + PREDICTIONS_
 
 
 ## OTHERS ##
-USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime']
-USELESS_FEATURES_FOR_TIME_SERIES = ['service', 'state', 'proto', 'attack_cat', 'dur', 'ct_ftp_cmd']
+USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', \
+                                     'dur', 'state', 'proto', 'ct_ftp_cmd']
+USELESS_FEATURES_FOR_CLASSIFICATION = ['id', 'rate', 'service', 'proto', 'state', 'ct_ftp_cmd']
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 ATTACK_CATEGORIES = ['Analysis', 'Backdoor', 'DoS', 'Exploits', 'Fuzzers', 'Generic', \
@@ -113,9 +114,9 @@ metrics['path']    = {True:  METRICS_CLASSIFICATION_TEST_FOLDER_PATH,
 metrics['report']  = {True:  METRICS_CLASSIFICATION_TEST_FOLDER_PATH + REPORT_FILE, 
                       False: METRICS_CLASSIFICATION_WINDOW_FOLDER_PATH + REPORT_FILE}
 metrics['conf_m']  = {True:  METRICS_CLASSIFICATION_TEST_FOLDER_PATH + CONFUSION_MATRIX_FILE, 
-                      False: METRICS_CLASSIFICATION_WINDOW_FOLDER_PATH + TIME_WINDOW_SET_FOLDER + CONFUSION_MATRIX_FILE}
+                      False: METRICS_CLASSIFICATION_WINDOW_FOLDER_PATH + CONFUSION_MATRIX_FILE}
 metrics['roc_auc'] = {True:  METRICS_CLASSIFICATION_TEST_FOLDER_PATH + ROC_CURVE_FILE, 
-                      False: METRICS_CLASSIFICATION_WINDOW_FOLDER_PATH + TIME_WINDOW_SET_FOLDER + ROC_CURVE_FILE}
+                      False: METRICS_CLASSIFICATION_WINDOW_FOLDER_PATH + ROC_CURVE_FILE}
 metrics = dotdict(metrics)
 
 save_model = {

@@ -1,13 +1,12 @@
 import csv
 import math
 import sys
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import matplotlib.dates as mdates
-
-import numpy as np
 from copy import copy
+
+import matplotlib.dates as mdates
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
 
 import wandb
 
@@ -24,9 +23,9 @@ from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
 
 import constants as const
-from models.functions import (get_callbacks,
-                              get_optimizer, get_y_from_generator,
-                              load_best_model, format_and_print_collective_anomaly,
+from models.functions import (format_and_print_collective_anomaly,
+                              get_callbacks, get_optimizer,
+                              get_y_from_generator, load_best_model,
                               pretty_print_point_anomaly,
                               pretty_print_window_ok)
 
@@ -40,7 +39,6 @@ class AnomalyModel:
         self.model_name = model_name
         self.patience_limit = patience_limit
         self.window_size = window_size
-        self.point_anomaly_detected = False
         self.collective_anomaly_count = 0
         self.an_detection_time = ()
         self.exceeding = 0
