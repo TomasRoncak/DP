@@ -75,12 +75,7 @@ class TimeSeriesDataHandler:
 
     def generate_time_series(self, n_input):
         self.time = list(self.df[const.TIME])[n_input:]
-        self.attack_time = self.attack_df[const.TIME][n_input:]
-
-        januar_time = list(filter(lambda x: x.month == 1, self.attack_time))
-        februar_time = list(filter(lambda x: x.month == 2, self.attack_time))
-        februar_time = [time.replace(month=1, day=23) + datetime.timedelta(minutes=38) for time in februar_time]
-        self.attack_time = januar_time + februar_time
+        self.attack_time = list(self.attack_df[const.TIME])[n_input:]
 
         self.df.drop(const.TIME, axis=1, inplace=True)
         self.attack_df.drop(const.TIME, axis=1, inplace=True)

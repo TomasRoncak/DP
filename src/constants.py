@@ -75,13 +75,11 @@ MODEL_PREDICTIONS_ATTACK_PATH = WHOLE_ANOMALY_MODEL_PATH + '{1}/' + PREDICTIONS_
 
 ## OTHERS ##
 USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime', 'Ltime', \
-                                     'dur', 'state', 'proto', 'ct_ftp_cmd']
+                                     'state', 'proto', 'ct_ftp_cmd']
 USELESS_FEATURES_FOR_CLASSIFICATION = ['id', 'rate', 'service', 'proto', 'state', 'ct_ftp_cmd']
 
 PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
-ATTACK_CATEGORIES = ['Analysis', 'Backdoor', 'DoS', 'Exploits', 'Fuzzers', 'Generic', \
-                     'Reconnaissance', 'Shellcode', 'Worms', 'Normal', 'All']
-TO_DELETE = ['Analysis', 'Backdoor', 'Shellcode', 'Worms']
+ATTACK_CATEGORIES = ['DoS', 'Exploits', 'Fuzzers', 'Generic', 'Reconnaissance', 'Normal', 'All']  # WAS REMOVED -> 'Analysis', 'Backdoor', 'Shellcode', 'Worms'
 
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
 REAL_DATASET_FEATURES = ['conn_count_uid_in', 'conn_count_uid_out', 'dns_count_uid_out', \

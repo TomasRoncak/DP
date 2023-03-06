@@ -36,7 +36,7 @@ if create_time_series_data:
 
 
 if select_features:
-    select_features_for_an(conf.window_size, print_steps=True)
+    select_features_for_an(conf.window_size, print_steps=False)
     merge_features_to_dataset(conf.window_size)
 
 

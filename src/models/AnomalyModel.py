@@ -146,8 +146,9 @@ class AnomalyModel:
                 self.collective_anomaly_count += 1
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
                 pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
-                self.save_plots(real_data_inversed, pred_data_inversed)
-
+                #self.save_plots(real_data_inversed, pred_data_inversed)
+                break
+            
         self.calculate_regression_metrics(real_data_inversed, pred_data_inversed, on_test_set=False)
 
     def is_anomaly_detected(self, curr_data_pred, curr_data_real, curr_time, i):

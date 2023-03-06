@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import datetime
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
@@ -18,6 +19,11 @@ def preprocess_whole_data():
 
     data[const.TIME] = pd.to_datetime(data['Stime'], unit='s')
     data[const.TIME] = data[const.TIME].dt.floor('Min')
+    
+    januar_time = list(filter(lambda x: x.month == 1, data[const.TIME]))
+    februar_time = list(filter(lambda x: x.month == 2, data[const.TIME]))
+    februar_time = [time.replace(month=1, day=23) + datetime.timedelta(minutes=38) for time in februar_time]
+    data[const.TIME] = januar_time + februar_time
 
     data['tc_flw_http_mthd'].fillna(value=data.tc_flw_http_mthd.mean(), inplace=True)
     data.rename(columns={'tc_flw_http_mthd': 'ct_flw_http_mthd'}, inplace=True)
@@ -29,7 +35,6 @@ def preprocess_whole_data():
     data['attack_cat'].replace('Backdoors', 'Backdoor', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
 
-    data = data[~data.attack_cat.isin(const.TO_DELETE)]
     data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
     data.rename(columns=lambda x: x.lower(), inplace=True)
     data.to_csv(const.WHOLE_DATASET_PATH, index=False)
@@ -63,6 +68,8 @@ def format_data(df, is_cat_multiclass, is_model_reccurent=False):
 
     if const.TIME in df:  # whole_dataset.csv obsahuje aj cas pre potreby anomaly dat, tu ho netreba
         df = df.drop(const.TIME, axis=1)
+    if 'service' in df:
+        df = df.drop('service', axis=1)  # dataset whole_dataset.csv obsahuje 'service' na vytvaranie casovych radov
     if is_cat_multiclass:
         df = df.drop('label', axis=1)
     else:

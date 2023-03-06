@@ -32,9 +32,6 @@ class TimeSeriesDataCreator:
                 relevant_protocols.append(protocol)
         return relevant_protocols
 
-    def time_from_string(self, time_str):
-        return datetime.datetime.strptime(time_str, const.FULL_TIME_FORMAT)
-
     def create_csv(self, data):
         Path(const.PROCESSED_ANOMALY_PROTOCOL_PATH \
             .format(self.window_length, self.attack_cat, self.current_protocol)) \
@@ -63,16 +60,9 @@ class TimeSeriesDataCreator:
 
     def perform_sliding_window(self, data):  
         window_length = datetime.timedelta(seconds=self.window_length)
-        #current_time, end_time = data[const.TIME].agg(['min', 'max'])[['min', 'max']]
-        curr_time = self.time_from_string('2015-01-22 11:45:00')
-        end_time = self.time_from_string('2015-02-18 12:20:00')
-
-        tmp_1 = self.time_from_string('2015-01-23  01:00:00')   # Specific for UNSW-NB15 dataset
-        tmp_2 = self.time_from_string('2015-02-18  00:00:00')
+        curr_time, end_time = data[const.TIME].agg(['min', 'max'])[['min', 'max']]
 
         while curr_time < end_time:
-            if curr_time > tmp_1 and curr_time < tmp_2:   # Skip days where wasn't any traffic
-                curr_time = self.time_from_string('2015-02-18  00:25:00')
             sliding_window = data[(data[const.TIME] >= curr_time) & (data[const.TIME] <= curr_time + window_length)]
             self.compute_window_statistics(sliding_window, curr_time)
             curr_time += window_length
@@ -97,11 +87,11 @@ class TimeSeriesDataCreator:
                 self.perform_sliding_window(data)
         print("Vytvorenie dokončené !")
 
-        self.save_ts_plots(const.ATTACK_CATEGORIES)
+        self.save_ts_plots()
 
-    def save_ts_plots(self, attack_cat): 
+    def save_ts_plots(self):
         print('Ukladám grafy ...')
-        for attack in attack_cat:
+        for attack in const.ATTACK_CATEGORIES:
             for protocol in self.relevant_protocols:
                 DATASET_FILE_NAME = const.TS_DATASET_BY_CATEGORY_PATH.format(self.window_length, attack, protocol) 
                 PLOTS_PATH = const.PROTOCOL_PLOTS_PATH.format(self.window_length, attack, protocol)
@@ -109,9 +99,12 @@ class TimeSeriesDataCreator:
         print('Ukladanie hotové !')
 
     def plot(self, path, dataset_file_name):
-        Path(path).mkdir(parents=True, exist_ok=True)
-        data = pd.read_csv(dataset_file_name)
+        try:
+            data = pd.read_csv(dataset_file_name)
+        except:
+            return
 
+        Path(path).mkdir(parents=True, exist_ok=True)
         for feature in data.columns:
             if feature == const.TIME or (data[feature] == 0).all():   # If column contains only zeroes
                 continue

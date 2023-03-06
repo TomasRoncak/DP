@@ -1,5 +1,6 @@
 import json
 import sys
+import os
 
 from pathlib import Path
 import random
@@ -27,13 +28,11 @@ def merge_features_to_dataset(window_size):
                                    )
             benign_protocol_data = handle_outliers(benign_protocol_data, with_attacks=False)
 
-            if attack_type != 'Normal':
-                protocol_data = pd.read_csv(
-                                    const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, attack_type, protocol), 
-                                    usecols = protocol_features[protocol]
-                                )
+            path = const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, attack_type, protocol)
+            if attack_type != 'Normal' and os.path.exists(path):
+                protocol_data = pd.read_csv(path, usecols = protocol_features[protocol])
                 if any(x in protocol_features[protocol] for x in [const.LABEL_SUM, const.TIME]):
-                    combined_data = protocol_data   # Labels and time don't have benign data to append
+                    combined_data = protocol_data   # Labels and time don't have benign data to append so use only protocol_data
                 else:
                     combined_data = benign_protocol_data + protocol_data
             else:
