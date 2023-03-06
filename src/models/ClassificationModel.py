@@ -126,7 +126,7 @@ class ClassificationModel:
         #model.save(const.SAVE_CAT_MODEL_PATH.format(self.model_number, model_name) + 'model.h5')
         run.finish()
 
-    def categorize_attacks(self, on_test_set, an_detect_time):
+    def categorize_attacks(self, an_detect_time=None, on_test_set=False, anomaly_count=None):
         self.model = load_best_model(self.model_number, self.model_name, model_type='cat', is_cat_multiclass=self.is_cat_multiclass)
 
         if on_test_set:
@@ -144,13 +144,13 @@ class ClassificationModel:
         else:
             prob = self.model.predict(x)
 
-        self.calculate_classification_metrics(y, prob, on_test_set)
+        self.calculate_classification_metrics(y, prob, on_test_set, anomaly_count)
         if not on_test_set:
             pretty_print_detected_attacks(prob, self.is_cat_multiclass)
 
-    def calculate_classification_metrics(self, y, prob, on_test_set):
+    def calculate_classification_metrics(self, y, prob, on_test_set, anomaly_count):
         Path(const.metrics.path[on_test_set] \
-            .format(self.model_path, self.model_name)) \
+            .format(self.model_path, self.model_name, anomaly_count)) \
             .mkdir(parents=True, exist_ok=True)
 
         if self.is_cat_multiclass:  # Multiclass classification
@@ -171,13 +171,13 @@ class ClassificationModel:
             print('Predikcia obsahuje len benígnu prevádzku !')
             return
 
-        with open(const.metrics.report[on_test_set].format(self.model_path, self.model_name), 'w') as f:
+        with open(const.metrics.report[on_test_set].format(self.model_path, self.model_name, anomaly_count), 'w') as f:
            f.write(classification_report(y, y_pred, labels=np.unique(y_pred), target_names=present_classes))
         
         plot_confusion_matrix(y, y_pred, self.model_number, present_classes, 
-            const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name))
+            const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, anomaly_count))
         plot_roc_auc(y, prob, self.model_number, self.is_cat_multiclass, 
-            const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name))
+            const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))
 
     def run_sweep(
         self,

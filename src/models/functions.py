@@ -124,6 +124,7 @@ def plot_roc_auc(y_test, y_score, model_number, is_cat_multiclass, path):
     plt.ylabel('Správne pozitívne')
     plt.legend(loc="lower right")
     plt.savefig(path.format(model_number))
+    plt.close()
 
 
 def plot_confusion_matrix(y, y_pred, model_number, present_classes, path):
@@ -136,10 +137,10 @@ def plot_confusion_matrix(y, y_pred, model_number, present_classes, path):
     plt.ylabel('Skutočné', fontsize=15)
     plt.tight_layout()
     plt.savefig(path.format(model_number))
+    plt.close()
 
 
 def pretty_print_detected_attacks(prob, is_multiclass):
-    print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + ': Časové okno obsahuje útoky na sieť!')
     if is_multiclass:
         classes = get_filtered_classes()
         res_list = list(Counter(np.argmax(prob, axis=-1)).items())
@@ -154,7 +155,7 @@ def pretty_print_detected_attacks(prob, is_multiclass):
     else:
         y_pred = np.round(prob, 0)
         print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + \
-            ': Bolo detegovaných {0} neznámych útokov!'.format((y_pred == 1).sum()))
+            ': Znalostný model detegoval v časovom okne {0} podozrivých tokov!'.format((y_pred == 1).sum()))
 
 
 def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding, patience_limit):

@@ -18,12 +18,13 @@ select_features = False
 anomaly_model = None
 train_an = False
 predict_an = False
+predict_an_on_test = False
 radar_plot = False
 
 ## Category model ##
 category_model = None
 train_cat = False
-predict_cat = False
+predict_cat_on_test = False
 
 
 if preprocess_data:
@@ -39,6 +40,7 @@ if select_features:
     select_features_for_an(conf.window_size, print_steps=False)
     merge_features_to_dataset(conf.window_size)
 
+## MODELS OBJECTS INSTANTIATION ##
 
 if train_an or predict_an or radar_plot:
     ts_handler = TimeSeriesDataHandler(
@@ -56,12 +58,14 @@ if train_an or predict_an or radar_plot:
         conf.patience_anomaly_limit
     )
 
-if train_cat or predict_cat:
+if train_cat or predict_cat_on_test or predict_an:
     category_model = ClassificationModel(
         conf.models_number, 
         conf.cat_model_name, 
         conf.is_cat_multiclass
     )
+
+## ANOMALY MODEL ##
 
 if train_an:
     if not conf.run_wandb_sweep:
@@ -83,13 +87,18 @@ if train_an:
             conf.blocks,
             conf.sweep_config_random
         )
+
+if predict_an_on_test:
+    anomaly_model.predict_on_benign_ts()
+
 if predict_an:
-    #anomaly_model.predict_on_benign_ts()
-    anomaly_model.predict_on_attack_ts()
+    anomaly_model.predict_on_attack_ts(category_model.categorize_attacks)
 
 if radar_plot:
     create_radar_plot(ts_handler.features, conf.models_number, on_test_set=True, pic_format=conf.radar_plot_format)
     create_radar_plot(ts_handler.features, conf.models_number, on_test_set=False, pic_format=conf.radar_plot_format)
+
+## CATEGORY MODEL ##
 
 if train_cat:
     if not conf.run_wandb_sweep:
@@ -110,13 +119,6 @@ if train_cat:
             conf.early_stop_patience,
             conf.sweep_config_random
         )
-if predict_cat:
-    category_model.categorize_attacks(
-        on_test_set=True,
-        an_detect_time=None
-    )
-    if anomaly_model is not None:
-        category_model.categorize_attacks(
-            on_test_set=False,
-            an_detect_time=anomaly_model.an_detection_time
-        )
+
+if predict_cat_on_test:
+    category_model.categorize_attacks(on_test_set=True)

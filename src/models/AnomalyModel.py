@@ -45,7 +45,6 @@ class AnomalyModel:
         self.normal = 0
 
         Path(const.MODEL_PREDICTIONS_BENIGN_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
-        Path(const.MODEL_PREDICTIONS_ATTACK_PATH.format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
         Path(const.anomaly_metrics[True].format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
         Path(const.anomaly_metrics[False].format(model_number, model_name)).mkdir(parents=True, exist_ok=True)
 
@@ -127,7 +126,7 @@ class AnomalyModel:
             show_full_data=False
         )
 
-    def predict_on_attack_ts(self):
+    def predict_on_attack_ts(self, categorize_attacks_func):
         self.model = load_best_model(self.model_number, self.model_name, model_type='an')
         data_generator = self.ts_handler.attack_data_generator  # Data from the beginnng of dataset
         data_pred = []
@@ -146,8 +145,8 @@ class AnomalyModel:
                 self.collective_anomaly_count += 1
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
                 pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
-                #self.save_plots(real_data_inversed, pred_data_inversed)
-                break
+                categorize_attacks_func(an_detect_time=self.an_detection_time, anomaly_count=self.collective_anomaly_count)
+                self.save_plots(real_data_inversed, pred_data_inversed)
             
         self.calculate_regression_metrics(real_data_inversed, pred_data_inversed, on_test_set=False)
 
@@ -222,8 +221,11 @@ class AnomalyModel:
         self.save_plots(whole_data, pred_data, time=time)
 
     def save_plots(self, real_data, prediction_data, time=None):
-        print('Ukladám grafy ...')
+        print('Ukladám grafy časových tokov...')
         if self.an_detection_time != ():
+            Path(const.MODEL_PREDICTIONS_ATTACK_PATH \
+                .format(self.model_number, self.model_name, self.collective_anomaly_count)) \
+                .mkdir(parents=True, exist_ok=True)
             fig = const.MODEL_PREDICTIONS_ATTACK_PATH
             time = self.ts_handler.attack_time
             start = mdates.date2num(self.an_detection_time[0])
@@ -245,11 +247,11 @@ class AnomalyModel:
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H-%M'))
 
             plt.rcParams['figure.figsize'] = (45, 15)
-            plt.plot(time[:len(real_feature)], real_feature, label ='Realita', color="#017b92", linewidth=3)
-            plt.plot(time[:len(predict_feature)], predict_feature, label ='Predikcia', color="#f97306", linewidth=3) 
+            plt.plot(time, real_feature, label='Realita', color="#017b92", linewidth=3)
+            plt.plot(time[:len(predict_feature)], predict_feature, label='Predikcia', color="#f97306", linewidth=3) 
             plt.xticks(rotation='vertical', fontsize=40)
             plt.yticks(fontsize=40)
-            plt.tight_layout()
+            #plt.tight_layout()
             plt.legend(fontsize=40)
             if self.an_detection_time != ():
                 plt.title('{0} - ({1} - {2})'.format(
@@ -259,7 +261,7 @@ class AnomalyModel:
                     ), 
                     fontsize=50
                 )
-                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i] + '_' + str(self.collective_anomaly_count), bbox_inches='tight')
+                plt.savefig(fig.format(self.model_number, self.model_name, self.collective_anomaly_count) + self.ts_handler.features[i], bbox_inches='tight')
             else:
                 plt.title(self.ts_handler.features[i], fontsize=50)
                 plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i], bbox_inches='tight')
