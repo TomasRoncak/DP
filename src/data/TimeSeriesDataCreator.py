@@ -1,4 +1,5 @@
 import csv
+import copy
 import datetime
 from os import stat
 from pathlib import Path
@@ -13,6 +14,7 @@ import constants as const
 class TimeSeriesDataCreator:
     def __init__(self, window_length):
         self.dataset = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME])
+        self.start_time, self.end_time = self.dataset[const.TIME].agg(['min', 'max'])[['min', 'max']]
         self.relevant_protocols = self.get_relevant_protocols(self.dataset)
         self.column_names = self.dataset.drop(columns=['service', 'attack_cat']).columns.values.tolist()
         self.column_names.append('connections')
@@ -60,9 +62,9 @@ class TimeSeriesDataCreator:
 
     def perform_sliding_window(self, data):  
         window_length = datetime.timedelta(seconds=self.window_length)
-        curr_time, end_time = data[const.TIME].agg(['min', 'max'])[['min', 'max']]
+        curr_time = copy.deepcopy(self.start_time)
 
-        while curr_time < end_time:
+        while curr_time < self.end_time:
             sliding_window = data[(data[const.TIME] >= curr_time) & (data[const.TIME] <= curr_time + window_length)]
             self.compute_window_statistics(sliding_window, curr_time)
             curr_time += window_length
