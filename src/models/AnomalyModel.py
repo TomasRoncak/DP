@@ -3,6 +3,7 @@ import math
 import sys
 from copy import copy
 
+import matplotlib as mpl
 import matplotlib.dates as mdates
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -17,7 +18,6 @@ from pathlib import Path
 from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
                           MaxPooling1D)
 from keras.models import Sequential
-from matplotlib.ticker import FuncFormatter
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
@@ -241,7 +241,7 @@ class AnomalyModel:
             predict_feature = [item[i] for item in prediction_data]
 
             ax = plt.gca()
-            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: format(int(x), ',')))
+            ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.2f}'))
             if self.an_detection_time != ():
                 ax.add_patch(copy(rect))
             ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=30))
