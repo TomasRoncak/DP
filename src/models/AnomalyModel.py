@@ -227,33 +227,33 @@ class AnomalyModel:
             Path(const.MODEL_PREDICTIONS_ATTACK_PATH \
                 .format(self.model_number, self.model_name, self.collective_anomaly_count)) \
                 .mkdir(parents=True, exist_ok=True)
-            fig = const.MODEL_PREDICTIONS_ATTACK_PATH
+            fig_name = const.MODEL_PREDICTIONS_ATTACK_PATH
             time = self.ts_handler.attack_time
             start = mdates.date2num(self.an_detection_time[0])
             end = mdates.date2num(self.an_detection_time[1])
             width = end - start
             rect = patches.Rectangle((start, 0), width, 5000, color='red')
         else:
-            fig = const.MODEL_PREDICTIONS_BENIGN_PATH
+            fig_name = const.MODEL_PREDICTIONS_BENIGN_PATH
     
         for i in range(self.ts_handler.n_features): 
             real_feature = [item[i] for item in real_data]
             predict_feature = [item[i] for item in prediction_data]
-
-            ax = plt.gca()
-            ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.2f}'))
-            if self.an_detection_time != ():
-                ax.add_patch(copy(rect))
-            ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=30))
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H-%M'))
 
             plt.rcParams['figure.figsize'] = (45, 15)
             plt.plot(time[:len(real_feature)], real_feature, label='Realita', color="#017b92", linewidth=3)
             plt.plot(time[:len(predict_feature)], predict_feature, label='Predikcia', color="#f97306", linewidth=3) 
             plt.xticks(rotation='vertical', fontsize=40)
             plt.yticks(fontsize=40)
-            #plt.tight_layout()
             plt.legend(fontsize=40)
+            
+            ax = plt.gca()
+            ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.2f}'))
+            if self.an_detection_time != ():
+                ax.add_patch(copy(rect))
+            ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=30))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
             if self.an_detection_time != ():
                 plt.title('{0} - ({1} - {2})'.format(
                     self.ts_handler.features[i], 
@@ -262,10 +262,10 @@ class AnomalyModel:
                     ), 
                     fontsize=50
                 )
-                plt.savefig(fig.format(self.model_number, self.model_name, self.collective_anomaly_count) + self.ts_handler.features[i], bbox_inches='tight')
+                plt.savefig(fig_name.format(self.model_number, self.model_name, self.collective_anomaly_count) + self.ts_handler.features[i], bbox_inches='tight')
             else:
                 plt.title(self.ts_handler.features[i], fontsize=50)
-                plt.savefig(fig.format(self.model_number, self.model_name) + self.ts_handler.features[i], bbox_inches='tight')
+                plt.savefig(fig_name.format(self.model_number, self.model_name) + self.ts_handler.features[i], bbox_inches='tight')
             plt.close()
         print('Ukladanie hotové !')
 
