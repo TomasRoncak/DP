@@ -196,7 +196,7 @@ def create_radar_plot(features, model_number, on_test_set, pic_format):
         try:
             metrics = pd.read_csv(const.anomaly_metrics[on_test_set].format(model_number, model_name) + const.REPORT_FILE)
         except:
-            print('Report pre {0} nebol nájdený !'.format(var))
+            print('Report pre {0} modelu {1} nebol nájdený !'.format(var, model_name))
             return
 
         metrics = metrics['mape'].to_list()

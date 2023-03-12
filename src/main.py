@@ -42,7 +42,7 @@ if select_features:
 
 ## MODELS OBJECTS INSTANTIATION ##
 
-if train_an or predict_an or radar_plot:
+if train_an or predict_an or predict_an_on_test or radar_plot:
     ts_handler = TimeSeriesDataHandler(
         conf.use_real_data, 
         conf.window_size, 

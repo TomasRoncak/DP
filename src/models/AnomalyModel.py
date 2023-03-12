@@ -70,11 +70,12 @@ class AnomalyModel:
             model.add(Flatten())
             model.add(Dense(25, activation=activation))
         elif self.model_name == 'lstm':
-            model.add(LSTM(16, input_shape=(n_steps, n_features), return_sequences=True))
-            model.add(LSTM(8))
+            model.add(LSTM(16, activation='relu', input_shape=(n_steps, n_features)))
         elif self.model_name == 'gru':
             model.add(GRU(blocks, input_shape=(n_steps, n_features)))
-        model.add(Dense(n_features))
+        else:
+            raise Exception('Nepodporovaný typ modelu !')
+        model.add(Dense(n_features, activation=activation))
         
         optimizer_fn = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
         model.compile(optimizer=optimizer_fn, loss='mse')
@@ -247,7 +248,7 @@ class AnomalyModel:
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H-%M'))
 
             plt.rcParams['figure.figsize'] = (45, 15)
-            plt.plot(time, real_feature, label='Realita', color="#017b92", linewidth=3)
+            plt.plot(time[:len(real_feature)], real_feature, label='Realita', color="#017b92", linewidth=3)
             plt.plot(time[:len(predict_feature)], predict_feature, label='Predikcia', color="#f97306", linewidth=3) 
             plt.xticks(rotation='vertical', fontsize=40)
             plt.yticks(fontsize=40)
