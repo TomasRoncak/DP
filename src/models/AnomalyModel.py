@@ -8,6 +8,7 @@ import matplotlib.dates as mdates
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 import wandb
 
@@ -21,6 +22,7 @@ from keras.models import Sequential
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as mse
+from tcn import TCN
 
 import constants as const
 from models.functions import (format_and_print_collective_anomaly,
@@ -70,12 +72,19 @@ class AnomalyModel:
             model.add(Flatten())
             model.add(Dense(25, activation=activation))
         elif self.model_name == 'lstm':
-            model.add(LSTM(16, activation='relu', input_shape=(n_steps, n_features)))
+            model.add(LSTM(blocks, activation='relu', input_shape=(n_steps, n_features)))
         elif self.model_name == 'gru':
             model.add(GRU(blocks, input_shape=(n_steps, n_features)))
+        elif self.model_name == 'cnn_lstm':
+            model.add(Conv1D(filters=64, padding="same", kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
+            model.add(MaxPooling1D(pool_size=2))
+            model.add(LSTM(blocks))
+            model.add(Dropout(dropout))
+        elif self.model_name == 'tcn':
+            model.add(TCN(input_shape=(n_steps, n_features), nb_filters=256))
         else:
             raise Exception('Nepodporovaný typ modelu !')
-        model.add(Dense(n_features, activation=activation))
+        model.add(Dense(n_features))
         
         optimizer_fn = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
         model.compile(optimizer=optimizer_fn, loss='mse')
@@ -223,6 +232,7 @@ class AnomalyModel:
 
     def save_plots(self, real_data, prediction_data, time=None):
         print('Ukladám grafy časových tokov...')
+        sns.set_style('darkgrid')
         if self.an_detection_time != ():
             Path(const.MODEL_PREDICTIONS_ATTACK_PATH \
                 .format(self.model_number, self.model_name, self.collective_anomaly_count)) \

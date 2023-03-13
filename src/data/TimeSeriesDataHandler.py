@@ -1,6 +1,5 @@
 import os 
 import sys
-import datetime
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'    # Hide info messages in terminal
 
