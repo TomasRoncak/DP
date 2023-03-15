@@ -7,7 +7,7 @@ remove_first_attacks = True
 remove_benign_outlier = True
 attack_category = 'All'
 
-models_number = 3
+models_number = 4
 
 ## ANOMALY MODEL CONFIG ##
 an_model_name = 'cnn'
@@ -28,7 +28,7 @@ momentum = 0
 early_stop_patience = 10
 patience_anomaly_limit = 2
 dropout_rate = 0.01
-blocks = 12
+blocks = 16
 optimizer = 'adam'
 
 run_wandb_sweep = False

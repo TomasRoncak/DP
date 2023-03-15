@@ -237,12 +237,9 @@ class AnomalyModel:
             Path(const.MODEL_PREDICTIONS_ATTACK_PATH \
                 .format(self.model_number, self.model_name, self.collective_anomaly_count)) \
                 .mkdir(parents=True, exist_ok=True)
-            fig_name = const.MODEL_PREDICTIONS_ATTACK_PATH
             time = self.ts_handler.attack_time
             start = mdates.date2num(self.an_detection_time[0])
-            end = mdates.date2num(self.an_detection_time[1])
-            width = end - start
-            rect = patches.Rectangle((start, 0), width, 5000, color='red')
+            fig_name = const.MODEL_PREDICTIONS_ATTACK_PATH
         else:
             fig_name = const.MODEL_PREDICTIONS_BENIGN_PATH
     
@@ -259,8 +256,6 @@ class AnomalyModel:
             
             ax = plt.gca()
             ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.2f}'))
-            if self.an_detection_time != ():
-                ax.add_patch(copy(rect))
             ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=30))
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
 
@@ -272,6 +267,7 @@ class AnomalyModel:
                     ), 
                     fontsize=50
                 )
+                plt.arrow(start, 0, 0, predict_feature[len(predict_feature)-1]*0.75, facecolor="red", width=0.003, head_length=np.mean(predict_feature)/6, length_includes_head=True)
                 plt.savefig(fig_name.format(self.model_number, self.model_name, self.collective_anomaly_count) + self.ts_handler.features[i], bbox_inches='tight')
             else:
                 plt.title(self.ts_handler.features[i], fontsize=50)
