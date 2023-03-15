@@ -15,9 +15,13 @@ import constants as const
 
 def merge_features_to_dataset(window_size):
     print("Vytváram finálny dataset podľa vybraných atribútov.")
-    Path(const.EXTRACTED_DATASETS_PATH.format(window_size)).mkdir(parents=True, exist_ok=True)
-    protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
-    protocol_features['all'] = [const.LABEL_SUM, const.TIME]
+    try:
+        protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
+        protocol_features['all'] = [const.LABEL_SUM, const.TIME]
+        Path(const.EXTRACTED_DATASETS_PATH.format(window_size)).mkdir(parents=True, exist_ok=True)
+    except:
+        print("Súbor (.json) s vybranými atribútmi nebol nájdený !")
+        return
 
     for attack_type in const.ATTACK_CATEGORIES:
         data = pd.DataFrame()
@@ -91,7 +95,7 @@ def plot_merged_dataset(window_size):
         data = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack))
         
         for feature in data.columns:
-            if feature == const.TIME:
+            if feature == const.TIME or (attack == 'Normal' and feature == 'label_all'):
                 continue
             pd.DataFrame(data, columns=[const.TIME, feature]) \
                 .plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))

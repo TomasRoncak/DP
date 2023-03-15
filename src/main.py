@@ -13,11 +13,12 @@ from models.functions import create_radar_plot
 preprocess_data = False
 create_time_series_data = False
 select_features = False
+create_final_ts_dataset = False
 
 ## Anomaly model ##
 anomaly_model = None
 train_an = False
-predict_an = False
+predict_an = True
 predict_an_on_test = False
 radar_plot = False
 
@@ -38,6 +39,9 @@ if create_time_series_data:
 
 if select_features:
     select_features_for_an(conf.window_size, print_steps=False)
+
+
+if create_final_ts_dataset:
     merge_features_to_dataset(conf.window_size)
 
 ## MODELS OBJECTS INSTANTIATION ##

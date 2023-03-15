@@ -1,11 +1,9 @@
 import csv
 import math
 import sys
-from copy import copy
 
 import matplotlib as mpl
 import matplotlib.dates as mdates
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
