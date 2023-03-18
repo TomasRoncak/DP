@@ -133,8 +133,13 @@ def plot_confusion_matrix(y, y_pred, model_number, is_cat_multiclass, path):
         classes_names = list(get_filtered_classes().values())
     else:
         classes_names = ['Benígne', 'Malígne']
+        
+    ax.set_xticks([x + 0.5 for x in range(len(classes_names))])
+    ax.set_yticks([x + 0.5 for x in range(len(classes_names))])
+    
     ax.xaxis.set_ticklabels(classes_names, rotation = 90)
     ax.yaxis.set_ticklabels(classes_names, rotation = 0)
+
     plt.xlabel('Predikované', fontsize=15)
     plt.ylabel('Skutočné', fontsize=15)
     plt.tight_layout()
