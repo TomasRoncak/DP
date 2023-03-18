@@ -18,7 +18,7 @@ create_final_ts_dataset = False
 ## Anomaly model ##
 anomaly_model = None
 train_an = False
-predict_an = True
+predict_an = False
 predict_an_on_test = False
 radar_plot = False
 
@@ -66,7 +66,8 @@ if train_cat or predict_cat_on_test or predict_an:
     category_model = ClassificationModel(
         conf.models_number, 
         conf.cat_model_name, 
-        conf.is_cat_multiclass
+        conf.is_cat_multiclass,
+        hybrid_mode_on=predict_an
     )
 
 ## ANOMALY MODEL ##

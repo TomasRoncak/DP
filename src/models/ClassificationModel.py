@@ -16,7 +16,7 @@ from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
 from keras.losses import BinaryCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Sequential
 from preprocess_data import format_data
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
@@ -29,14 +29,16 @@ from models.functions import (get_callbacks, get_filtered_classes,
 
 
 class ClassificationModel:
-    def __init__(self, model_number, model_name, is_cat_multiclass):
+    def __init__(self, model_number, model_name, is_cat_multiclass, hybrid_mode_on):
         self.model_number = model_number
         self.model_name = model_name
         self.is_cat_multiclass = is_cat_multiclass
         self.is_model_reccurent = self.model_name in ['lstm', 'gru']
         self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
                           if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
-        self.whole_data = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
+        if hybrid_mode_on:
+            self.whole_data = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
+        self.split_data_train_val_test()
 
     def train_categorical_model(
         self,
@@ -50,12 +52,7 @@ class ClassificationModel:
         momentum,
         blocks
     ):
-
-        df = pd.read_csv(const.CAT_TRAIN_DATASET_PATH)
-        trainX, trainY = format_data(df, self.is_cat_multiclass, self.is_model_reccurent)
-        trainX, valX, trainY, valY = train_test_split(trainX, trainY, test_size=0.2, random_state=0, stratify=trainY)
-
-        num_categories = len(np.unique(trainY))
+        num_categories = len(np.unique(self.trainY))
 
         if num_categories > 2:  
             loss = SparseCategoricalCrossentropy()
@@ -67,35 +64,35 @@ class ClassificationModel:
 
         model = Sequential()
         if self.model_name == 'mlp':
-            model.add(Dense(1024, activation=activation, input_dim=trainX.shape[1]))
+            model.add(Dense(1024, activation=activation, input_dim=self.trainX.shape[1]))
             model.add(Dropout(dropout))
             model.add(Dense(768, activation=activation))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'cnn':
-            model.add(Conv1D(filters=32, padding='same', kernel_size=2, activation=activation, input_shape=(trainX.shape[1],1)))
+            model.add(Conv1D(filters=32, padding='same', kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1],1)))
             model.add(MaxPooling1D(pool_size=2))
             model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation))
             model.add(Dropout(dropout)),
             model.add(Flatten())
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'lstm':
-            model.add(LSTM(20, return_sequences=True, input_dim=trainX.shape[2]))
+            model.add(LSTM(20, return_sequences=True, input_dim=self.trainX.shape[2]))
             model.add(LSTM(20, return_sequences=True))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'gru':
-            model.add(GRU(blocks, input_dim=trainX.shape[2]))
+            model.add(GRU(blocks, input_dim=self.trainX.shape[2]))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'cnn_lstm':
-            model.add(Conv1D(filters=64, padding="same", kernel_size=2, activation=activation, input_shape=(trainX.shape[1], 1)))
+            model.add(Conv1D(filters=64, padding="same", kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1], 1)))
             model.add(MaxPooling1D(pool_size=2))
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'rf':
-            rf = RandomForestRegressor(n_estimators = 1000, random_state = 42)
-            rf.fit(trainX, trainY)
+            rf = RandomForestClassifier(n_estimators = 100, n_jobs=-1, random_state=0, bootstrap=True)
+            rf.fit(self.trainX, self.trainY)
             path = const.save_model[self.is_cat_multiclass].format(self.model_number, self.model_name)
             Path(path).mkdir(parents=True, exist_ok=True)
             joblib.dump(rf, path + const.RANDOM_FOREST_FILE)
@@ -109,11 +106,11 @@ class ClassificationModel:
         run = wandb.init(project="dp_cat", entity="tomasroncak")
 
         model.fit(
-                trainX,
-                trainY,
+                self.trainX,
+                self.trainY,
                 batch_size=batch_size,
                 epochs=epochs,
-                validation_data=(valX, valY),
+                validation_data=(self.valX, self.valY),
                 callbacks=[get_callbacks(
                             self.model_number,
                             self.model_name,
@@ -130,23 +127,29 @@ class ClassificationModel:
         self.model = load_best_model(self.model_number, self.model_name, model_type='cat', is_cat_multiclass=self.is_cat_multiclass)
 
         if on_test_set:
-            test_df = pd.read_csv(const.CAT_TEST_DATASET_PATH)
-            x, y = format_data(test_df, self.is_cat_multiclass, self.is_model_reccurent)
-        elif not an_detect_time:
-            print('Časové okno pre klasifikáciu nebolo nájdené !')
-            return
-        else:
+            x, y = self.testX, self.testY
+        elif an_detect_time:
             windowed_data = self.whole_data[(self.whole_data[const.TIME] >= an_detect_time[0]) & (self.whole_data[const.TIME] <= an_detect_time[1])]
             x, y = format_data(windowed_data, self.is_model_reccurent)
-        
-        if self.model_name != 'rf':
-            prob = self.model.predict(x, verbose=0)
         else:
+            print('Časové okno pre klasifikáciu nebolo nájdené !')
+            return
+        
+        if self.model_name == 'rf':
             prob = self.model.predict(x)
+        else:
+            prob = self.model.predict(x, verbose=0)
 
         self.calculate_classification_metrics(y, prob, on_test_set, anomaly_count)
         if not on_test_set:
             pretty_print_detected_attacks(prob, self.is_cat_multiclass)
+
+    def split_data_train_val_test(self):
+        train_test_data = pd.read_csv(const.CAT_TRAIN_TEST_DATASET)
+        X, y = format_data(train_test_data, self.is_cat_multiclass, self.is_model_reccurent)
+        
+        self.trainX, remX, self.trainY, remY = train_test_split(X, y, train_size=0.7)
+        self.valX, self.testX, self.valY, self.testY = train_test_split(remX, remY, test_size=0.5)
 
     def calculate_classification_metrics(self, y, prob, on_test_set, anomaly_count):
         Path(const.metrics.path[on_test_set] \
@@ -176,7 +179,7 @@ class ClassificationModel:
         
         plot_confusion_matrix(y, y_pred, self.model_number, present_classes, 
             const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, anomaly_count))
-        plot_roc_auc(y, prob, self.model_number, self.is_cat_multiclass, 
+        plot_roc_auc(y, prob, self.model_number, self.trainY,
             const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))
 
     def run_sweep(

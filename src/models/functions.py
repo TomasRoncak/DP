@@ -86,15 +86,12 @@ def get_y_from_generator(n_features, gen):
     return y.reshape((-1, n_features))    
 
 
-def plot_roc_auc(y_test, y_score, model_number, is_cat_multiclass, path):
+def plot_roc_auc(y_test, y_score, model_number, trainY, path):
     sns.set_style('darkgrid')        
     deep_colors = sns.color_palette('deep')
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-
-    train_df = pd.read_csv(const.CAT_TRAIN_DATASET_PATH)
-    _, trainY = format_data(train_df, is_cat_multiclass)
 
     label_binarizer = LabelBinarizer().fit(trainY)
     y_onehot_test = label_binarizer.transform(y_test)

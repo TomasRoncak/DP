@@ -43,22 +43,15 @@ def preprocess_whole_data():
 def preprocess_train_test_data():
     Path(const.PREPROCESSED_CAT_PATH).mkdir(parents=True, exist_ok=True)
 
-    for dataset_type in ['train', 'test']:
-        if dataset_type == 'train':
-            data = pd.read_csv(const.UNPROCESSED_TRAINING_SET_PATH)
-            PATH = const.CAT_TRAIN_DATASET_PATH
-        elif dataset_type == 'test':
-            data = pd.read_csv(const.UNPROCESSED_TESTING_SET_PATH)
-            PATH = const.CAT_TEST_DATASET_PATH
+    data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_TRAINING_SET_PATH, const.UNPROCESSED_TESTING_SET_PATH]), ignore_index=True)
+    
+    data["attack_cat"].fillna('Normal', inplace=True)
+    data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
+    data['attack_cat'] = data['attack_cat'].str.strip()
 
-        data["attack_cat"].fillna('Normal', inplace=True)
-        data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
-        data['attack_cat'] = data['attack_cat'].str.strip()
-
-        data = data[~data.attack_cat.isin(const.TO_DELETE)]
-        data.drop(columns=const.USELESS_FEATURES_FOR_CLASSIFICATION, inplace=True)
-        data.rename(columns=lambda x: x.lower(), inplace=True) 
-        data.to_csv(PATH, index=False)
+    data.drop(columns=const.USELESS_FEATURES_FOR_CLASSIFICATION, inplace=True)
+    data.rename(columns=lambda x: x.lower(), inplace=True) 
+    data.to_csv(const.CAT_TRAIN_TEST_DATASET, index=False)
 
 
 def format_data(df, is_cat_multiclass, is_model_reccurent=False):
