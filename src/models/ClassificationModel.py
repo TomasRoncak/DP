@@ -27,6 +27,8 @@ from models.functions import (get_callbacks, get_filtered_classes,
                               plot_confusion_matrix, plot_roc_auc,
                               pretty_print_detected_attacks)
 
+import absl.logging
+absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ("Found untraced functions such as ...")
 
 class ClassificationModel:
     def __init__(self, model_number, model_name, is_cat_multiclass, hybrid_mode_on):

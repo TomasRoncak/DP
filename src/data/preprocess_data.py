@@ -31,27 +31,26 @@ def preprocess_whole_data():
     data['is_ftp_login'].fillna(value=data.is_ftp_login.mean(), inplace=True)
     data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
 
-    data['attack_cat'].fillna('Normal', inplace=True)
-    data['attack_cat'].replace('Backdoors', 'Backdoor', inplace=True)
-    data['attack_cat'] = data['attack_cat'].str.strip()
-
+    data = process_attack_cat_column(data)
     data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
-    data.rename(columns=lambda x: x.lower(), inplace=True)
     data.to_csv(const.WHOLE_DATASET_PATH, index=False)
 
 
 def preprocess_train_test_data():
     Path(const.PREPROCESSED_CAT_PATH).mkdir(parents=True, exist_ok=True)
-
     data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_TRAINING_SET_PATH, const.UNPROCESSED_TESTING_SET_PATH]), ignore_index=True)
-    
+    data = process_attack_cat_column(data)
+    data.drop(columns=const.USELESS_FEATURES_FOR_CLASSIFICATION, inplace=True)
+    data.to_csv(const.CAT_TRAIN_TEST_DATASET, index=False)
+
+
+def process_attack_cat_column(data):
     data["attack_cat"].fillna('Normal', inplace=True)
     data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
-
-    data.drop(columns=const.USELESS_FEATURES_FOR_CLASSIFICATION, inplace=True)
+    data = data.loc[data['attack_cat'].isin(const.ATTACK_CATEGORIES)]  # Filter out not wanted attack categories
     data.rename(columns=lambda x: x.lower(), inplace=True) 
-    data.to_csv(const.CAT_TRAIN_TEST_DATASET, index=False)
+    return data
 
 
 def format_data(df, is_cat_multiclass, is_model_reccurent=False):
@@ -78,19 +77,6 @@ def format_data(df, is_cat_multiclass, is_model_reccurent=False):
         x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
 
     return x, y
-
-
-def clamp_and_reduce_values(df):
-    df_numeric = df.select_dtypes(include=[np.number])
-    df_cat = df.select_dtypes(exclude=[np.number])
-
-    for feature in df_numeric.columns:  # Clamp extreme Values
-        if df_numeric[feature].max() > 10 * df_numeric[feature].median() and df_numeric[feature].max() > 10:
-            df_numeric[feature] = np.where(df_numeric[feature] < df_numeric[feature].quantile(0.95), df_numeric[feature], df_numeric[feature].quantile(0.95))
-
-    for feature in df_cat.columns:  # Reduce the labels in categorical features
-        if df_cat[feature].nunique() > 6:
-            df[feature] = np.where(df[feature].isin(df[feature].value_counts().head().index), df[feature], '-')
 
 
 def get_classes():
