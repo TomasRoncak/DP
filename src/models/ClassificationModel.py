@@ -177,9 +177,9 @@ class ClassificationModel:
             return
 
         with open(const.metrics.report[on_test_set].format(self.model_path, self.model_name, anomaly_count), 'w') as f:
-           f.write(classification_report(y, y_pred, labels=np.unique(y_pred), target_names=present_classes))
+           f.write(classification_report(y, y_pred, labels=np.unique(y), target_names=present_classes, zero_division=0))
         
-        plot_confusion_matrix(y, y_pred, self.model_number, present_classes, 
+        plot_confusion_matrix(y, y_pred, self.model_number, self.is_cat_multiclass,
             const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, anomaly_count))
         plot_roc_auc(y, prob, self.model_number, self.trainY,
             const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))

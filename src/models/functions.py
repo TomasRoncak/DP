@@ -107,11 +107,12 @@ def plot_roc_auc(y_test, y_score, model_number, trainY, path):
     else:
         classes = get_filtered_classes()
         for i in range(n_classes):
-            fpr[i], tpr[i], _ = roc_curve(y_onehot_test[:, i], y_score[:, i])
-            roc_auc[i] = auc(fpr[i], tpr[i])
+            if not (y_onehot_test[:, i] == 0).all():
+                fpr[i], tpr[i], _ = roc_curve(y_onehot_test[:, i], y_score[:, i])
+                roc_auc[i] = auc(fpr[i], tpr[i])
 
         plt.figure(figsize=(10, 5))
-        for i in range(n_classes):
+        for i in range(len(fpr)):
             plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], 
                 label='{0} (AUC = {1:0.2f})'.format(classes[i], roc_auc[i]))
         plt.plot([0, 1], [0, 1], 'k--', lw=2)
@@ -124,12 +125,16 @@ def plot_roc_auc(y_test, y_score, model_number, trainY, path):
     plt.close()
 
 
-def plot_confusion_matrix(y, y_pred, model_number, present_classes, path):
+def plot_confusion_matrix(y, y_pred, model_number, is_cat_multiclass, path):
     plt.figure(figsize=(8, 5))
     cm = confusion_matrix(y, y_pred)
     ax = sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
-    ax.xaxis.set_ticklabels(present_classes, rotation = 90)
-    ax.yaxis.set_ticklabels(present_classes, rotation = 0)
+    if is_cat_multiclass:
+        classes_names = list(get_filtered_classes().values())
+    else:
+        classes_names = ['Benígne', 'Malígne']
+    ax.xaxis.set_ticklabels(classes_names, rotation = 90)
+    ax.yaxis.set_ticklabels(classes_names, rotation = 0)
     plt.xlabel('Predikované', fontsize=15)
     plt.ylabel('Skutočné', fontsize=15)
     plt.tight_layout()
