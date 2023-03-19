@@ -1,7 +1,6 @@
 import config as conf
 from data.merge_features_to_dataset import merge_features_to_dataset
-from data.preprocess_data import (preprocess_train_test_data,
-                                  preprocess_whole_data)
+from data.preprocess_data import preprocess_whole_data, split_whole_dataset
 from data.TimeSeriesDataCreator import TimeSeriesDataCreator
 from data.TimeSeriesDataHandler import TimeSeriesDataHandler
 from features.feature_selection_an import select_features_for_an
@@ -30,7 +29,7 @@ predict_cat_on_test = False
 
 if preprocess_data:
     preprocess_whole_data()
-    preprocess_train_test_data()
+    split_whole_dataset()
 
 
 if create_time_series_data:
@@ -66,8 +65,7 @@ if train_cat or predict_cat_on_test or predict_an:
     category_model = ClassificationModel(
         conf.models_number, 
         conf.cat_model_name, 
-        conf.is_cat_multiclass,
-        hybrid_mode_on=predict_an
+        conf.is_cat_multiclass
     )
 
 ## ANOMALY MODEL ##

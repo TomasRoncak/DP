@@ -1,16 +1,17 @@
 import sys
 
+import joblib
 import numpy as np
 import pandas as pd
 
 import wandb
-import joblib
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 from pathlib import Path
 
+import absl.logging
 from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
                           MaxPooling1D)
 from keras.losses import BinaryCrossentropy, SparseCategoricalCrossentropy
@@ -23,24 +24,27 @@ from sklearn.model_selection import train_test_split
 import constants as const
 from models.functions import (get_callbacks, get_filtered_classes,
                               get_optimizer, load_best_model,
-                              parse_date_as_timestamp,
-                              plot_confusion_matrix, plot_roc_auc,
-                              pretty_print_detected_attacks)
+                              parse_date_as_timestamp, plot_confusion_matrix,
+                              plot_roc_auc, pretty_print_detected_attacks,
+                              split_data_train_val)
 
-import absl.logging
 absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ("Found untraced functions such as ...")
 
 class ClassificationModel:
-    def __init__(self, model_number, model_name, is_cat_multiclass, hybrid_mode_on):
+    def __init__(self, model_number, model_name, is_cat_multiclass):
         self.model_number = model_number
         self.model_name = model_name
         self.is_cat_multiclass = is_cat_multiclass
         self.is_model_reccurent = self.model_name in ['lstm', 'gru']
         self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
                           if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
-        if hybrid_mode_on:
-            self.whole_data = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
-        self.split_data_train_val_test()
+        
+        X, y = split_data_train_val(pd.read_csv(const.CAT_TRAIN_VAL_DATASET), self.is_cat_multiclass, self.is_model_reccurent)
+        self.trainX, self.valX, self.trainY, self.valY = train_test_split(X, y, train_size=0.8, shuffle=True)
+        
+        self.test_data = pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
+        self.testX, self.testY = split_data_train_val(self.test_data, self.is_cat_multiclass, self.is_model_reccurent)
+
 
     def train_categorical_model(
         self,
@@ -131,8 +135,8 @@ class ClassificationModel:
         if on_test_set:
             x, y = self.testX, self.testY
         elif an_detect_time:
-            windowed_data = self.whole_data[(self.whole_data[const.TIME] >= an_detect_time[0]) & (self.whole_data[const.TIME] <= an_detect_time[1])]
-            x, y = format_data(windowed_data, self.is_model_reccurent)
+            windowed_data = self.test_data[(self.test_data[const.TIME] >= an_detect_time[0]) & (self.test_data[const.TIME] <= an_detect_time[1])]
+            x, y = format_data(windowed_data, self.is_cat_multiclass, self.is_model_reccurent)
         else:
             print('Časové okno pre klasifikáciu nebolo nájdené !')
             return
@@ -145,13 +149,6 @@ class ClassificationModel:
         self.calculate_classification_metrics(y, prob, on_test_set, anomaly_count)
         if not on_test_set:
             pretty_print_detected_attacks(prob, self.is_cat_multiclass)
-
-    def split_data_train_val_test(self):
-        train_test_data = pd.read_csv(const.CAT_TRAIN_TEST_DATASET)
-        X, y = format_data(train_test_data, self.is_cat_multiclass, self.is_model_reccurent)
-        
-        self.trainX, remX, self.trainY, remY = train_test_split(X, y, train_size=0.7)
-        self.valX, self.testX, self.valY, self.testY = train_test_split(remX, remY, test_size=0.5)
 
     def calculate_classification_metrics(self, y, prob, on_test_set, anomaly_count):
         Path(const.metrics.path[on_test_set] \

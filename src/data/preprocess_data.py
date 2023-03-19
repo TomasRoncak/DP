@@ -36,12 +36,10 @@ def preprocess_whole_data():
     data.to_csv(const.WHOLE_DATASET_PATH, index=False)
 
 
-def preprocess_train_test_data():
-    Path(const.PREPROCESSED_CAT_PATH).mkdir(parents=True, exist_ok=True)
-    data = pd.concat(map(pd.read_csv, [const.UNPROCESSED_TRAINING_SET_PATH, const.UNPROCESSED_TESTING_SET_PATH]), ignore_index=True)
-    data = process_attack_cat_column(data)
-    data.drop(columns=const.USELESS_FEATURES_FOR_CLASSIFICATION, inplace=True)
-    data.to_csv(const.CAT_TRAIN_TEST_DATASET, index=False)
+def split_whole_dataset():
+    whole_df = pd.read_csv(const.WHOLE_DATASET_PATH)
+    whole_df[::2].to_csv(const.CAT_TRAIN_VAL_DATASET, index=False)
+    whole_df[1::2].to_csv(const.CAT_TEST_DATASET, index=False)
 
 
 def process_attack_cat_column(data):
