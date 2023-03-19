@@ -83,8 +83,7 @@ class ClassificationModel:
             model.add(Flatten())
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'lstm':
-            model.add(LSTM(20, return_sequences=True, input_dim=self.trainX.shape[2]))
-            model.add(LSTM(20, return_sequences=True))
+            model.add(LSTM(blocks, input_dim=self.trainX.shape[2]))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'gru':
             model.add(GRU(blocks, input_dim=self.trainX.shape[2]))
