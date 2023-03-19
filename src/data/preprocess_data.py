@@ -43,6 +43,7 @@ def preprocess_whole_data():
 
 def split_whole_dataset():
     whole_df = pd.read_csv(const.WHOLE_DATASET_PATH)
+    whole_df = whole_df.drop_duplicates()
     whole_df[::2].to_csv(const.CAT_TRAIN_VAL_DATASET, index=False)
     whole_df[1::2].to_csv(const.CAT_TEST_DATASET, index=False)
 
