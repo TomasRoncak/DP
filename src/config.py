@@ -7,7 +7,7 @@ remove_first_attacks = True
 remove_benign_outlier = True
 attack_category = 'All'
 
-models_number = 4
+models_number = 1
 
 ## ANOMALY MODEL CONFIG ##
 an_model_name = 'cnn'
@@ -16,17 +16,17 @@ an_activation = 'relu'
 radar_plot_format = 'svg'
 
 ## CATEGORY MODEL CONFIG ##
-cat_model_name = 'cnn'
-cat_epochs = 40
-cat_batch_size = 2000
+cat_model_name = 'mlp'
+cat_epochs = 35
+cat_batch_size = 5000
 cat_activation = 'relu'
-is_cat_multiclass = False
+is_cat_multiclass = True
 
 ## OTHERS ##
 learning_rate = 0.001
 momentum = 0
-early_stop_patience = 10
-patience_anomaly_limit = 2
+early_stop_patience = 4  # Aplikuje sa na epochy nie batche
+patience_anomaly_limit = 2  # Limit pre pocet detegovanych anomalii v urcitom rozsahu tokov
 dropout_rate = 0.01
 blocks = 16
 optimizer = 'adam'

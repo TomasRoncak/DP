@@ -1,4 +1,5 @@
 import sys
+import os
 
 import joblib
 import numpy as np
@@ -9,6 +10,7 @@ import wandb
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
+from datetime import datetime as dt
 from pathlib import Path
 
 import absl.logging
@@ -29,6 +31,8 @@ from models.functions import (get_callbacks, get_filtered_classes,
                               split_data_train_val)
 
 absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ("Found untraced functions such as ...")
+
+os.environ["WANDB_SILENT"] = "true"
 
 class ClassificationModel:
     def __init__(self, model_number, model_name, is_cat_multiclass):
@@ -70,15 +74,15 @@ class ClassificationModel:
 
         model = Sequential()
         if self.model_name == 'mlp':
-            model.add(Dense(1024, activation=activation, input_dim=self.trainX.shape[1]))
+            model.add(Dense(16, activation=activation, input_dim=self.trainX.shape[1]))
             model.add(Dropout(dropout))
-            model.add(Dense(768, activation=activation))
+            model.add(Dense(8, activation=activation))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'cnn':
-            model.add(Conv1D(filters=32, padding='same', kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1],1)))
+            model.add(Conv1D(filters=16, padding='same', kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1], 1)))
             model.add(MaxPooling1D(pool_size=2))
-            model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation))
+            model.add(Conv1D(filters=8, padding='same', kernel_size=2, activation=activation))
             model.add(Dropout(dropout)),
             model.add(Flatten())
             model.add(Dense(num_categories, activation=last_activation))
@@ -110,6 +114,7 @@ class ClassificationModel:
 
         run = wandb.init(project="dp_cat", entity="tomasroncak")
 
+        start = dt.now()
         model.fit(
                 self.trainX,
                 self.trainY,
@@ -124,6 +129,7 @@ class ClassificationModel:
                            )],
                 verbose=1
         )
+        print("Tréning modelu {0} prebiehal {1} sekúnd.".format(self.model_name, (dt.now() - start).seconds))
 
         #model.save(const.SAVE_CAT_MODEL_PATH.format(self.model_number, model_name) + 'model.h5')
         run.finish()

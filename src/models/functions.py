@@ -52,10 +52,10 @@ def get_callbacks(model_number, model_name, patience, is_cat_multiclass=None):
     file_path = const.save_model[is_cat_multiclass].format(model_number, model_name) + 'loss-{loss:03f}.ckpt'
     cp_callback = ModelCheckpoint(filepath=file_path,
                                   monitor='loss',
-                                  verbose=1,
+                                  verbose=0,
                                   save_best_only=True,
                                   mode='min',
-                                  save_freq=1,
+                                  save_freq='epoch',
                                   initial_value_threshold=None)
     early_stopping = EarlyStopping(monitor='loss', patience=patience)
     wandb_callback = wandb.keras.WandbCallback()

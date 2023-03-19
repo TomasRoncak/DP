@@ -1,6 +1,7 @@
 import csv
 import math
 import sys
+from datetime import datetime as dt
 
 import matplotlib as mpl
 import matplotlib.dates as mdates
@@ -89,6 +90,7 @@ class AnomalyModel:
 
         run = wandb.init(project="dp_an", entity="tomasroncak")
 
+        start = dt.now()
         model.fit(
             self.ts_handler.benign_train_generator,
             epochs=epochs,
@@ -99,6 +101,7 @@ class AnomalyModel:
                 early_stop_patience
                 )]
         )
+        print("Tréning modelu {0} prebiehal {1} sekúnd.".format(self.model_name, (dt.now() - start).seconds))
 
         #model.save(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name) + 'model.h5')
         run.finish()
