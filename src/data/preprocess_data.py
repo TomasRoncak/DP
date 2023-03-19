@@ -31,8 +31,13 @@ def preprocess_whole_data():
     data['is_ftp_login'].fillna(value=data.is_ftp_login.mean(), inplace=True)
     data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
 
-    data = process_attack_cat_column(data)
+    data["attack_cat"].fillna('Normal', inplace=True)
+    data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
+    data['attack_cat'] = data['attack_cat'].str.strip()
+    data = data.loc[data['attack_cat'].isin(const.ATTACK_CATEGORIES)]  # Filter out not wanted attack categories
+
     data.drop(columns=const.USELESS_FEATURES_FOR_PARTIAL_CSVS, inplace=True)
+    data.rename(columns=lambda x: x.lower(), inplace=True) 
     data.to_csv(const.WHOLE_DATASET_PATH, index=False)
 
 
@@ -40,15 +45,6 @@ def split_whole_dataset():
     whole_df = pd.read_csv(const.WHOLE_DATASET_PATH)
     whole_df[::2].to_csv(const.CAT_TRAIN_VAL_DATASET, index=False)
     whole_df[1::2].to_csv(const.CAT_TEST_DATASET, index=False)
-
-
-def process_attack_cat_column(data):
-    data["attack_cat"].fillna('Normal', inplace=True)
-    data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
-    data['attack_cat'] = data['attack_cat'].str.strip()
-    data = data.loc[data['attack_cat'].isin(const.ATTACK_CATEGORIES)]  # Filter out not wanted attack categories
-    data.rename(columns=lambda x: x.lower(), inplace=True) 
-    return data
 
 
 def format_data(df, is_cat_multiclass, is_model_reccurent=False):

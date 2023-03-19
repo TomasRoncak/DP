@@ -193,10 +193,9 @@ def parse_date_as_timestamp(date):
 
 
 def split_data_train_val(data, is_cat_multiclass, is_model_reccurent):
-    if is_cat_multiclass:
-        normal_data = data[data['attack_cat'] == 'Normal'][::10]
-        data = data[data.attack_cat != 'Normal']
-        data = pd.concat([data, normal_data])
+    normal_data = data[data['attack_cat'] == 'Normal'][::10]
+    data = data[data.attack_cat != 'Normal']
+    data = pd.concat([data, normal_data])
     return format_data(data, is_cat_multiclass, is_model_reccurent)
 
 
