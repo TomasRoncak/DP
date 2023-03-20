@@ -1,7 +1,6 @@
-import sys
 import os
+import sys
 
-import joblib
 import numpy as np
 import pandas as pd
 
@@ -28,11 +27,11 @@ from models.functions import (get_callbacks, get_filtered_classes,
                               get_optimizer, load_best_model,
                               parse_date_as_timestamp, plot_confusion_matrix,
                               plot_roc_auc, pretty_print_detected_attacks,
-                              split_data_train_val)
+                              save_rf_model, split_data_train_val)
 
-absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ("Found untraced functions such as ...")
+absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ('Found untraced functions such as ...')
 
-os.environ["WANDB_SILENT"] = "true"
+os.environ['WANDB_SILENT'] = 'true'
 
 class ClassificationModel:
     def __init__(self, model_number, model_name, is_cat_multiclass):
@@ -94,17 +93,15 @@ class ClassificationModel:
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'cnn_lstm':
-            model.add(Conv1D(filters=64, padding="same", kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1], 1)))
+            model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1], 1)))
             model.add(MaxPooling1D(pool_size=2))
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
             model.add(Dense(num_categories, activation=last_activation))
         elif self.model_name == 'rf':
-            rf = RandomForestClassifier(n_estimators = 100, n_jobs=-1, random_state=0, bootstrap=True)
-            rf.fit(self.trainX, self.trainY)
-            path = const.save_model[self.is_cat_multiclass].format(self.model_number, self.model_name)
-            Path(path).mkdir(parents=True, exist_ok=True)
-            joblib.dump(rf, path + const.RANDOM_FOREST_FILE)
+            model = RandomForestClassifier(n_estimators = 200, n_jobs=-1, random_state=0, bootstrap=True)
+            model.fit(self.trainX, self.trainY)
+            save_rf_model(model, self.is_cat_multiclass, self.model_number, self.model_name)
             return
         else:
             raise Exception('Nepodporovaný typ modelu !')
@@ -112,7 +109,7 @@ class ClassificationModel:
         optimizer = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
         model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
-        run = wandb.init(project="dp_cat", entity="tomasroncak")
+        run = wandb.init(project=('multiclass' if self.is_cat_multiclass else 'binary') + '_classification', entity='tomasroncak')
 
         start = dt.now()
         model.fit(
@@ -129,7 +126,7 @@ class ClassificationModel:
                            )],
                 verbose=1
         )
-        print("Tréning modelu {0} prebiehal {1} sekúnd.".format(self.model_name, (dt.now() - start).seconds))
+        print('Tréning modelu {0} prebiehal {1} sekúnd.'.format(self.model_name, (dt.now() - start).seconds))
 
         #model.save(const.SAVE_CAT_MODEL_PATH.format(self.model_number, model_name) + 'model.h5')
         run.finish()
@@ -163,7 +160,10 @@ class ClassificationModel:
         if self.is_cat_multiclass:  # Multiclass classification
             # Pre multiclass pouzivame Softmax aktivacnu funkciu, ktora vrati pravdepodobnost pre kazdu triedu
             # argmax funkcia vrati index s najvyssou hodnotou (pravdepodobnostou)
-            y_pred = np.argmax(prob, axis=-1)  
+            if self.model_name == 'rf':
+                y_pred = prob
+            else:
+                y_pred = np.argmax(prob, axis=-1)  
             all_classes = get_filtered_classes()
             present_classes = [all_classes[x] for x in np.unique(y)]
         else:
@@ -183,7 +183,7 @@ class ClassificationModel:
         
         plot_confusion_matrix(y, y_pred, self.model_number, self.is_cat_multiclass,
             const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, anomaly_count))
-        plot_roc_auc(y, prob, self.model_number, self.trainY,
+        plot_roc_auc(y, prob, self.model_number, self.trainY, self.model_name,
             const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))
 
     def run_sweep(

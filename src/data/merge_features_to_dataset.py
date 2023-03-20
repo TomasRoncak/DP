@@ -14,13 +14,13 @@ import config as conf
 import constants as const
 
 def merge_features_to_dataset(window_size):
-    print("Vytváram finálny dataset podľa vybraných atribútov.")
+    print('Vytváram finálny dataset podľa vybraných atribútov.')
     try:
         protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
         protocol_features['all'] = [const.LABEL_SUM, const.TIME]
         Path(const.EXTRACTED_DATASETS_PATH.format(window_size)).mkdir(parents=True, exist_ok=True)
     except:
-        print("Súbor (.json) s vybranými atribútmi nebol nájdený !")
+        print('Súbor (.json) s vybranými atribútmi nebol nájdený !')
         return
 
     for attack_type in const.ATTACK_CATEGORIES:
@@ -51,7 +51,7 @@ def merge_features_to_dataset(window_size):
         
         data.to_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_type), index=False)
     
-    print("Vytvorenie dokončené !")
+    print('Vytvorenie dokončené !')
     plot_merged_dataset(window_size)
 
 

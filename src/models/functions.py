@@ -1,9 +1,10 @@
 import datetime
 import os
-import joblib
 import sys
 from collections import Counter
+from pathlib import Path
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -39,11 +40,11 @@ class bcolors:
 
 def get_optimizer(learning_rate, optimizer, momentum = 0):
     switcher = {
-        'sgd': SGD(learning_rate=learning_rate, name="SGD"),
-        'sgd-momentum': SGD(learning_rate=learning_rate, momentum=momentum, name="SGD-Momentum"),
-        'rms-prop': RMSprop(learning_rate=learning_rate, name="RMSprop"),
-        'adam': Adam(learning_rate=learning_rate, name="Adam"),
-        'adagrad': Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07, name="Adagrad")
+        'sgd': SGD(learning_rate=learning_rate, name='SGD'),
+        'sgd-momentum': SGD(learning_rate=learning_rate, momentum=momentum, name='SGD-Momentum'),
+        'rms-prop': RMSprop(learning_rate=learning_rate, name='RMSprop'),
+        'adam': Adam(learning_rate=learning_rate, name='Adam'),
+        'adagrad': Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07, name='Adagrad')
     }
     return switcher.get(optimizer)
 
@@ -86,7 +87,7 @@ def get_y_from_generator(n_features, gen):
     return y.reshape((-1, n_features))    
 
 
-def plot_roc_auc(y_test, y_score, model_number, trainY, path):
+def plot_roc_auc(y_test, y_score, model_number, trainY, model_name, path):
     sns.set_style('darkgrid')        
     deep_colors = sns.color_palette('deep')
     fpr = dict()
@@ -106,6 +107,8 @@ def plot_roc_auc(y_test, y_score, model_number, trainY, path):
         plt.plot(fpr, tpr, lw=2, color = deep_colors[0], label='AUC = {0:0.2f}'.format(roc_auc))
     else:
         classes = get_filtered_classes()
+        if model_name == 'rf':
+            y_score = label_binarizer.transform(y_score)
         for i in range(n_classes):
             if not (y_onehot_test[:, i] == 0).all():
                 fpr[i], tpr[i], _ = roc_curve(y_onehot_test[:, i], y_score[:, i])
@@ -120,7 +123,7 @@ def plot_roc_auc(y_test, y_score, model_number, trainY, path):
     plt.ylim([0.0, 1.05])
     plt.xlabel('Falošne pozitívne')
     plt.ylabel('Správne pozitívne')
-    plt.legend(loc="lower right")
+    plt.legend(loc='lower right')
     plt.savefig(path.format(model_number))
     plt.close()
 
@@ -197,6 +200,12 @@ def split_data_train_val(data, is_cat_multiclass, is_model_reccurent):
     data = data[data.attack_cat != 'Normal']
     data = pd.concat([data, normal_data])
     return format_data(data, is_cat_multiclass, is_model_reccurent)
+
+
+def save_rf_model(model, is_cat_multiclass, model_number, model_name):
+    path = const.save_model[is_cat_multiclass].format(model_number, model_name)
+    Path(path).mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, path + const.RANDOM_FOREST_FILE)
 
 
 def create_radar_plot(features, model_number, on_test_set, pic_format):

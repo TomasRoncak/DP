@@ -85,7 +85,7 @@ def ljung_box_randomness_test(df, print_steps):
     df.drop(columns=to_remove, inplace=True)
 
 
-def remove_colinearity(df, protocol, labels, window_size, print_steps):
+def remove_colinearity(df, labels, print_steps):
     if df.empty:
         return
 
@@ -109,12 +109,6 @@ def remove_colinearity(df, protocol, labels, window_size, print_steps):
         print_test_results(to_remove, test_name='kolinearity')  
     df.drop(columns=to_remove, inplace=True)
 
-    #Path(const.CORELLATIONS_FILE_PATH.format(window_size)).mkdir(parents=True, exist_ok=True)
-    #fig, ax = plt.subplots(figsize=(8, 6))
-    #svm = sns.heatmap(df.corr(), ax=ax, annot=True, fmt='.2f', cmap='YlGnBu')
-    #figure = svm.get_figure()
-    #figure.savefig(const.CORELLATIONS_PNG_FILE.format(window_size, protocol))
-
 
 def peak_value_cutoff(df):
     percent = 0.05
@@ -135,16 +129,16 @@ def select_features(protocol, window_size, print_steps):
     peak_value_cutoff(df_attack)
     adfueller_test(df_attack, print_steps)
     ljung_box_randomness_test(df_attack, print_steps)
-    remove_colinearity(df_attack, protocol, labels, window_size, print_steps)
+    remove_colinearity(df_attack, labels, print_steps)
 
     return list(df_attack.columns)
 
-"""
+'''
 perform feature selection on created time series dataset (nonunique, colinearity, adfueller, ljung_box, peak cutoff)
 
 :param window_size: integer specifying the length of sliding window to be used
 :param print_steps: boolean specifying if selection steps should be described in more detail
-"""
+'''
 def select_features_for_an(window_size, print_steps):
     chosen_cols = {}
 

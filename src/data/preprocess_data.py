@@ -31,8 +31,8 @@ def preprocess_whole_data():
     data['is_ftp_login'].fillna(value=data.is_ftp_login.mean(), inplace=True)
     data['is_ftp_login'] = np.where(data['is_ftp_login'] > 1, 1, data['is_ftp_login'])
 
-    data["attack_cat"].fillna('Normal', inplace=True)
-    data["attack_cat"].replace('Backdoors', 'Backdoor', inplace=True)
+    data['attack_cat'].fillna('Normal', inplace=True)
+    data['attack_cat'].replace('Backdoors', 'Backdoor', inplace=True)
     data['attack_cat'] = data['attack_cat'].str.strip()
     data = data.loc[data['attack_cat'].isin(const.ATTACK_CATEGORIES)]  # Filter out not wanted attack categories
 

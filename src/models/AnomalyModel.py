@@ -75,7 +75,7 @@ class AnomalyModel:
         elif self.model_name == 'gru':
             model.add(GRU(blocks, input_shape=(n_steps, n_features)))
         elif self.model_name == 'cnn_lstm':
-            model.add(Conv1D(filters=64, padding="same", kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
+            model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
             model.add(MaxPooling1D(pool_size=2))
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
@@ -88,7 +88,7 @@ class AnomalyModel:
         optimizer_fn = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
         model.compile(optimizer=optimizer_fn, loss='mse')
 
-        run = wandb.init(project="dp_an", entity="tomasroncak")
+        run = wandb.init(project='dp_an', entity='tomasroncak')
 
         start = dt.now()
         model.fit(
@@ -101,7 +101,7 @@ class AnomalyModel:
                 early_stop_patience
                 )]
         )
-        print("Tréning modelu {0} prebiehal {1} sekúnd.".format(self.model_name, (dt.now() - start).seconds))
+        print('Tréning modelu {0} prebiehal {1} sekúnd.'.format(self.model_name, (dt.now() - start).seconds))
 
         #model.save(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name) + 'model.h5')
         run.finish()
@@ -189,7 +189,7 @@ class AnomalyModel:
             return True
     
     def calculate_anomaly_threshold(self, i):
-        q1, q3 = np.percentile(self.whole_real_data[:i], [25, 96])  # Calculate threshold according to whole data to the time point of "i"
+        q1, q3 = np.percentile(self.whole_real_data[:i], [25, 96])  # Calculate threshold according to whole data to the time point of 'i'
         iqr = q3 - q1
         upper_bound = q3 + (1.5 * iqr)
         return upper_bound
@@ -249,8 +249,8 @@ class AnomalyModel:
             predict_feature = [item[i] for item in prediction_data]
 
             plt.rcParams['figure.figsize'] = (45, 15)
-            plt.plot(time[:len(real_feature)], real_feature, label='Realita', color="#017b92", linewidth=3)
-            plt.plot(time[:len(predict_feature)], predict_feature, label='Predikcia', color="#f97306", linewidth=3) 
+            plt.plot(time[:len(real_feature)], real_feature, label='Realita', color='#017b92', linewidth=3)
+            plt.plot(time[:len(predict_feature)], predict_feature, label='Predikcia', color='#f97306', linewidth=3) 
             plt.xticks(rotation='vertical', fontsize=40)
             plt.yticks(fontsize=40)
             plt.legend(fontsize=40)
@@ -268,7 +268,7 @@ class AnomalyModel:
                     ), 
                     fontsize=50
                 )
-                plt.arrow(start, 0, 0, predict_feature[len(predict_feature)-1]*0.75, facecolor="red", width=0.003, head_length=np.mean(predict_feature)/6, length_includes_head=True)
+                plt.arrow(start, 0, 0, predict_feature[len(predict_feature)-1]*0.75, facecolor='red', width=0.003, head_length=np.mean(predict_feature)/6, length_includes_head=True)
                 plt.savefig(fig_name.format(self.model_number, self.model_name, self.collective_anomaly_count) + self.ts_handler.features[i], bbox_inches='tight')
             else:
                 plt.title(self.ts_handler.features[i], fontsize=50)
