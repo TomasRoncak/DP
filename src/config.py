@@ -16,8 +16,8 @@ an_activation = 'relu'
 radar_plot_format = 'svg'
 
 ## CATEGORY MODEL CONFIG ##
-cat_model_name = 'mlp'
-cat_epochs = 35
+cat_model_name = 'cnn'
+cat_epochs = 40
 cat_batch_size = 5000
 cat_activation = 'relu'
 is_cat_multiclass = True

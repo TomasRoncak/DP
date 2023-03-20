@@ -11,7 +11,6 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 from datetime import datetime as dt
 from pathlib import Path
-import random
 
 import absl.logging
 from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
@@ -111,8 +110,9 @@ class ClassificationModel:
         model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
         run = wandb.init(
-            project=('multiclass' if self.is_cat_multiclass else 'binary') + '_classification', 
-            name=self.model_name + '_' + str(random.randint(1,20)),
+            project=('multiclass' if self.is_cat_multiclass else 'binary') + '_classification',
+            group=self.model_name,
+            job_type='eval',
             entity='tomasroncak'
         )
 
