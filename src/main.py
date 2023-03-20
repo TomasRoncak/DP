@@ -23,8 +23,8 @@ radar_plot = False
 
 ## Category model ##
 category_model = None
-train_cat = True
-predict_cat_on_test = True
+train_cat = False
+predict_cat_on_test = False
 
 
 if preprocess_data:
@@ -49,8 +49,7 @@ if train_an or predict_an or predict_an_on_test or radar_plot:
     ts_handler = TimeSeriesDataHandler(
         conf.use_real_data, 
         conf.window_size, 
-        conf.dataset_split,
-        conf.n_steps, 
+        conf.n_steps,
         conf.attack_category
     )
     anomaly_model = AnomalyModel(
@@ -84,10 +83,7 @@ if train_an:
         )
     else:
         anomaly_model.run_sweep(
-            conf.an_model_name,
-            conf.n_steps,
             conf.early_stop_patience,
-            conf.blocks,
             conf.sweep_config_random
         )
 
@@ -118,7 +114,6 @@ if train_cat:
         )
     else:
         category_model.run_sweep(
-            conf.cat_model_name,
             conf.early_stop_patience,
             conf.sweep_config_random
         )

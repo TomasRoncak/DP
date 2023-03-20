@@ -14,14 +14,12 @@ import constants as const
 
 
 class TimeSeriesDataHandler:
-    def __init__(self, use_real_data, window_size, data_split, n_steps, attack_cat):
+    def __init__(self, use_real_data, window_size, n_steps, attack_cat):
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.stand_scaler = StandardScaler()
 
         self.attack_minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.attack_stand_scaler = StandardScaler()
-
-        self.data_split = data_split
 
         if use_real_data:
             self.df = pd.read_csv(const.REAL_DATASET, sep='\t', usecols=const.REAL_DATASET_FEATURES)
@@ -69,7 +67,7 @@ class TimeSeriesDataHandler:
             return self.minmax_scaler.inverse_transform(tmp)
 
     def split_dataset(self, df):
-        train_size = int(len(df) * self.data_split)
+        train_size = int(len(df) * 0.8)
         return df[:train_size], df[train_size:]
 
     def generate_time_series(self, n_input):

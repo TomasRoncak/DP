@@ -191,21 +191,20 @@ class ClassificationModel:
         plot_roc_auc(y, prob, self.model_number, self.trainY, self.model_name,
             const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))
 
-    def run_sweep(
-        self,
-        model_name,
-        early_stop_patience,
-        sweep_config_random
-        ):
-            sweep_id = wandb.sweep(sweep_config_random, project= 'categorical_' + model_name)
-            wandb.agent(
-                sweep_id, 
-                function=lambda: self.wandb_train(early_stop_patience), 
-                count=40
-            )
+    def run_sweep(self, early_stop_patience, sweep_config_random):
+        project_name = 'multiclass' if self.is_cat_multiclass else 'binary' + '_categorical'
+        sweep_id = wandb.sweep(
+            sweep_config_random, 
+            project=project_name + '_sweep'
+        )
+        wandb.agent(
+            sweep_id, 
+            function=lambda: self.wandb_train(early_stop_patience, project_name), 
+            count=40
+        )
 
-    def wandb_train(self, early_stop_patience):
-        run = wandb.init(project='dp_categorical', entity='tomasroncak')
+    def wandb_train(self, early_stop_patience, project_name):
+        run = wandb.init(project=project_name, group=self.model_name, entity='tomasroncak')
         self.train_categorical_model(
                     wandb.config.learning_rate,
                     wandb.config.optimizer,
@@ -214,6 +213,7 @@ class ClassificationModel:
                     wandb.config.batch_size,
                     wandb.config.dropout,
                     wandb.config.activation,
-                    wandb.config.momentum
-                    )
+                    wandb.config.momentum,
+                    wandb.config.blocks
+        )
         run.finish()

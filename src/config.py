@@ -1,7 +1,6 @@
 ## DATA CONFIG ##
 window_size = 180
-dataset_split = 0.8
-n_steps = 5
+n_steps = 5  # Number of previous steps used to predict future value (if changed, time series data must be regenerated)
 use_real_data = False
 remove_first_attacks = True
 remove_benign_outlier = True
@@ -20,7 +19,7 @@ cat_model_name = 'cnn'
 cat_epochs = 40
 cat_batch_size = 5000
 cat_activation = 'relu'
-is_cat_multiclass = True
+is_cat_multiclass = False
 
 ## OTHERS ##
 learning_rate = 0.001
@@ -31,7 +30,7 @@ dropout_rate = 0.01
 blocks = 16
 optimizer = 'adam'
 
-run_wandb_sweep = False
+run_wandb_sweep = True
 sweep_config_random = {
     'method': 'random',
     'metric': {
@@ -53,7 +52,7 @@ sweep_config_random = {
             'max': 0.3
         },
         'epochs': {
-            'values': [100]
+            'values': [40]
         },
         'optimizer': {
             'values': ['sgd', 'sgd-momentum', 'rms-prop', 'adam', 'adagrad']
@@ -65,6 +64,9 @@ sweep_config_random = {
         },
         'activation': {
             'values': ['relu', 'tanh', 'selu']
+        },
+        'blocks': {
+            'values': [4, 8, 12, 16, 20]
         }
     }
 }

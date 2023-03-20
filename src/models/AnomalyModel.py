@@ -280,39 +280,22 @@ class AnomalyModel:
             plt.close()
         print('Ukladanie hotové !')
 
-    def run_sweep(
-        self,
-        model_name,
-        n_steps,
-        patience,
-        blocks,
-        sweep_config_random
-    ):
+    def run_sweep(self, patience, sweep_config_random):
         wandb.agent(
-            wandb.sweep(sweep_config_random, project='anomaly_' + model_name), 
-            function=lambda: self.wandb_train(
-                                n_steps,
-                                patience,
-                                blocks
-                            ), 
+            wandb.sweep(sweep_config_random, project='ts_prediction_sweep'), 
+            function=lambda: self.wandb_train(patience), 
             count=40
         )
 
-    def wandb_train(
-        self,
-        n_steps,
-        patience,
-        blocks
-    ):
-        run = wandb.init(project='dp_anomaly', entity='tomasroncak')
+    def wandb_train(self, patience):
+        run = wandb.init(project='ts_prediction', group=self.model_name, entity='tomasroncak')
         self.train_anomaly_model(
-            n_steps,
             wandb.config.learning_rate,
             wandb.config.optimizer,
             patience,
             wandb.config.epochs,
             wandb.config.dropout,
-            blocks,
+            wandb.config.blocks,
             wandb.config.activation,
             wandb.config.momentum
         )
