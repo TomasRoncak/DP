@@ -8,6 +8,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import random
 
 import wandb
 
@@ -88,7 +89,11 @@ class AnomalyModel:
         optimizer_fn = get_optimizer(learning_rate=learning_rate, momentum=momentum, optimizer=optimizer)
         model.compile(optimizer=optimizer_fn, loss='mse')
 
-        run = wandb.init(project='dp_an', entity='tomasroncak')
+        run = wandb.init(
+            project='time_series_prediction', 
+            name=self.model_name + '_' + str(random.randint(1,20)),
+            entity='tomasroncak'
+        )
 
         start = dt.now()
         model.fit(
