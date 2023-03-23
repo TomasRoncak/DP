@@ -159,11 +159,12 @@ class AnomalyModel:
             if self.is_anomaly_detected(curr_pred, y, curr_time, i):
                 self.collective_anomaly_count += 1
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
-                pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred))
                 categorize_attacks_func(an_detect_time=self.an_detection_time, anomaly_count=self.collective_anomaly_count)
+                pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred))
                 self.save_plots(real_data_inversed, pred_data_inversed)
-            
-        self.calculate_regression_metrics(real_data_inversed, pred_data_inversed, on_test_set=False)
+
+        whole_pred_data_inversed =  self.ts_handler.inverse_transform(np.array(data_pred))
+        self.calculate_regression_metrics(real_data_inversed, whole_pred_data_inversed, on_test_set=False)
 
     def is_anomaly_detected(self, curr_data_pred, curr_data_real, curr_time, i):
         if not i:  # No data yet to detect on
@@ -180,7 +181,7 @@ class AnomalyModel:
                 self.first_an_detection_time = curr_time
                 self.normal = 0
             self.exceeding += 1
-            self.ts_handler.attack_data_generator.data[i] = curr_data_pred
+            self.ts_handler.attack_data_generator.data[i] = curr_data_pred  # Replace real data with prediction of data
 
             pretty_print_point_anomaly(err, threshold, curr_time, self.window_size, self.exceeding, self.patience_limit)
 
