@@ -15,9 +15,9 @@ an_activation = 'relu'
 radar_plot_format = 'svg'
 
 ## CATEGORY MODEL CONFIG ##
-cat_model_name = 'cnn'
-cat_epochs = 40
-cat_batch_size = 5000
+cat_model_name = 'mlp'
+cat_epochs = 50
+cat_batch_size = 3000
 cat_activation = 'relu'
 is_cat_multiclass = False
 
@@ -30,7 +30,7 @@ dropout_rate = 0.01
 blocks = 16
 optimizer = 'adam'
 
-run_wandb_sweep = True
+run_wandb_sweep = False
 sweep_config_random = {
     'method': 'random',
     'metric': {

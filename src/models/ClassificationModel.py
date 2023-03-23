@@ -133,7 +133,7 @@ class ClassificationModel:
         )
         print('Tréning modelu {0} prebiehal {1} sekúnd.'.format(self.model_name, (dt.now() - start).seconds))
 
-        #model.save(const.SAVE_CAT_MODEL_PATH.format(self.model_number, model_name) + 'model.h5')
+        #model.save(const.save_model[self.is_cat_multiclass].format(self.model_number, self.model_name) + 'model.h5')
         run.finish()
 
     def categorize_attacks(self, an_detect_time=None, on_test_set=False, anomaly_count=None):
@@ -200,7 +200,7 @@ class ClassificationModel:
         wandb.agent(
             sweep_id, 
             function=lambda: self.wandb_train(early_stop_patience, project_name), 
-            count=40
+            count=20
         )
 
     def wandb_train(self, early_stop_patience, project_name):

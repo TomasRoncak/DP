@@ -107,7 +107,7 @@ class AnomalyModel:
         )
         print('Tréning modelu {0} prebiehal {1} sekúnd.'.format(self.model_name, (dt.now() - start).seconds))
 
-        #model.save(const.SAVE_ANOMALY_MODEL_PATH.format(model_number, model_name) + 'model.h5')
+        #model.save(const.save_model[None].format(self.model_number, self.model_name) + 'model.h5')
         run.finish()
 
     def predict_on_benign_ts(self):

@@ -44,8 +44,21 @@ def preprocess_whole_data():
 def split_whole_dataset():
     whole_df = pd.read_csv(const.WHOLE_DATASET_PATH)
     whole_df = whole_df.drop_duplicates()
-    whole_df[::2].to_csv(const.CAT_TRAIN_VAL_DATASET, index=False)
-    whole_df[1::2].to_csv(const.CAT_TEST_DATASET, index=False)
+    whole_train_val_data = pd.DataFrame()
+    whole_test_data = pd.DataFrame()
+
+    for cat in const.ATTACK_CATEGORIES:
+        if cat == 'All':
+            continue
+        cat_data = whole_df[whole_df['attack_cat'] == cat]
+        train_val_data = cat_data[::2]
+        test_data = cat_data[1::2]
+
+        whole_train_val_data = pd.concat([whole_train_val_data, train_val_data])
+        whole_test_data = pd.concat([whole_test_data, test_data])
+
+    whole_train_val_data.to_csv(const.CAT_TRAIN_VAL_DATASET, index=False)
+    whole_test_data.to_csv(const.CAT_TEST_DATASET, index=False)
 
 
 def format_data(df, is_cat_multiclass, is_model_reccurent=False):
