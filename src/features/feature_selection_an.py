@@ -91,6 +91,9 @@ def remove_colinearity(df, labels, print_steps):
 
     to_remove = set()
     feature_and_label_corr = df.corrwith(labels).sort_values().to_dict()    # Correlations between features and labels
+    for x in feature_and_label_corr:  # Remove features that do not correlate with target variable
+        if feature_and_label_corr[x] < 0.55:
+            to_remove.add(x)
 
     features_corr = df.corr().unstack().drop_duplicates()   # Correlations between features
     features_corr = features_corr[(features_corr>0.95) & (features_corr<1)].to_dict()   
@@ -143,6 +146,8 @@ def select_features_for_an(window_size, print_steps):
     chosen_cols = {}
 
     for protocol in const.PROTOCOLS:
+        #if protocol == 'smtp':
+        #    print('here')
         if print_steps:
             print('---------------------------------------------------------')
             print(bcolors.BOLD + 'Protokol: {0} \n'.format(protocol) + bcolors.ENDC)

@@ -98,7 +98,7 @@ class AnomalyModel:
         model.fit(
             self.ts_handler.benign_train_generator,
             epochs=epochs,
-            verbose=0,
+            verbose=1,
             callbacks=[get_callbacks(
                 self.model_number, 
                 self.model_name, 

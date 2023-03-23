@@ -79,7 +79,7 @@ USELESS_FEATURES_FOR_PARTIAL_CSVS = ['srcip', 'sport', 'dstip', 'dsport', 'Stime
                                      'state', 'proto', 'ct_ftp_cmd']
 USELESS_FEATURES_FOR_CLASSIFICATION = ['id', 'rate', 'service', 'proto', 'state', 'ct_ftp_cmd']
 
-PROTOCOLS = ['all', 'dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
+PROTOCOLS = ['dns', 'ftp', 'ftp-data', 'http', 'smtp', 'ssh']  # pop3 was removed(no attacks)
 ATTACK_CATEGORIES = ['DoS', 'Exploits', 'Fuzzers', 'Generic', 'Reconnaissance', 'Normal', 'All']  # WAS REMOVED -> 'Analysis', 'Backdoor', 'Shellcode', 'Worms'
 
 REAL_DATASET = 'data/real/buffer_2021-04-15_2021-05-26.tsv'
