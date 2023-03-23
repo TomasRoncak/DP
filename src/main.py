@@ -47,7 +47,6 @@ if create_final_ts_dataset:
 
 if train_an or predict_an or predict_an_on_test or radar_plot:
     ts_handler = TimeSeriesDataHandler(
-        conf.use_real_data, 
         conf.window_size, 
         conf.n_steps,
         conf.attack_category

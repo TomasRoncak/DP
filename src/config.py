@@ -1,7 +1,6 @@
 ## DATA CONFIG ##
 window_size = 180
 n_steps = 5  # Number of previous steps used to predict future value (if changed, time series data must be regenerated)
-use_real_data = False
 remove_first_attacks = True
 remove_benign_outlier = True
 attack_category = 'All'

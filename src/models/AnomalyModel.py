@@ -34,7 +34,7 @@ from models.functions import (format_and_print_collective_anomaly,
 class AnomalyModel:
     def __init__(self, ts_handler, model_number, model_name, window_size, patience_limit):
         self.ts_handler = ts_handler
-        self.n_features = ts_handler.n_features
+        self.n_features = len(ts_handler.features)
         self.whole_real_data = get_y_from_generator(self.n_features, ts_handler.attack_data_generator)
         self.model_number = model_number
         self.model_name = model_name
@@ -145,7 +145,7 @@ class AnomalyModel:
         self.model = load_best_model(self.model_number, self.model_name, model_type='an')
         data_generator = self.ts_handler.attack_data_generator  # Data from the beginnng of dataset
         data_pred = []
-        real_data_inversed = self.ts_handler.inverse_transform(self.whole_real_data, attack_data=True)
+        real_data_inversed = self.ts_handler.inverse_transform(self.whole_real_data)
         
         for i in range(len(data_generator)):
             x, y = data_generator[i]
@@ -159,7 +159,7 @@ class AnomalyModel:
             if self.is_anomaly_detected(curr_pred, y, curr_time, i):
                 self.collective_anomaly_count += 1
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
-                pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred), attack_data=True)
+                pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred))
                 categorize_attacks_func(an_detect_time=self.an_detection_time, anomaly_count=self.collective_anomaly_count)
                 self.save_plots(real_data_inversed, pred_data_inversed)
             
@@ -227,7 +227,7 @@ class AnomalyModel:
         end = begin + len(test_data)                        # End is where predicted data ends
 
         whole_data = np.append(train_data, test_data)             
-        whole_data = whole_data.reshape(-1, self.ts_handler.n_features)
+        whole_data = whole_data.reshape(-1, self.n_features)
 
         pred_data = np.empty_like(whole_data)
         pred_data[:, :] = np.nan                            # First : stands for first and the second : for the second dimension
@@ -248,7 +248,7 @@ class AnomalyModel:
         else:
             fig_name = const.MODEL_PREDICTIONS_BENIGN_PATH
     
-        for i in range(self.ts_handler.n_features): 
+        for i in range(self.n_features): 
             real_feature = [item[i] for item in real_data]
             predict_feature = [item[i] for item in prediction_data]
 

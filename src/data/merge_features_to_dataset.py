@@ -1,46 +1,43 @@
 import json
-import sys
 import os
-
-from pathlib import Path
 import random
-import pandas as pd
+import sys
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
 import config as conf
 import constants as const
 
+
 def merge_features_to_dataset(window_size):
     print('Vytváram finálny dataset podľa vybraných atribútov.')
     try:
         protocol_features = json.load(open(const.SELECTED_FEATURES_JSON.format(window_size)))
-        protocol_features['all'] = [const.LABEL_SUM, const.TIME]
         Path(const.EXTRACTED_DATASETS_PATH.format(window_size)).mkdir(parents=True, exist_ok=True)
     except:
         print('Súbor (.json) s vybranými atribútmi nebol nájdený !')
         return
-
+    
+    time = pd.read_csv(const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, 'Normal', 'all'), usecols = [const.TIME])
     for attack_type in const.ATTACK_CATEGORIES:
-        data = pd.DataFrame()
+        data = pd.DataFrame(time)
         for protocol in protocol_features:
+            path = const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, attack_type, protocol)
             benign_protocol_data = pd.read_csv(
                                         const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, 'Normal', protocol), 
                                         usecols = protocol_features[protocol]
                                    )
-            benign_protocol_data = handle_outliers(benign_protocol_data, with_attacks=False)
+            combined_data = handle_outliers(benign_protocol_data)   # At this point it contains only benign traffic
 
-            path = const.TS_DATASET_BY_CATEGORY_PATH.format(window_size, attack_type, protocol)
-            if attack_type != 'Normal' and os.path.exists(path):
-                protocol_data = pd.read_csv(path, usecols = protocol_features[protocol])
-                if any(x in protocol_features[protocol] for x in [const.LABEL_SUM, const.TIME]):
-                    combined_data = protocol_data   # Labels and time don't have benign data to append so use only protocol_data
-                else:
-                    combined_data = benign_protocol_data + protocol_data
-            else:
-                combined_data = benign_protocol_data
+            if os.path.exists(path) and attack_type != 'Normal':  
+                malign_protocol_data = pd.read_csv(path, usecols = protocol_features[protocol])
+                combined_data += malign_protocol_data   # Here is the data combined with malign traffic
+            
             combined_data.columns = combined_data.columns.str.replace('_sum', '_{0}'.format(protocol))
             data = pd.concat([data, combined_data], axis=1)
 
@@ -55,16 +52,16 @@ def merge_features_to_dataset(window_size):
     plot_merged_dataset(window_size)
 
 
-def handle_outliers(data, with_attacks=True):
+def handle_outliers(data):
     data.replace(0, np.NaN, inplace=True)
-    data = remove_outliers(data, upper=(not with_attacks))  # If data contains attacks dont cut upper outliers
+    data = remove_outliers(data, upper=True)  # If data contains attacks dont cut upper outliers
     data = interpolate_data(data)
     return data
 
 
 def remove_outliers(data, upper):
     for column in data.columns:
-        if column in (const.TIME, const.LABEL_SUM):
+        if column == const.TIME:
             continue
         median = data[column].median()
         if upper:
@@ -79,7 +76,7 @@ def interpolate_data(data):
     # Fill zeroes(nan) with interpolate values + rand value to not be a straight line
     for index, row in data.iterrows():
         for column in data.columns:
-            if column in (const.TIME, const.LABEL_SUM):
+            if column == const.TIME:
                 continue
             if row[column] != row[column]:  # If is NaN
                 mean = data[column].mean()
@@ -95,7 +92,7 @@ def plot_merged_dataset(window_size):
         data = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack))
         
         for feature in data.columns:
-            if feature == const.TIME or (attack == 'Normal' and feature == 'label_all'):
+            if feature == const.TIME:
                 continue
             pd.DataFrame(data, columns=[const.TIME, feature]) \
                 .plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
