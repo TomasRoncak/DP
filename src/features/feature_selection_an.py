@@ -146,10 +146,8 @@ def select_features_for_an(window_size, print_steps):
     chosen_cols = {}
 
     for protocol in const.PROTOCOLS:
-        #if protocol == 'smtp':
-        #    print('here')
         if print_steps:
-            print('---------------------------------------------------------')
+            print('--------------------------------------------------------------------------------')
             print(bcolors.BOLD + 'Protokol: {0} \n'.format(protocol) + bcolors.ENDC)
         
         chosen_cols[protocol] = select_features(protocol, window_size, print_steps)
