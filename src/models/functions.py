@@ -21,7 +21,7 @@ import wandb
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data')
 
-from preprocess_data import format_data, get_filtered_classes
+from preprocess_data import get_filtered_classes
 
 import constants as const
 
@@ -36,7 +36,10 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    
+
+
+WARNING_TEXT = bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC
+
 
 def get_optimizer(learning_rate, optimizer, momentum = 0):
     switcher = {
@@ -164,8 +167,7 @@ def pretty_print_detected_attacks(prob, is_multiclass):
             print('{0} ({1}x)'.format(x[0], x[1]))
     else:
         y_pred = np.round(prob, 0)
-        print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + \
-            ': Znalostný model detegoval v časovom okne {0} podozrivých tokov!'.format((y_pred == 1).sum()))
+        print(WARNING_TEXT + ': Znalostný model detegoval v časovom okne {0} podozrivých tokov!'.format((y_pred == 1).sum()))
 
 
 def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding, patience_limit):
@@ -180,8 +182,7 @@ def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding
 
 
 def format_and_print_collective_anomaly(start_time, stop_time):
-    print(bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC + 
-        ': Kolektívna anomália detegovaná v okne {0} až {1}!' \
+    print(WARNING_TEXT + ': Kolektívna anomália detegovaná v okne {0} až {1}!' \
         .format(start_time.strftime(const.PRETTY_TIME_FORMAT), stop_time.strftime(const.PRETTY_TIME_FORMAT))
     )
     return (start_time, stop_time)
@@ -195,11 +196,13 @@ def parse_date_as_timestamp(date):
     return [pd.Timestamp(one_date) for one_date in date]
 
 
-def split_data_train_val(data, is_cat_multiclass, is_model_reccurent):
+def reduce_normal_traffic(data, to_delete):
     normal_data = data[data['attack_cat'] == 'Normal'][::10]
     data = data[data.attack_cat != 'Normal']
     data = pd.concat([data, normal_data])
-    return format_data(data, is_cat_multiclass, is_model_reccurent)
+    data.drop(to_delete, axis=1, inplace=True)
+
+    return data.iloc[:, :-1], data.iloc[:, -1]  # x, y
 
 
 def save_rf_model(model, is_cat_multiclass, model_number, model_name):

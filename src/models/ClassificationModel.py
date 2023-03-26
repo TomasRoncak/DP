@@ -17,17 +17,18 @@ from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
                           MaxPooling1D)
 from keras.losses import BinaryCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Sequential
-from preprocess_data import format_data
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
 import constants as const
-from models.functions import (get_callbacks, get_filtered_classes,
-                              get_optimizer, load_best_model,
-                              parse_date_as_timestamp, plot_confusion_matrix,
-                              plot_roc_auc, pretty_print_detected_attacks,
-                              save_rf_model, split_data_train_val)
+from models.functions import (WARNING_TEXT, get_callbacks,
+                              get_filtered_classes, get_optimizer,
+                              load_best_model, parse_date_as_timestamp,
+                              plot_confusion_matrix, plot_roc_auc,
+                              pretty_print_detected_attacks,
+                              reduce_normal_traffic, save_rf_model)
 
 absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ('Found untraced functions such as ...')
 
@@ -41,13 +42,41 @@ class ClassificationModel:
         self.is_model_reccurent = self.model_name in ['lstm', 'gru']
         self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
                           if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
-        
-        X, y = split_data_train_val(pd.read_csv(const.CAT_TRAIN_VAL_DATASET), self.is_cat_multiclass, self.is_model_reccurent)
-        self.trainX, self.valX, self.trainY, self.valY = train_test_split(X, y, train_size=0.8, shuffle=True)
-        
-        self.test_data = pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
-        self.testX, self.testY = split_data_train_val(self.test_data, self.is_cat_multiclass, self.is_model_reccurent)
+        self.handle_data()
 
+    def handle_data(self):
+        self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
+        self.standard_scaler = StandardScaler()
+        self.label_encoder = LabelEncoder()
+        to_delete = 'label' if self.is_cat_multiclass else 'attack_cat'
+        features = [const.TIME, 'label', 'attack_cat']
+
+        trainX, trainY = reduce_normal_traffic(pd.read_csv(const.CAT_TRAIN_VAL_DATASET), to_delete)
+        trainX, valX, trainY, valY = train_test_split(trainX, trainY, train_size=0.8, shuffle=True)
+        self.trainX, self.trainY = self.scale_data(trainX, trainY, isTrain=True)
+        self.valX, self.valY = self.scale_data(valX, valY)
+        
+        self.testDf = pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
+        self.testDf.drop(to_delete, axis=1, inplace=True)
+
+        selected = [x for x in list(self.testDf.columns) if (x not in features)]
+        self.testDf[selected], _ = self.scale_data(self.testDf[selected], None)
+
+        if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
+            self.trainX = np.reshape(self.trainX, (self.trainX.shape[0], 1, self.trainX.shape[1]))
+            self.valX = np.reshape(self.valX, (self.valX.shape[0], 1, self.valX.shape[1]))
+
+    def scale_data(self, dataX, dataY, isTrain=False):
+        if isTrain:
+            dataX = self.minmax_scaler.fit_transform(dataX)
+            dataX = self.standard_scaler.fit_transform(dataX)
+            dataY = self.label_encoder.fit_transform(dataY)
+        else:
+            dataX = self.minmax_scaler.transform(dataX)
+            dataX = self.standard_scaler.transform(dataX)
+            if dataY is not None:
+                dataY = self.label_encoder.transform(dataY)
+        return dataX, dataY
 
     def train_categorical_model(
         self,
@@ -139,11 +168,14 @@ class ClassificationModel:
         if on_test_set:
             x, y = self.testX, self.testY
         elif an_detect_time:
-            windowed_data = self.test_data[(self.test_data[const.TIME] >= an_detect_time[0]) & (self.test_data[const.TIME] <= an_detect_time[1])]
-            x, y = format_data(windowed_data, self.is_cat_multiclass, self.is_model_reccurent)
-        else:
-            print('Časové okno pre klasifikáciu nebolo nájdené !')
-            return
+            window_data = self.testDf[(self.testDf[const.TIME] >= an_detect_time[0]) & (self.testDf[const.TIME] <= an_detect_time[1])]
+            data = window_data.drop(const.TIME, axis=1)
+            x, y = data.iloc[:, :-1], data.iloc[:, -1]
+            if x.empty:
+                print(WARNING_TEXT + ': Klasifikačné dáta časového okna {0} - {1} neboli nájdené !'.format(an_detect_time[0], an_detect_time[1]))
+                return
+            if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
+                x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
         
         if self.model_name == 'rf':
             prob = self.model.predict(x)

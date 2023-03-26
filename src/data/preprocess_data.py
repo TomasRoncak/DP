@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import datetime
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 
@@ -44,6 +43,10 @@ def preprocess_whole_data():
 def split_whole_dataset():
     whole_df = pd.read_csv(const.WHOLE_DATASET_PATH)
     whole_df = whole_df.drop_duplicates()
+    whole_df.drop('service', axis=1, inplace=True)
+    time_column = whole_df.pop(const.TIME)   # Move column to first place in df
+    whole_df.insert(0, const.TIME, time_column)
+
     whole_train_val_data = pd.DataFrame()
     whole_test_data = pd.DataFrame()
 
@@ -57,34 +60,9 @@ def split_whole_dataset():
         whole_train_val_data = pd.concat([whole_train_val_data, train_val_data])
         whole_test_data = pd.concat([whole_test_data, test_data])
 
+    whole_train_val_data.drop(const.TIME, axis=1, inplace=True)
     whole_train_val_data.to_csv(const.CAT_TRAIN_VAL_DATASET, index=False)
     whole_test_data.to_csv(const.CAT_TEST_DATASET, index=False)
-
-
-def format_data(df, is_cat_multiclass, is_model_reccurent=False):
-    label_encoder = LabelEncoder()
-    minmax_scaler = MinMaxScaler(feature_range=(0, 1))
-    standard_scaler = StandardScaler()
-
-    if const.TIME in df:  # whole_dataset.csv obsahuje aj cas pre potreby anomaly dat, tu ho netreba
-        df = df.drop(const.TIME, axis=1)
-    if 'service' in df:
-        df = df.drop('service', axis=1)  # dataset whole_dataset.csv obsahuje 'service' na vytvaranie casovych radov
-    if is_cat_multiclass:
-        df = df.drop('label', axis=1)
-    else:
-        df = df.drop('attack_cat', axis=1)
-
-    x = df.iloc[:, :-1]
-    x = minmax_scaler.fit_transform(x)
-    x = standard_scaler.fit_transform(x)
-
-    y = label_encoder.fit_transform(df.iloc[:, -1])
-
-    if is_model_reccurent:  # Reshape -> [samples, time steps, features]
-        x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
-
-    return x, y
 
 
 def get_classes():
