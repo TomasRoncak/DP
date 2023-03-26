@@ -44,40 +44,6 @@ class ClassificationModel:
                           if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
         self.handle_data()
 
-    def handle_data(self):
-        self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
-        self.standard_scaler = StandardScaler()
-        self.label_encoder = LabelEncoder()
-        to_delete = 'label' if self.is_cat_multiclass else 'attack_cat'
-        features = [const.TIME, 'label', 'attack_cat']
-
-        trainX, trainY = reduce_normal_traffic(pd.read_csv(const.CAT_TRAIN_VAL_DATASET), to_delete)
-        trainX, valX, trainY, valY = train_test_split(trainX, trainY, train_size=0.8, shuffle=True)
-        self.trainX, self.trainY = self.scale_data(trainX, trainY, isTrain=True)
-        self.valX, self.valY = self.scale_data(valX, valY)
-        
-        self.testDf = pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
-        self.testDf.drop(to_delete, axis=1, inplace=True)
-
-        selected = [x for x in list(self.testDf.columns) if (x not in features)]
-        self.testDf[selected], _ = self.scale_data(self.testDf[selected], None)
-
-        if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
-            self.trainX = np.reshape(self.trainX, (self.trainX.shape[0], 1, self.trainX.shape[1]))
-            self.valX = np.reshape(self.valX, (self.valX.shape[0], 1, self.valX.shape[1]))
-
-    def scale_data(self, dataX, dataY, isTrain=False):
-        if isTrain:
-            dataX = self.minmax_scaler.fit_transform(dataX)
-            dataX = self.standard_scaler.fit_transform(dataX)
-            dataY = self.label_encoder.fit_transform(dataY)
-        else:
-            dataX = self.minmax_scaler.transform(dataX)
-            dataX = self.standard_scaler.transform(dataX)
-            if dataY is not None:
-                dataY = self.label_encoder.transform(dataY)
-        return dataX, dataY
-
     def train_categorical_model(
         self,
         learning_rate,
@@ -246,3 +212,37 @@ class ClassificationModel:
                     wandb.config.blocks
         )
         run.finish()
+
+    def handle_data(self):
+        self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
+        self.standard_scaler = StandardScaler()
+        self.label_encoder = LabelEncoder()
+        to_delete = 'label' if self.is_cat_multiclass else 'attack_cat'
+        features = [const.TIME, 'label', 'attack_cat']
+
+        trainX, trainY = reduce_normal_traffic(pd.read_csv(const.CAT_TRAIN_VAL_DATASET), to_delete)
+        trainX, valX, trainY, valY = train_test_split(trainX, trainY, train_size=0.8, shuffle=True)
+        self.trainX, self.trainY = self.scale_data(trainX, trainY, isTrain=True)
+        self.valX, self.valY = self.scale_data(valX, valY)
+        
+        self.testDf = pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
+        self.testDf.drop(to_delete, axis=1, inplace=True)
+
+        selected = [x for x in list(self.testDf.columns) if (x not in features)]
+        self.testDf[selected], _ = self.scale_data(self.testDf[selected], None)
+
+        if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
+            self.trainX = np.reshape(self.trainX, (self.trainX.shape[0], 1, self.trainX.shape[1]))
+            self.valX = np.reshape(self.valX, (self.valX.shape[0], 1, self.valX.shape[1]))
+
+    def scale_data(self, dataX, dataY, isTrain=False):
+        if isTrain:
+            dataX = self.minmax_scaler.fit_transform(dataX)
+            dataX = self.standard_scaler.fit_transform(dataX)
+            dataY = self.label_encoder.fit_transform(dataY)
+        else:
+            dataX = self.minmax_scaler.transform(dataX)
+            dataX = self.standard_scaler.transform(dataX)
+            if dataY is not None:
+                dataY = self.label_encoder.transform(dataY)
+        return dataX, dataY
