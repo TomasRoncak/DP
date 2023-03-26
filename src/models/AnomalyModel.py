@@ -71,16 +71,17 @@ class AnomalyModel:
             model.add(Flatten())
             model.add(Dense(25, activation=activation))
         elif self.model_name == 'lstm':
-            model.add(LSTM(blocks, activation='relu', input_shape=(n_steps, n_features)))
+            model.add(LSTM(blocks, activation=activation, input_shape=(n_steps, n_features)))
         elif self.model_name == 'gru':
             model.add(GRU(blocks, input_shape=(n_steps, n_features)))
         elif self.model_name == 'cnn_lstm':
             model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation, input_shape=(n_steps, n_features)))
             model.add(MaxPooling1D(pool_size=2))
-            model.add(LSTM(blocks))
+            model.add(LSTM(blocks, activation=activation))
             model.add(Dropout(dropout))
         elif self.model_name == 'tcn':
             model.add(TCN(input_shape=(n_steps, n_features), nb_filters=256))
+            model.add(Dropout(dropout))
         else:
             raise Exception('Nepodporovaný typ modelu !')
         model.add(Dense(n_features))
@@ -89,7 +90,7 @@ class AnomalyModel:
         model.compile(optimizer=optimizer_fn, loss='mse')
 
         run = wandb.init(
-            project='time_series_prediction',
+            project='ts_prediction',
             group=self.model_name,
             entity='tomasroncak'
         )

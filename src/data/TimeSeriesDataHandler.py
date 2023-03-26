@@ -20,8 +20,12 @@ class TimeSeriesDataHandler:
         self.benign_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, 'Normal'), parse_dates=[const.TIME])
         self.attack_df = pd.read_csv(const.EXTRACTED_ATTACK_CAT_DATASET_PATH.format(window_size, attack_cat), parse_dates=[const.TIME])
 
+        self.time = list(self.benign_df[const.TIME])[n_steps:]
+        self.attack_time = list(self.attack_df[const.TIME])[n_steps:]
+
+        self.benign_df.drop(const.TIME, axis=1, inplace=True)
+        self.attack_df.drop(const.TIME, axis=1, inplace=True)
         self.features = self.benign_df.columns.tolist()
-        self.features.remove(const.TIME)  # Time is not considered a feature
 
         self.generate_time_series(n_steps)
 
@@ -40,12 +44,6 @@ class TimeSeriesDataHandler:
         return df[:train_size], df[train_size:]
 
     def generate_time_series(self, n_input):
-        self.time = list(self.benign_df[const.TIME])[n_input:]
-        self.attack_time = list(self.attack_df[const.TIME])[n_input:]
-
-        self.benign_df.drop(const.TIME, axis=1, inplace=True)
-        self.attack_df.drop(const.TIME, axis=1, inplace=True)
-
         train, test = self.split_dataset(self.benign_df)
 
         train_norm = self.normalize_data(train.copy())
