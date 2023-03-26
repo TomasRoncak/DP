@@ -87,10 +87,10 @@ if train_an:
         )
 
 if predict_an_on_test:
-    anomaly_model.predict_on_benign_ts()
+    anomaly_model.predict_ts(on_test_set=True)
 
 if predict_an:
-    anomaly_model.predict_on_attack_ts(category_model.categorize_attacks)
+    anomaly_model.predict_ts(on_test_set=False, categorize_attacks_func=category_model.categorize_attacks)
 
 if radar_plot:
     create_radar_plot(ts_handler.features, conf.models_number, on_test_set=True, pic_format=conf.radar_plot_format)

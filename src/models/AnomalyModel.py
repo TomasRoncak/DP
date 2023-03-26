@@ -111,61 +111,34 @@ class AnomalyModel:
         #model.save(const.save_model[None].format(self.model_number, self.model_name) + 'model.h5')
         run.finish()
 
-    def predict_on_benign_ts(self):
+    def predict_ts(self, on_test_set, categorize_attacks_func=None):
         self.model = load_best_model(self.model_number, self.model_name, model_type='an')
-        data_generator = self.ts_handler.benign_test_generator
-        data_pred = []
-        
-        for i in range(len(data_generator)):
-            x, y = data_generator[i]
-            curr_time = self.ts_handler.time[i]
-            curr_pred = self.model.predict(x, verbose=0)
-            
-            err = mse(curr_pred, y)
-            pretty_print_window_ok(curr_time, err)
-
-            data_pred.append(curr_pred[0])
-
-        train_data = get_y_from_generator(self.n_features, self.ts_handler.benign_train_generator)
-        test_data = get_y_from_generator(self.n_features, self.ts_handler.benign_test_generator)
-        
-        train_inversed = self.ts_handler.inverse_transform(train_data)
-        test_inversed = self.ts_handler.inverse_transform(test_data)
-        predict_inversed = self.ts_handler.inverse_transform(data_pred)
-
-        self.calculate_regression_metrics(test_inversed, predict_inversed, on_test_set=True)
-        self.save_benign_ts_plots(
-            train_inversed, 
-            test_inversed, 
-            predict_inversed, 
-            self.ts_handler.time, 
-            show_full_data=False
-        )
-
-    def predict_on_attack_ts(self, categorize_attacks_func):
-        self.model = load_best_model(self.model_number, self.model_name, model_type='an')
-        data_generator = self.ts_handler.attack_data_generator  # Data from the beginnng of dataset
+        data_generator = self.ts_handler.benign_test_generator if on_test_set else self.ts_handler.attack_data_generator
         data_pred = []
         real_data_inversed = self.ts_handler.inverse_transform(self.whole_real_data)
-        
+
         for i in range(len(data_generator)):
             x, y = data_generator[i]
             # x => conf.n_steps of data to be used for prediction - e.g. 0-4, 1-5, ...
             # y => real data at time step conf.n_steps + i - e.g. 5+0, 5+1, ...
-            
-            curr_time = self.ts_handler.attack_time[i] 
+            curr_time = self.ts_handler.time[i]
             curr_pred = self.model.predict(x, verbose=0)
             data_pred.append(curr_pred[0])
 
-            if self.is_anomaly_detected(curr_pred, y, curr_time, i):
+            if on_test_set:
+                err = mse(curr_pred, y)
+                pretty_print_window_ok(curr_time, err)
+            elif self.is_anomaly_detected(curr_pred, y, curr_time, i):
                 self.collective_anomaly_count += 1
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
                 categorize_attacks_func(an_detect_time=self.an_detection_time, anomaly_count=self.collective_anomaly_count)
                 pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred))
                 self.save_plots(real_data_inversed, pred_data_inversed)
 
-        whole_pred_data_inversed =  self.ts_handler.inverse_transform(np.array(data_pred))
-        self.calculate_regression_metrics(real_data_inversed, whole_pred_data_inversed, on_test_set=False)
+        predict_data_inversed = self.ts_handler.inverse_transform(data_pred)
+        if on_test_set:
+            self.save_benign_ts_plots(predict_data_inversed, show_full_data=False)
+        self.calculate_regression_metrics(predict_data_inversed, on_test_set=on_test_set)
 
     def is_anomaly_detected(self, curr_data_pred, curr_data_real, curr_time, i):
         if not i:  # No data yet to detect on
@@ -200,9 +173,11 @@ class AnomalyModel:
         upper_bound = q3 + (1.5 * iqr)
         return upper_bound
 
-    def calculate_regression_metrics(self, real_data, predict_data, on_test_set):
+    def calculate_regression_metrics(self, predict_data, on_test_set):
+        real_data = get_y_from_generator(self.n_features, self.ts_handler.benign_test_generator) if on_test_set else self.whole_real_data
+        real_data = self.ts_handler.inverse_transform(real_data)
         real_data = real_data[0:len(predict_data)]  # Slice data, if predicted data are shorter (detected anomaly stops prediction)
-        
+
         with open(const.anomaly_metrics[on_test_set].format(self.model_number, self.model_name) + const.REPORT_FILE, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['feature', 'mae', 'mape', 'mse', 'rmse'])   # Header
@@ -219,11 +194,17 @@ class AnomalyModel:
                     round(math.sqrt(mse_score), 2)
                 ])
     
-    def save_benign_ts_plots(self, train_data, test_data, prediction_data, time, show_full_data):
+    def save_benign_ts_plots(self, prediction_data, show_full_data):
+        train_data = get_y_from_generator(self.n_features, self.ts_handler.benign_train_generator)
+        train_data = self.ts_handler.inverse_transform(train_data)
+
+        test_data = get_y_from_generator(self.n_features, self.ts_handler.benign_test_generator)
+        test_data = self.ts_handler.inverse_transform(test_data)
+
         if not show_full_data:                              # Display only half of the train data
             train_len = len(train_data)
-            train_data = train_data[int(train_len/3)*2:]    
-            time = time[int(train_len/3)*2:train_len + len(train_data)]
+            train_data = train_data[int(train_len/3)*2:]
+            shortened_time = self.ts_handler.time[int(train_len/3)*2:train_len + len(train_data)]
 
         begin = len(train_data)                             # Beginning is where train data ends
         end = begin + len(test_data)                        # End is where predicted data ends
@@ -235,7 +216,7 @@ class AnomalyModel:
         pred_data[:, :] = np.nan                            # First : stands for first and the second : for the second dimension
         pred_data[begin:end, :] = prediction_data           # Insert predicted values
 
-        self.save_plots(whole_data, pred_data, time=time)
+        self.save_plots(whole_data, pred_data, time=shortened_time)
 
     def save_plots(self, real_data, prediction_data, time=None):
         print('Ukladám grafy časových tokov...')
@@ -244,7 +225,7 @@ class AnomalyModel:
             Path(const.MODEL_PREDICTIONS_ATTACK_PATH \
                 .format(self.model_number, self.model_name, self.collective_anomaly_count)) \
                 .mkdir(parents=True, exist_ok=True)
-            time = self.ts_handler.attack_time
+            time = self.ts_handler.time
             start = mdates.date2num(self.an_detection_time[0])
             fig_name = const.MODEL_PREDICTIONS_ATTACK_PATH
         else:

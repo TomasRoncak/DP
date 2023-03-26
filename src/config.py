@@ -51,7 +51,7 @@ sweep_config_random = {
             'max': 0.3
         },
         'epochs': {
-            'values': [40]
+            'values': [50]
         },
         'optimizer': {
             'values': ['sgd', 'sgd-momentum', 'rms-prop', 'adam', 'adagrad']
