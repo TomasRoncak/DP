@@ -29,11 +29,17 @@ class TimeSeriesDataHandler:
 
         self.generate_time_series(n_steps)
 
-    def normalize_data(self, df):
+    def normalize_train_data(self, df):
         return self.minmax_scaler.fit_transform(df)
     
-    def scale_data(self, df):
+    def scale_train_data(self, df):
         return self.stand_scaler.fit_transform(df)
+    
+    def normalize_data(self, df):
+        return self.minmax_scaler.transform(df)
+    
+    def scale_data(self, df):
+        return self.stand_scaler.transform(df)
 
     def inverse_transform(self, predict):
         tmp = self.stand_scaler.inverse_transform(predict)
@@ -46,10 +52,10 @@ class TimeSeriesDataHandler:
     def generate_time_series(self, n_input):
         train, test = self.split_dataset(self.benign_df)
 
-        train_norm = self.normalize_data(train.copy())
-        train_scaled = self.scale_data(train_norm)
+        train_norm = self.normalize_train_data(train)
+        train_scaled = self.scale_train_data(train_norm)
 
-        test_norm = self.normalize_data(test.copy())
+        test_norm = self.normalize_data(test)
         test_scaled = self.scale_data(test_norm)
 
         attack_norm = self.normalize_data(self.attack_df)
