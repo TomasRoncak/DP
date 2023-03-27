@@ -141,11 +141,9 @@ class AnomalyModel:
         self.calculate_regression_metrics(predict_data_inversed, on_test_set=on_test_set)
 
     def is_anomaly_detected(self, curr_data_pred, curr_data_real, curr_time, i):
-        if not i:  # No data yet to detect on
-            return False
-        
         threshold = self.calculate_anomaly_threshold(i)
         err = mse(curr_data_pred, curr_data_real)
+        n_steps = self.ts_handler.attack_data_generator.length
 
         if err <= threshold:
             self.normal += 1
@@ -155,7 +153,8 @@ class AnomalyModel:
                 self.first_an_detection_time = curr_time
                 self.normal = 0
             self.exceeding += 1
-            self.ts_handler.attack_data_generator.data[i] = curr_data_pred  # Replace real data with prediction of data
+            # i + n_steps means set i to the position of y, not x
+            self.ts_handler.attack_data_generator.data[i + n_steps] = curr_data_pred  # Replace real data with prediction of data
 
             pretty_print_point_anomaly(err, threshold, curr_time, self.window_size, self.exceeding, self.patience_limit)
 
@@ -168,7 +167,8 @@ class AnomalyModel:
             return True
     
     def calculate_anomaly_threshold(self, i):
-        q1, q3 = np.percentile(self.whole_real_data[:i], [25, 96])  # Calculate threshold according to whole data to the time point of 'i'
+        # Calculate threshold according to real data up to the time point of 'i'
+        q1, q3 = np.percentile(self.whole_real_data[:i] if i > 0 else self.whole_real_data[i], [25, 96])
         iqr = q3 - q1
         upper_bound = q3 + (1.5 * iqr)
         return upper_bound

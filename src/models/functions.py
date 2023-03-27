@@ -194,8 +194,8 @@ def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding
 
 
 def format_and_print_collective_anomaly(start_time, stop_time):
-    print(WARNING_TEXT_RED + ': Kolektívna anomália detegovaná v okne {0} až {1}!' \
-        .format(start_time.strftime(const.PRETTY_TIME_FORMAT), stop_time.strftime(const.PRETTY_TIME_FORMAT))
+    print(WARNING_TEXT_RED + ': Kolektívna anomália detegovaná v okne {0}-{1}!' \
+        .format(start_time.strftime(const.PRETTY_TIME_FORMAT), stop_time.strftime(const.PRETTY_SHORT_TIME_FORMAT))
     )
     return (start_time, stop_time)
 
