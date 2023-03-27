@@ -168,7 +168,7 @@ class AnomalyModel:
     
     def calculate_anomaly_threshold(self, i):
         # Calculate threshold according to real data up to the time point of 'i'
-        q1, q3 = np.percentile(self.whole_real_data[:i] if i > 0 else self.whole_real_data[i], [25, 96])
+        q1, q3 = np.percentile(self.whole_real_data[:i] if i > 0 else self.whole_real_data[i], [25, 95])
         iqr = q3 - q1
         upper_bound = q3 + (1.5 * iqr)
         return upper_bound
@@ -188,10 +188,10 @@ class AnomalyModel:
 
                 writer.writerow([
                     self.ts_handler.features[i], 
-                    round(mae_score, 2), 
+                    round(mae_score, 4), 
                     round(mape_score, 2), 
-                    round(mse_score, 2), 
-                    round(math.sqrt(mse_score), 2)
+                    round(mse_score, 4), 
+                    round(math.sqrt(mse_score), 4)
                 ])
     
     def save_benign_ts_plots(self, prediction_data, show_full_data):

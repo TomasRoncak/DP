@@ -224,17 +224,17 @@ def save_rf_model(model, is_cat_multiclass, model_number, model_name):
 
 
 def create_radar_plot(features, model_number, on_test_set, pic_format):
-    var = 'test' if on_test_set else 'window'
+    var = 'Test' if on_test_set else 'Window'
     features.append(features[0])
     fig = go.Figure()
 
     for model_name in os.listdir(const.WHOLE_ANOMALY_MODEL_PATH.format(model_number)):
-        if model_name.startswith('radar'):
+        if model_name.startswith('radar') or model_name == '.DS_Store':
             continue
         try:
             metrics = pd.read_csv(const.anomaly_metrics[on_test_set].format(model_number, model_name) + const.REPORT_FILE)
         except:
-            print('Report pre {0} modelu {1} nebol nájdený !'.format(var, model_name))
+            print('{0} report modelu {1} nebol nájdený! Radar chart nemohol byť vytvorený.'.format(var, model_name))
             return
 
         metrics = metrics['mape'].to_list()
@@ -243,7 +243,7 @@ def create_radar_plot(features, model_number, on_test_set, pic_format):
         fig.add_trace(go.Scatterpolar(
             r=metrics,
             theta=features,
-            name=model_name
+            name=model_name.upper()
         ))
 
         fig.update_layout(
@@ -257,3 +257,4 @@ def create_radar_plot(features, model_number, on_test_set, pic_format):
             const.MODEL_REGRESSION_RADAR_CHART_PATH.format(model_number, var + '.' + pic_format), 
             format=pic_format
         )
+    print('{0} radar chart bol úspešne vytvorený.'.format(var))

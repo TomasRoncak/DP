@@ -1,34 +1,46 @@
 ## DATA CONFIG ##
-window_size = 180
-n_steps = 5  # Number of previous steps used to predict future value (if changed, time series data must be regenerated)
-remove_first_attacks = True
 attack_category = 'All'
+create_final_ts_dataset = False
+create_time_series_data = False
+n_steps = 5  # Number of previous steps used to predict future value (if changed, time series data must be regenerated)
+preprocess_data = False
+remove_first_attacks = True
+select_features = False
+window_size = 180
 
-models_number = 1
 
 ## ANOMALY MODEL CONFIG ##
-an_model_name = 'cnn'
-an_epochs = 75
 an_activation = 'relu'
+an_epochs = 75
+an_model_name = 'cnn'
+create_radar_chart = False
+predict_anomaly = False
+predict_anomaly_on_test = False
 radar_plot_format = 'svg'
+train_anomaly = False
+
 
 ## CATEGORY MODEL CONFIG ##
-cat_model_name = 'mlp'
-cat_epochs = 50
-cat_batch_size = 3000
 cat_activation = 'relu'
+cat_batch_size = 3000
+cat_epochs = 50
+cat_model_name = 'mlp'
 is_cat_multiclass = False
+predict_category_on_test = False
+train_category = False
+
 
 ## OTHERS ##
-learning_rate = 0.001
-momentum = 0
-early_stop_patience = 4  # Aplikuje sa na epochy nie batche
-patience_anomaly_limit = 2  # Limit pre pocet detegovanych anomalii v urcitom rozsahu tokov
-dropout_rate = 0.01
 blocks = 16
+dropout_rate = 0.01
+early_stop_patience = 4  # Aplikuje sa na epochy nie batche
+learning_rate = 0.001
+models_number = 1
+momentum = 0
 optimizer = 'adam'
-
+patience_anomaly_limit = 2  # Limit pre pocet detegovanych anomalii v urcitom rozsahu tokov
 run_wandb_sweep = False
+
 sweep_config_random = {
     'method': 'random',
     'metric': {

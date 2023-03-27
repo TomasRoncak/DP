@@ -8,44 +8,27 @@ from models.AnomalyModel import AnomalyModel
 from models.ClassificationModel import ClassificationModel
 from models.functions import create_radar_plot
 
-## Data processing ##
-preprocess_data = False
-create_time_series_data = False
-select_features = False
-create_final_ts_dataset = False
-
-## Anomaly model ##
 anomaly_model = None
-train_an = False
-predict_an = False
-predict_an_on_test = False
-radar_plot = False
-
-## Category model ##
 category_model = None
-train_cat = False
-predict_cat_on_test = False
 
-
-if preprocess_data:
+if conf.preprocess_data:
     preprocess_whole_data()
     split_whole_dataset()
 
 
-if create_time_series_data:
+if conf.create_time_series_data:
     TimeSeriesDataCreator(window_length=conf.window_size)   # Creates time series datasets
 
 
-if select_features:
+if conf.select_features:
     select_features_for_an(conf.window_size, print_steps=False)
 
 
-if create_final_ts_dataset:
+if conf.create_final_ts_dataset:
     merge_features_to_dataset(conf.window_size)
 
 ## MODELS OBJECTS INSTANTIATION ##
-
-if train_an or predict_an or predict_an_on_test or radar_plot:
+if conf.train_anomaly or conf.predict_anomaly or conf.predict_anomaly_on_test or conf.create_radar_chart:
     ts_handler = TimeSeriesDataHandler(
         conf.window_size, 
         conf.n_steps,
@@ -59,7 +42,7 @@ if train_an or predict_an or predict_an_on_test or radar_plot:
         conf.patience_anomaly_limit
     )
 
-if train_cat or predict_cat_on_test or predict_an:
+if conf.train_category or conf.predict_category_on_test or conf.predict_anomaly:
     category_model = ClassificationModel(
         conf.models_number, 
         conf.cat_model_name, 
@@ -67,8 +50,7 @@ if train_cat or predict_cat_on_test or predict_an:
     )
 
 ## ANOMALY MODEL ##
-
-if train_an:
+if conf.train_anomaly:
     if not conf.run_wandb_sweep:
         anomaly_model.train_anomaly_model(
             conf.learning_rate,
@@ -86,19 +68,18 @@ if train_an:
             conf.sweep_config_random
         )
 
-if predict_an_on_test:
+if conf.predict_anomaly_on_test:
     anomaly_model.predict_ts(on_test_set=True)
 
-if predict_an:
+if conf.predict_anomaly:
     anomaly_model.predict_ts(on_test_set=False, categorize_attacks_func=category_model.categorize_attacks)
 
-if radar_plot:
+if conf.create_radar_chart:
     create_radar_plot(ts_handler.features, conf.models_number, on_test_set=True, pic_format=conf.radar_plot_format)
     create_radar_plot(ts_handler.features, conf.models_number, on_test_set=False, pic_format=conf.radar_plot_format)
 
 ## CATEGORY MODEL ##
-
-if train_cat:
+if conf.train_category:
     if not conf.run_wandb_sweep:
         category_model.train_categorical_model(
             conf.learning_rate,
@@ -117,5 +98,5 @@ if train_cat:
             conf.sweep_config_random
         )
 
-if predict_cat_on_test:
+if conf.predict_category_on_test:
     category_model.categorize_attacks(on_test_set=True)
