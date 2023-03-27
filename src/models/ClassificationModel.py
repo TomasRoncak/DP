@@ -23,7 +23,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
 import constants as const
-from models.functions import (WARNING_TEXT, get_callbacks,
+from models.functions import (WARNING_TEXT_RED, get_callbacks,
                               get_filtered_classes, get_optimizer,
                               load_best_model, parse_date_as_timestamp,
                               plot_confusion_matrix, plot_roc_auc,
@@ -138,7 +138,7 @@ class ClassificationModel:
             data = window_data.drop(const.TIME, axis=1)
             x, y = data.iloc[:, :-1], data.iloc[:, -1]
             if x.empty:
-                print(WARNING_TEXT + ': Klasifikačné dáta časového okna {0} - {1} neboli nájdené !'.format(an_detect_time[0], an_detect_time[1]))
+                print(WARNING_TEXT_RED + ': Klasifikačné dáta časového okna {0} - {1} neboli nájdené !'.format(an_detect_time[0], an_detect_time[1]))
                 return
             if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
                 x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
@@ -169,22 +169,16 @@ class ClassificationModel:
         else:
             # Pre binary pouzivame Sigmoid aktivacnu funkciu, ktora vrati pravdepodobnost v intervale <0,1> preto staci len zaokruhlenie
             y_pred = np.round(prob, 0)
-            present_classes = ['Benígne', 'Malígne']  # Binary classification
-
-        if (y == 0).all():
-            print('Vybrané okno(á) obsahuje(ú) iba benígnu prevádzku !')
-            return
-        elif (y_pred == 0).all():
-            print('Predikcia obsahuje len benígnu prevádzku !')
-            return
+            present_classes = ['Benígne'] if len(np.unique(y)) == 1 and (y == 0).all() else ['Benígne', 'Malígne']
 
         with open(const.metrics.report[on_test_set].format(self.model_path, self.model_name, anomaly_count), 'w') as f:
            f.write(classification_report(y, y_pred, labels=np.unique(y), target_names=present_classes, zero_division=0))
         
-        plot_confusion_matrix(y, y_pred, self.model_number, self.is_cat_multiclass,
-            const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, anomaly_count))
-        plot_roc_auc(y, prob, self.model_number, self.trainY, self.model_name,
-            const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))
+        if len(present_classes) > 1:
+            plot_confusion_matrix(y, y_pred, self.model_number, self.is_cat_multiclass,
+                const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, anomaly_count))
+            plot_roc_auc(y, prob, self.model_number, self.trainY, self.model_name,
+                const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))
 
     def run_sweep(self, early_stop_patience, sweep_config_random):
         project_name = 'multiclass' if self.is_cat_multiclass else 'binary' + '_categorical'

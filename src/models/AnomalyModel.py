@@ -261,7 +261,6 @@ class AnomalyModel:
                 plt.title(self.ts_handler.features[i], fontsize=50)
                 plt.savefig(fig_name.format(self.model_number, self.model_name) + self.ts_handler.features[i], bbox_inches='tight')
             plt.close()
-        print('Ukladanie hotové !')
 
     def run_sweep(self, patience, sweep_config_random):
         wandb.agent(

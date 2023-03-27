@@ -96,6 +96,7 @@ TIME = 'time'
 FULL_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 TIME_FORMAT = '%m-%d %H:%M'
 PRETTY_TIME_FORMAT = '%d.%m %H:%M'
+PRETTY_SHORT_TIME_FORMAT = '%H:%M'
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""

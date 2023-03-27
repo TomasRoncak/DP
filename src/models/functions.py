@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import seaborn as sns
+import sklearn
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.models import load_model
 from keras.optimizers import SGD, Adagrad, Adam, RMSprop
@@ -21,9 +22,13 @@ import wandb
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data')
 
+import warnings
+
 from preprocess_data import get_filtered_classes
 
 import constants as const
+
+warnings.filterwarnings("ignore", category=sklearn.exceptions.UndefinedMetricWarning)
 
 
 class bcolors:
@@ -38,7 +43,9 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-WARNING_TEXT = bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC
+WARNING_TEXT_GREEN = bcolors.OKGREEN + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC
+WARNING_TEXT_RED = bcolors.FAIL + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC
+WARNING_TEXT_YELLOW = bcolors.WARNING + bcolors.BOLD + 'Upozornenie' + bcolors.ENDC
 
 
 def get_optimizer(learning_rate, optimizer, momentum = 0):
@@ -167,22 +174,27 @@ def pretty_print_detected_attacks(prob, is_multiclass):
             print('{0} ({1}x)'.format(x[0], x[1]))
     else:
         y_pred = np.round(prob, 0)
-        print(WARNING_TEXT + ': Znalostný model detegoval v časovom okne {0} podozrivých tokov!'.format((y_pred == 1).sum()))
-
+        pred_attack_sum = (y_pred == 1).sum()
+        if pred_attack_sum > 1:
+            text = 'podozrivých tokov' if pred_attack_sum > 3 else 'podozrivé toky'
+            print(WARNING_TEXT_RED + ': Znalostný model detegoval v časovom okne {0} {1}!'.format(pred_attack_sum, text))
+        else:
+            print(WARNING_TEXT_GREEN + ': Znalostný model nedetegoval v časovom okne žiadne podozrivé toky.')
+         
 
 def pretty_print_point_anomaly(err, threshold, curr_time, window_size, exceeding, patience_limit):
     window_end_time = (curr_time + datetime.timedelta(seconds=window_size)) \
-                      .strftime(const.PRETTY_TIME_FORMAT)
+                      .strftime(const.PRETTY_SHORT_TIME_FORMAT)
     curr_time = curr_time.strftime(const.PRETTY_TIME_FORMAT)
 
-    print(bcolors.WARNING + 'Bodová anomália detegovaná v časovom okne {0} - {1}' \
+    print(WARNING_TEXT_YELLOW + ': Bola detegovaná bodová anomália v časovom okne {0}-{1}' \
             .format(curr_time, window_end_time) + bcolors.ENDC, end=' - ')
-    print('chyba {0:.2f} prekročila prah {1:.2f} (trpezlivosť={2}/{3})' \
+    print('chyba {0:.2f} > prah {1:.2f} (trpezlivosť={2}/{3})' \
             .format(err, threshold, exceeding, patience_limit))
 
 
 def format_and_print_collective_anomaly(start_time, stop_time):
-    print(WARNING_TEXT + ': Kolektívna anomália detegovaná v okne {0} až {1}!' \
+    print(WARNING_TEXT_RED + ': Kolektívna anomália detegovaná v okne {0} až {1}!' \
         .format(start_time.strftime(const.PRETTY_TIME_FORMAT), stop_time.strftime(const.PRETTY_TIME_FORMAT))
     )
     return (start_time, stop_time)

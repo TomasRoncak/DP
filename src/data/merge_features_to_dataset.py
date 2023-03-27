@@ -41,8 +41,6 @@ def merge_features_to_dataset(window_size):
             combined_data.columns = combined_data.columns.str.replace('_sum', '_{0}'.format(protocol))
             data = pd.concat([data, combined_data], axis=1)
 
-        if conf.remove_benign_outlier:  # Removal of benign outliers from attack dataset
-            data.drop(range(98, 103), inplace=True)
         if conf.remove_first_attacks:
             data = data.iloc[40:]
         
