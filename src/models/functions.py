@@ -208,13 +208,19 @@ def parse_date_as_timestamp(date):
     return [pd.Timestamp(one_date) for one_date in date]
 
 
-def reduce_normal_traffic(data, to_delete):
-    normal_data = data[data['attack_cat'] == 'Normal'][::10]
-    data = data[data.attack_cat != 'Normal']
-    data = pd.concat([data, normal_data])
-    data.drop(to_delete, axis=1, inplace=True)
+def format_data(is_cat_multiclass):
+    def reduce_normal_traffic(data):
+        y_to_delete = 'label' if is_cat_multiclass else 'attack_cat'
+        normal_data = data[data['attack_cat'] == 'Normal'][::10]
+        data = data[data.attack_cat != 'Normal']
+        data = pd.concat([data, normal_data])
+        data.drop(y_to_delete, axis=1, inplace=True)
+        return data
 
-    return data.iloc[:, :-1], data.iloc[:, -1]  # x, y
+    train_data = reduce_normal_traffic(pd.read_csv(const.CAT_TRAIN_VAL_DATASET))
+    test_data = reduce_normal_traffic(pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp))
+
+    return train_data.iloc[:, :-1], train_data.iloc[:, -1], test_data
 
 
 def save_rf_model(model, is_cat_multiclass, model_number, model_name):

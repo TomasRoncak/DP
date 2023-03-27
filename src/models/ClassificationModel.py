@@ -23,12 +23,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
 import constants as const
-from models.functions import (WARNING_TEXT_RED, get_callbacks,
+from models.functions import (WARNING_TEXT_RED, format_data, get_callbacks,
                               get_filtered_classes, get_optimizer,
-                              load_best_model, parse_date_as_timestamp,
-                              plot_confusion_matrix, plot_roc_auc,
-                              pretty_print_detected_attacks,
-                              reduce_normal_traffic, save_rf_model)
+                              load_best_model, plot_confusion_matrix,
+                              plot_roc_auc, pretty_print_detected_attacks,
+                              save_rf_model)
 
 absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ('Found untraced functions such as ...')
 
@@ -132,7 +131,8 @@ class ClassificationModel:
         self.model = load_best_model(self.model_number, self.model_name, model_type='cat', is_cat_multiclass=self.is_cat_multiclass)
 
         if on_test_set:
-            x, y = self.testX, self.testY
+            data = self.testDf.drop(const.TIME, axis=1)
+            x, y = data.iloc[:, :-1], self.label_encoder.transform(data.iloc[:, -1]) if self.is_cat_multiclass else data.iloc[:, -1]
         elif an_detect_time:
             window_data = self.testDf[(self.testDf[const.TIME] >= an_detect_time[0]) & (self.testDf[const.TIME] <= an_detect_time[1])]
             data = window_data.drop(const.TIME, axis=1)
@@ -211,18 +211,13 @@ class ClassificationModel:
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.standard_scaler = StandardScaler()
         self.label_encoder = LabelEncoder()
-        to_delete = 'label' if self.is_cat_multiclass else 'attack_cat'
-        features = [const.TIME, 'label', 'attack_cat']
 
-        trainX, trainY = reduce_normal_traffic(pd.read_csv(const.CAT_TRAIN_VAL_DATASET), to_delete)
+        trainX, trainY, self.testDf = format_data(self.is_cat_multiclass)
         trainX, valX, trainY, valY = train_test_split(trainX, trainY, train_size=0.8, shuffle=True)
         self.trainX, self.trainY = self.scale_data(trainX, trainY, isTrain=True)
         self.valX, self.valY = self.scale_data(valX, valY)
         
-        self.testDf = pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
-        self.testDf.drop(to_delete, axis=1, inplace=True)
-
-        selected = [x for x in list(self.testDf.columns) if (x not in features)]
+        selected = [x for x in list(self.testDf.columns) if (x not in [const.TIME, 'label', 'attack_cat'])]
         self.testDf[selected], _ = self.scale_data(self.testDf[selected], None)
 
         if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
