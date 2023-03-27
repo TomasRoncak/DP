@@ -47,6 +47,10 @@ def split_whole_dataset():
     time_column = whole_df.pop(const.TIME)   # Move column to first place in df
     whole_df.insert(0, const.TIME, time_column)
 
+    normal_data = whole_df[whole_df['attack_cat'] == 'Normal'][::10]    # Reduce normal traffic by 10
+    whole_df = whole_df[whole_df.attack_cat != 'Normal']
+    whole_df = pd.concat([whole_df, normal_data])
+
     whole_train_val_data = pd.DataFrame()
     whole_test_data = pd.DataFrame()
 
