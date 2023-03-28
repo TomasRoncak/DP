@@ -41,6 +41,8 @@ class ClassificationModel:
         self.is_model_reccurent = self.model_name in ['lstm', 'gru']
         self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
                           if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
+        self.across_windows_y = []
+        self.across_windows_prob = []
         self.handle_data()
 
     def train_categorical_model(
@@ -148,11 +150,17 @@ class ClassificationModel:
         else:
             prob = self.model.predict(x, verbose=0)
 
-        self.calculate_classification_metrics(y, prob, on_test_set, anomaly_count)
+        self.across_windows_y.extend(y)
+        self.across_windows_prob.extend(prob)
+
+        self.calculate_metrics(y, prob, on_test_set, anomaly_count)
         if not on_test_set:
             pretty_print_detected_attacks(prob, self.is_cat_multiclass)
 
-    def calculate_classification_metrics(self, y, prob, on_test_set, anomaly_count):
+    def calculate_metrics_across_windows(self):
+        self.calculate_metrics(self.across_windows_y, self.across_windows_prob, False, 'all')
+
+    def calculate_metrics(self, y, prob, on_test_set, anomaly_count):
         Path(const.metrics.path[on_test_set] \
             .format(self.model_path, self.model_name, anomaly_count)) \
             .mkdir(parents=True, exist_ok=True)

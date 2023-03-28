@@ -73,6 +73,7 @@ if conf.predict_anomaly_on_test:
 
 if conf.predict_anomaly:
     anomaly_model.predict_ts(on_test_set=False, categorize_attacks_func=category_model.categorize_attacks)
+    category_model.calculate_metrics_across_windows()
 
 if conf.create_radar_chart:
     create_radar_plot(ts_handler.features, conf.models_number, on_test_set=True, pic_format=conf.radar_plot_format)

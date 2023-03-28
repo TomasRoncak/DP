@@ -138,7 +138,7 @@ class AnomalyModel:
         predict_data_inversed = self.ts_handler.inverse_transform(data_pred)
         if on_test_set:
             self.save_benign_ts_plots(predict_data_inversed, show_full_data=False)
-        self.calculate_regression_metrics(predict_data_inversed, on_test_set=on_test_set)
+        self.calculate_metrics(predict_data_inversed, on_test_set=on_test_set)
 
     def is_anomaly_detected(self, curr_data_pred, curr_data_real, curr_time, i):
         threshold = self.calculate_anomaly_threshold(i)
@@ -173,7 +173,7 @@ class AnomalyModel:
         upper_bound = q3 + (1.5 * iqr)
         return upper_bound
 
-    def calculate_regression_metrics(self, predict_data, on_test_set):
+    def calculate_metrics(self, predict_data, on_test_set):
         real_data = get_y_from_generator(self.n_features, self.ts_handler.benign_test_generator) if on_test_set else self.whole_real_data
         real_data = self.ts_handler.inverse_transform(real_data)
         real_data = real_data[0:len(predict_data)]  # Slice data, if predicted data are shorter (detected anomaly stops prediction)
