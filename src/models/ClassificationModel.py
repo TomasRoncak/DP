@@ -62,23 +62,23 @@ class ClassificationModel:
 
         model = Sequential()
         if self.model_name == 'mlp':
-            model.add(Dense(16, activation=activation, input_dim=self.trainX.shape[1]))
+            model.add(Dense(16, activation=activation, input_dim=self.data_handler.trainX.shape[1]))
             model.add(Dropout(dropout))
             model.add(Dense(8, activation=activation))
             model.add(Dropout(dropout))
         elif self.model_name == 'cnn':
-            model.add(Conv1D(filters=16, padding='same', kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1], 1)))
+            model.add(Conv1D(filters=16, padding='same', kernel_size=2, activation=activation, input_shape=(self.data_handler.trainX.shape[1], 1)))
             model.add(MaxPooling1D(pool_size=2))
             model.add(Conv1D(filters=8, padding='same', kernel_size=2, activation=activation))
             model.add(Dropout(dropout)),
             model.add(Flatten())
         elif self.model_name == 'lstm':
-            model.add(LSTM(blocks, input_dim=self.trainX.shape[2]))
+            model.add(LSTM(blocks, input_dim=self.data_handler.trainX.shape[2]))
         elif self.model_name == 'gru':
-            model.add(GRU(blocks, input_dim=self.trainX.shape[2]))
+            model.add(GRU(blocks, input_dim=self.data_handler.trainX.shape[2]))
             model.add(Dropout(dropout))
         elif self.model_name == 'cnn_lstm':
-            model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation, input_shape=(self.trainX.shape[1], 1)))
+            model.add(Conv1D(filters=64, padding='same', kernel_size=2, activation=activation, input_shape=(self.data_handler.trainX.shape[1], 1)))
             model.add(MaxPooling1D(pool_size=2))
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
@@ -104,11 +104,11 @@ class ClassificationModel:
 
         start = dt.now()
         model.fit(
-                self.trainX,
-                self.trainY,
+                self.data_handler.trainX,
+                self.data_handler.trainY,
                 batch_size=batch_size,
                 epochs=epochs,
-                validation_data=(self.valX, self.valY),
+                validation_data=(self.data_handler.valX, self.data_handler.valY),
                 callbacks=[get_callbacks(
                             self.model_number,
                             self.model_name,
