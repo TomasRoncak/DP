@@ -24,7 +24,7 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data')
 
 import warnings
 
-from preprocess_data import get_filtered_classes
+from ClassificationDataHandler import get_attack_classes
 
 import constants as const
 
@@ -116,7 +116,7 @@ def plot_roc_auc(y_test, y_score, model_number, trainY, model_name, path):
         plt.figure(figsize=(10, 5))
         plt.plot(fpr, tpr, lw=2, color = deep_colors[0], label='AUC = {0:0.2f}'.format(roc_auc))
     else:
-        classes = get_filtered_classes()
+        classes = get_attack_classes()
         if model_name == 'rf':
             y_score = label_binarizer.transform(y_score)
         for i in range(n_classes):
@@ -125,9 +125,9 @@ def plot_roc_auc(y_test, y_score, model_number, trainY, model_name, path):
                 roc_auc[i] = auc(fpr[i], tpr[i])
 
         plt.figure(figsize=(10, 5))
-        for i in range(len(fpr)):
-            plt.plot(fpr[i], tpr[i], lw=2, color = deep_colors[i], 
-                label='{0} (AUC = {1:0.2f})'.format(classes[i], roc_auc[i]))
+        for value in fpr:
+            plt.plot(fpr[value], tpr[value], lw=2, color = deep_colors[value], 
+                    label='{0} (AUC = {1:0.2f})'.format(classes[value], roc_auc[value]))
         plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -143,7 +143,10 @@ def plot_confusion_matrix(y, y_pred, model_number, is_cat_multiclass, path):
     cm = confusion_matrix(y, y_pred)
     ax = sns.heatmap(cm, annot=True, fmt='d', cmap='OrRd')
     if is_cat_multiclass:
-        classes_names = list(get_filtered_classes().values())
+        all_classes = get_attack_classes()
+        predicted_classes_names = [all_classes[x] for x in np.unique(y_pred)] 
+        present_classes_names = [all_classes[x] for x in np.unique(y)] 
+        classes_names = predicted_classes_names if len(predicted_classes_names) > len(present_classes_names) else present_classes_names
     else:
         classes_names = ['Benígne', 'Malígne']
         
@@ -162,7 +165,7 @@ def plot_confusion_matrix(y, y_pred, model_number, is_cat_multiclass, path):
 
 def pretty_print_detected_attacks(prob, is_multiclass):
     if is_multiclass:
-        classes = get_filtered_classes()
+        classes = get_attack_classes()
         res_list = list(Counter(np.argmax(prob, axis=-1)).items())
         res_list.sort(key=lambda a: a[1], reverse=True)
         res = [(classes[x[0]], x[1]) for x in res_list]
@@ -202,10 +205,6 @@ def format_and_print_collective_anomaly(start_time, stop_time):
 
 def pretty_print_window_ok(curr_time, err):
     print('Okno {0} - chyba {1:.2f} '.format(curr_time, err) + bcolors.OKGREEN + 'OK' + bcolors.ENDC)
-
-
-def parse_date_as_timestamp(date):
-    return [pd.Timestamp(one_date) for one_date in date]
 
 
 def save_rf_model(model, is_cat_multiclass, model_number, model_name):

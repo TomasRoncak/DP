@@ -1,8 +1,8 @@
 import config as conf
 from data.merge_features_to_dataset import merge_features_to_dataset
-from data.preprocess_data import preprocess_whole_data, split_whole_dataset
 from data.TimeSeriesDataCreator import TimeSeriesDataCreator
 from data.TimeSeriesDataHandler import TimeSeriesDataHandler
+from data.ClassificationDataHandler import ClassificationDataHandler, preprocess_whole_data, split_whole_dataset
 from features.feature_selection_an import select_features_for_an
 from models.AnomalyModel import AnomalyModel
 from models.ClassificationModel import ClassificationModel
@@ -43,10 +43,22 @@ if conf.train_anomaly or conf.predict_anomaly or conf.predict_anomaly_on_test or
     )
 
 if conf.train_category or conf.predict_category_on_test or conf.predict_anomaly:
+    classification_handler = ClassificationDataHandler(
+                                conf.cat_model_name, 
+                                conf.is_cat_multiclass, 
+                                conf.predict_category_on_test, 
+                                conf.attack_categories
+                            )
+    classification_handler.handle_train_val_data()
+    if conf.predict_category_on_test:
+        classification_handler.handle_test_data()
+
     category_model = ClassificationModel(
         conf.models_number, 
-        conf.cat_model_name, 
-        conf.is_cat_multiclass
+        conf.cat_model_name,
+        classification_handler,
+        conf.is_cat_multiclass,
+        conf.attack_categories
     )
 
 ## ANOMALY MODEL ##
@@ -100,4 +112,4 @@ if conf.train_category:
         )
 
 if conf.predict_category_on_test:
-    category_model.categorize_attacks(on_test_set=True)
+    category_model.categorize_attacks(on_test_set=conf.predict_category_on_test)
