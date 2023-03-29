@@ -50,7 +50,7 @@ class ClassificationModel:
         momentum,
         blocks
     ):
-        num_categories = len(np.unique(self.trainY))
+        num_categories = len(np.unique(self.data_handler.trainY))
 
         if num_categories > 2:  
             loss = SparseCategoricalCrossentropy()

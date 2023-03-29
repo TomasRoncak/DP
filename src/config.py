@@ -1,6 +1,6 @@
 ## DATA CONFIG ##
 attack_category = 'Combined'
-attack_categories = ['Exploits', 'Fuzzers']  # Fill out with attakc data if dataset contains only certain types of attacks
+attack_categories = ['Exploits', 'Fuzzers', 'DoS', 'Generic']  # Fill out with attakc data if dataset contains only certain types of attacks
 create_final_ts_dataset = False
 create_time_series_data = False
 n_steps = 5  # Number of previous steps used to predict future value (if changed, time series data must be regenerated)
