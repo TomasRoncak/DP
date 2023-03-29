@@ -39,9 +39,6 @@ class ClassificationDataHandler:
            self.trainX = np.reshape(self.trainX, (self.trainX.shape[0], 1, self.trainX.shape[1]))
            self.valX = np.reshape(self.valX, (self.valX.shape[0], 1, self.valX.shape[1]))
 
-    def get_test_data_from_window(self, data, anomaly_detection_time):
-        return data[(data[const.TIME] >= anomaly_detection_time[0]) & (data[const.TIME] <= anomaly_detection_time[1])]
-
     def handle_test_data(self, anomaly_detection_time=None, anomaly_count=None):
         if len(self.attack_categories) > 1 and anomaly_count is not None and self.is_multiclass:
             data = pd.read_csv(
@@ -81,6 +78,9 @@ class ClassificationDataHandler:
                 dataY = self.label_encoder.transform(dataY)
         return dataX, dataY
     
+    def get_test_data_from_window(self, data, anomaly_detection_time):
+        return data[(data[const.TIME] >= anomaly_detection_time[0]) & (data[const.TIME] <= anomaly_detection_time[1])]
+
 
 def preprocess_whole_data():
     Path(const.DATA_FOLDER + const.PREPROCESSED_CATEGORY_FOLDER).mkdir(exist_ok=True)
