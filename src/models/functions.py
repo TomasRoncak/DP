@@ -24,8 +24,6 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data')
 
 import warnings
 
-from ClassificationDataHandler import get_attack_classes
-
 import constants as const
 
 warnings.filterwarnings("ignore", category=sklearn.exceptions.UndefinedMetricWarning)
@@ -248,3 +246,13 @@ def create_radar_plot(features, model_number, on_test_set, pic_format):
             format=pic_format
         )
     print('{0} radar chart bol úspešne vytvorený.'.format(var))
+
+
+def get_attack_classes():
+    return {0: 'DoS',
+            1: 'Exploits',
+            2: 'Fuzzers',
+            3: 'Generic',
+            4: 'Normal',
+            5: 'Reconnaissance'
+            }

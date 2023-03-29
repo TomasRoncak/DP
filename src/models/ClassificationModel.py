@@ -16,32 +16,27 @@ from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
                           MaxPooling1D)
 from keras.losses import BinaryCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Sequential
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 
 import constants as const
-from models.functions import (WARNING_TEXT_RED, get_callbacks,
-                              get_attack_classes, get_optimizer,
+from models.functions import (get_attack_classes, get_callbacks, get_optimizer,
                               load_best_model, plot_confusion_matrix,
-                              plot_roc_auc, pretty_print_detected_attacks,
-                              save_rf_model)
+                              plot_roc_auc, pretty_print_detected_attacks)
 
 absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ('Found untraced functions such as ...')
 
 os.environ['WANDB_SILENT'] = 'true'
 
 class ClassificationModel:
-    def __init__(self, model_number, model_name, classification_handler, is_cat_multiclass, attack_categories):
+    def __init__(self, model_number, model_name, classification_handler, is_cat_multiclass):
         self.model_number = model_number
         self.model_name = model_name
         self.data_handler = classification_handler
-        self.is_cat_multiclass = is_cat_multiclass
-        self.is_model_reccurent = self.model_name in ['lstm', 'gru']
-        self.attack_categories = attack_categories
+        self.is_multiclass = is_cat_multiclass
         self.model_path = const.WHOLE_CLASSIFICATION_MULTICLASS_MODEL_PATH.format(model_number) \
-                          if self.is_cat_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
-        self.across_windows_y = []
-        self.across_windows_prob = []
+                          if self.is_multiclass else const.WHOLE_CLASSIFICATION_BINARY_MODEL_PATH.format(model_number)
+        self.all_windows_y = []
+        self.all_windows_prob = []
 
     def train_categorical_model(
         self,
@@ -87,11 +82,11 @@ class ClassificationModel:
             model.add(MaxPooling1D(pool_size=2))
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
-        elif self.model_name == 'rf':
-            model = RandomForestClassifier(n_estimators = 200, n_jobs=-1, random_state=0, bootstrap=True)
-            model.fit(self.trainX, self.trainY)
-            save_rf_model(model, self.is_cat_multiclass, self.model_number, self.model_name)
-            return
+        # elif self.model_name == 'rf':
+        #     model = RandomForestClassifier(n_estimators = 200, n_jobs=-1, random_state=0, bootstrap=True)
+        #     model.fit(self.trainX, self.trainY)
+        #     save_rf_model(model, self.is_multiclass, self.model_number, self.model_name)
+        #     return
         else:
             raise Exception('Nepodporovaný typ modelu !')
         
@@ -101,7 +96,7 @@ class ClassificationModel:
         model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
         run = wandb.init(
-            project=('multiclass' if self.is_cat_multiclass else 'binary') + '_classification',
+            project=('multiclass' if self.is_multiclass else 'binary') + '_classification',
             group=self.model_name,
             job_type='eval',
             entity='tomasroncak'
@@ -118,52 +113,40 @@ class ClassificationModel:
                             self.model_number,
                             self.model_name,
                             patience,
-                            self.is_cat_multiclass
+                            self.is_multiclass
                            )],
                 verbose=1
         )
         print('Tréning modelu {0} prebiehal {1} sekúnd.'.format(self.model_name, (dt.now() - start).seconds))
 
-        #model.save(const.save_model[self.is_cat_multiclass].format(self.model_number, self.model_name) + 'model.h5')
+        #model.save(const.save_model[self.is_multiclass].format(self.model_number, self.model_name) + 'model.h5')
         run.finish()
 
-    def categorize_attacks(self, an_detect_time=None, on_test_set=False, anomaly_count=None):
-        self.model = load_best_model(self.model_number, self.model_name, model_type='cat', is_cat_multiclass=self.is_cat_multiclass)
+    def categorize_attacks(self, anomaly_detection_time=None, on_test_set=False, anomaly_count=None):
+        self.model = load_best_model(self.model_number, self.model_name, model_type='cat', is_cat_multiclass=self.is_multiclass)
 
-        if on_test_set:
-            data = self.data_handler.testDf
-            x, y = data.iloc[:, :-1], data.iloc[:, -1]
-        elif an_detect_time:
-            self.data_handler.handle_test_data(an_detect_time, anomaly_count)
-            data = self.data_handler.testDf
-            x, y = data.iloc[:, :-1], data.iloc[:, -1]
-            if x.empty:
-                print(WARNING_TEXT_RED + ': Klasifikačné dáta časového okna {0} - {1} neboli nájdené !'.format(an_detect_time[0], an_detect_time[1]))
-                return
-            if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
-                x = np.reshape(x, (x.shape[0], 1, x.shape[1]))
+        if anomaly_detection_time:
+            self.data_handler.handle_test_data(anomaly_detection_time, anomaly_count)
+        x, y = self.data_handler.testX, self.data_handler.testY
         
-        if self.model_name == 'rf':
-            prob = self.model.predict(x)
-        else:
-            prob = self.model.predict(x, verbose=0)
+        prob = self.model.predict(x, verbose=0)
 
-        self.across_windows_y.extend(y)
-        self.across_windows_prob.extend(prob.tolist())
+        self.all_windows_y.extend(y)
+        self.all_windows_prob.extend(prob.tolist())
 
         self.calculate_metrics(y, prob, on_test_set, anomaly_count)
         if not on_test_set:
-            pretty_print_detected_attacks(prob, self.is_cat_multiclass)
+            pretty_print_detected_attacks(prob, self.is_multiclass)
 
     def calculate_metrics_across_windows(self):
-        self.calculate_metrics(self.across_windows_y, np.array(self.across_windows_prob), False, 'all')
+        self.calculate_metrics(self.all_windows_y, np.array(self.all_windows_prob), False, 'all')
 
-    def calculate_metrics(self, y, prob, on_test_set, anomaly_count):
+    def calculate_metrics(self, y, prob, on_test_set, file_postfix):
         Path(const.metrics.path[on_test_set] \
-            .format(self.model_path, self.model_name, anomaly_count)) \
+            .format(self.model_path, self.model_name, file_postfix)) \
             .mkdir(parents=True, exist_ok=True)
 
-        if self.is_cat_multiclass:  # Multiclass classification
+        if self.is_multiclass:
             # Pre multiclass pouzivame Softmax aktivacnu funkciu, ktora vrati pravdepodobnost pre kazdu triedu
             # argmax funkcia vrati index s najvyssou hodnotou (pravdepodobnostou)
             if self.model_name == 'rf':
@@ -177,17 +160,17 @@ class ClassificationModel:
             y_pred = np.round(prob, 0)
             present_classes = ['Benígne'] if len(np.unique(y)) == 1 and (y == 0).all() else ['Benígne', 'Malígne']
 
-        with open(const.metrics.report[on_test_set].format(self.model_path, self.model_name, anomaly_count), 'w') as f:
+        with open(const.metrics.report[on_test_set].format(self.model_path, self.model_name, file_postfix), 'w') as f:
            f.write(classification_report(y, y_pred, labels=np.unique(y), target_names=present_classes, zero_division=0))
         
         if len(present_classes) > 1:
-            plot_confusion_matrix(y, y_pred, self.model_number, self.is_cat_multiclass,
-                const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, anomaly_count))
+            plot_confusion_matrix(y, y_pred, self.model_number, self.is_multiclass,
+                const.metrics.conf_m[on_test_set].format(self.model_path, self.model_name, file_postfix))
             plot_roc_auc(y, prob, self.model_number, self.data_handler.trainY, self.model_name,
-                const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, anomaly_count))
+                const.metrics.roc_auc[on_test_set].format(self.model_path, self.model_name, file_postfix))
 
     def run_sweep(self, early_stop_patience, sweep_config_random):
-        project_name = 'multiclass' if self.is_cat_multiclass else 'binary' + '_categorical'
+        project_name = 'multiclass' if self.is_multiclass else 'binary' + '_categorical'
         sweep_id = wandb.sweep(
             sweep_config_random, 
             project=project_name + '_sweep'

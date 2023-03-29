@@ -12,13 +12,15 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 
 import constants as const
 
+from models.functions import WARNING_TEXT_RED
+
 class ClassificationDataHandler:
-    def __init__(self, model_name, is_cat_multiclass, on_test_set, attack_categories):
+    def __init__(self, model_name, is_multiclass, on_test_set, attack_categories):
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.standard_scaler = StandardScaler()
         self.label_encoder = LabelEncoder()
 
-        self.is_cat_multiclass = is_cat_multiclass
+        self.is_multiclass = is_multiclass
         self.is_model_reccurent = model_name in ['lstm', 'gru']
         self.on_test_set = on_test_set
         self.attack_categories = attack_categories
@@ -26,7 +28,7 @@ class ClassificationDataHandler:
         self.test_data = pd.read_csv(const.CAT_TEST_DATASET, parse_dates=[const.TIME], date_parser=parse_date_as_timestamp)
 
     def handle_train_val_data(self):
-        self.train_data.drop('label' if self.is_cat_multiclass else 'attack_cat', axis=1, inplace=True)
+        self.train_data.drop('label' if self.is_multiclass else 'attack_cat', axis=1, inplace=True)
 
         trainX, trainY, self.testDf = self.train_data.iloc[:, :-1], self.train_data.iloc[:, -1], self.test_data
         trainX, valX, trainY, valY = train_test_split(trainX, trainY, train_size=0.8, shuffle=True)
@@ -37,31 +39,35 @@ class ClassificationDataHandler:
            self.trainX = np.reshape(self.trainX, (self.trainX.shape[0], 1, self.trainX.shape[1]))
            self.valX = np.reshape(self.valX, (self.valX.shape[0], 1, self.valX.shape[1]))
 
-    def get_data_from_window(self, data, an_detect_time):
-        return data[(data[const.TIME] >= an_detect_time[0]) & (data[const.TIME] <= an_detect_time[1])]
+    def get_test_data_from_window(self, data, anomaly_detection_time):
+        return data[(data[const.TIME] >= anomaly_detection_time[0]) & (data[const.TIME] <= anomaly_detection_time[1])]
 
-    def handle_test_data(self, an_detect_time=None, anomaly_count=None):
-        if len(self.attack_categories) > 1 and anomaly_count is not None and self.is_cat_multiclass:
+    def handle_test_data(self, anomaly_detection_time=None, anomaly_count=None):
+        if len(self.attack_categories) > 1 and anomaly_count is not None and self.is_multiclass:
             data = pd.read_csv(
                     const.CAT_ATTACK_CATEGORY_DATASET.format(self.attack_categories[anomaly_count-1]), 
                     parse_dates=[const.TIME], date_parser=parse_date_as_timestamp
             )
-            data = self.get_data_from_window(data, an_detect_time)
+            data = self.get_test_data_from_window(data, anomaly_detection_time)
         else:
             data = self.test_data
         if not self.on_test_set:
-            data = self.get_data_from_window(data, an_detect_time)
+            data = self.get_test_data_from_window(data, anomaly_detection_time)
 
         data = data.drop(const.TIME, axis=1)
-        data.drop('label' if self.is_cat_multiclass else 'attack_cat', axis=1, inplace=True)
+        data.drop('label' if self.is_multiclass else 'attack_cat', axis=1, inplace=True)
 
-        if self.is_cat_multiclass:
-            data = data.assign(attack_cat = self.label_encoder.transform(data.iloc[:, -1]))
-        
-        selected = [x for x in list(data.columns) if (x not in [const.TIME, 'label', 'attack_cat'])]
-        data[selected], _ = self.scale_data(data[selected], None)
-
-        self.testDf = data
+        if self.is_multiclass:
+            self.testX, self.testY = self.scale_data(data.iloc[:, :-1], data.iloc[:, -1])
+        else:
+            self.testX, _ = self.scale_data(data.iloc[:, :-1], None)
+            self.testY = data.iloc[:, -1]
+      
+        if self.testX.size == 0:
+            print(WARNING_TEXT_RED + ': Klasifikačné dáta časového okna neboli nájdené !')
+            return
+        if self.is_model_reccurent:  # Reshape -> [samples, time steps, features]
+            self.testX = np.reshape(self.testX, (self.testX.shape[0], 1, self.testX.shape[1]))
 
     def scale_data(self, dataX, dataY, isTrain=False):
         if isTrain:
@@ -137,15 +143,6 @@ def split_whole_dataset():
     whole_train_val_data.to_csv(const.CAT_TRAIN_VAL_DATASET, index=False)
     whole_test_data.to_csv(const.CAT_TEST_DATASET, index=False)
 
-
-def get_attack_classes():
-    return {0: 'DoS',
-            1: 'Exploits',
-            2: 'Fuzzers',
-            3: 'Generic',
-            4: 'Normal',
-            5: 'Reconnaissance'
-            }
 
 def parse_date_as_timestamp(date):
     return [pd.Timestamp(one_date) for one_date in date]

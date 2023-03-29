@@ -131,7 +131,7 @@ class AnomalyModel:
             elif self.is_anomaly_detected(curr_pred, y, curr_time, i):
                 self.collective_anomaly_count += 1
                 self.an_detection_time = format_and_print_collective_anomaly(self.first_an_detection_time, curr_time)
-                categorize_attacks_func(an_detect_time=self.an_detection_time, anomaly_count=self.collective_anomaly_count)
+                categorize_attacks_func(anomaly_detection_time=self.an_detection_time, anomaly_count=self.collective_anomaly_count)
                 pred_data_inversed = self.ts_handler.inverse_transform(np.array(data_pred))
                 self.save_plots(real_data_inversed, pred_data_inversed)
 

@@ -57,8 +57,7 @@ if conf.train_category or conf.predict_category_on_test or conf.predict_anomaly:
         conf.models_number, 
         conf.cat_model_name,
         classification_handler,
-        conf.is_cat_multiclass,
-        conf.attack_categories
+        conf.is_cat_multiclass
     )
 
 ## ANOMALY MODEL ##
