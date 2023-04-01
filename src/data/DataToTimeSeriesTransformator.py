@@ -1,17 +1,19 @@
-import csv
 import copy
+import csv
 import datetime
 from os import stat
 from pathlib import Path
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 import constants as const
 
 
-class TimeSeriesDataCreator:
+class DataToTimeSeriesTransformator:
     def __init__(self, window_length):
         self.dataset = pd.read_csv(const.WHOLE_DATASET_PATH, parse_dates=[const.TIME])
         self.start_time, self.end_time = self.dataset[const.TIME].agg(['min', 'max'])[['min', 'max']]
@@ -102,19 +104,28 @@ class TimeSeriesDataCreator:
 
     def plot(self, path, dataset_file_name):
         try:
-            data = pd.read_csv(dataset_file_name)
+            data = pd.read_csv(dataset_file_name, parse_dates=[const.TIME])
         except:
             return
 
+        sns.set_style('darkgrid')
         Path(path).mkdir(parents=True, exist_ok=True)
         for feature in data.columns:
             if feature == const.TIME or (data[feature] == 0).all():   # If column contains only zeroes
                 continue
-            pd.DataFrame(data, columns=[const.TIME, feature]).plot(x=const.TIME, y=feature, rot=90, figsize=(15, 5))
+            plt.rcParams['figure.figsize'] = (15, 5)
+            plt.plot(data[const.TIME], data[feature])
+            plt.xticks(rotation='vertical', fontsize=15)
+            plt.yticks(fontsize=15)
+            plt.xlabel('Čas', fontsize=17, labelpad=10)
+            plt.ylabel('Počet', fontsize=17, labelpad=10)
             plt.legend('', frameon=False)   # Hide legend
             plt.tight_layout()
-            plt.xlabel('Čas', fontsize=15)
-            plt.ylabel('Počet', fontsize=15)
-            plt.title(feature, fontsize=15)
+            plt.title(feature, fontsize=20)
+
+            ax = plt.gca()
+            ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=70))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
             plt.savefig(path + feature, bbox_inches='tight')
             plt.close()

@@ -12,7 +12,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import constants as const
 
 
-class TimeSeriesDataHandler:
+class TimeSeriesDataFormatter:
     def __init__(self, window_size, n_steps, attack_cat):
         self.minmax_scaler = MinMaxScaler(feature_range=(0, 1))
         self.stand_scaler = StandardScaler()

@@ -1,7 +1,7 @@
 import config as conf
-from data.merge_features_to_dataset import merge_features_to_dataset
-from data.TimeSeriesDataCreator import TimeSeriesDataCreator
-from data.TimeSeriesDataHandler import TimeSeriesDataHandler
+from data.TimeSeriesDatasetCreator import TimeSeriesDatasetCreator
+from data.DataToTimeSeriesTransformator import DataToTimeSeriesTransformator
+from data.TimeSeriesDataFormatter import TimeSeriesDataFormatter
 from data.ClassificationDataHandler import ClassificationDataHandler, preprocess_whole_data, split_whole_dataset
 from features.feature_selection_an import select_features_for_an
 from models.AnomalyModel import AnomalyModel
@@ -17,7 +17,7 @@ if conf.preprocess_data:
 
 
 if conf.create_time_series_data:
-    TimeSeriesDataCreator(window_length=conf.window_size)   # Creates time series datasets
+    DataToTimeSeriesTransformator(window_length=conf.window_size)   # Creates time series datasets
 
 
 if conf.select_features:
@@ -25,11 +25,12 @@ if conf.select_features:
 
 
 if conf.create_final_ts_dataset:
-    merge_features_to_dataset(conf.window_size)
+    ts_creator = TimeSeriesDatasetCreator(conf.window_size)
+    ts_creator.merge_features_to_dataset(conf.window_size)
 
 ## MODELS OBJECTS INSTANTIATION ##
 if conf.train_anomaly or conf.predict_anomaly or conf.predict_anomaly_on_test or conf.create_radar_chart:
-    ts_handler = TimeSeriesDataHandler(
+    ts_handler = TimeSeriesDataFormatter(
         conf.window_size, 
         conf.n_steps,
         conf.attack_category
