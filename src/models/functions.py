@@ -75,12 +75,13 @@ def get_callbacks(model_number, model_name, patience, is_cat_multiclass=None):
 def load_best_model(model_number, model_name, model_type, is_cat_multiclass=None):
     dir = const.save_model[is_cat_multiclass].format(model_number, model_name)
 
-    if model_name == 'rf':
-        return joblib.load(dir + const.RANDOM_FOREST_FILE)
-    elif os.path.exists(dir):
-        sub_dirs = os.listdir(dir)
-        sub_dirs.sort()
-        return load_model(dir + sub_dirs[0])
+    if os.path.exists(dir):
+        if model_name == 'rf':
+            return joblib.load(dir + const.RANDOM_FOREST_FILE)
+        else:
+            sub_dirs = os.listdir(dir)
+            sub_dirs.sort()
+            return load_model(dir + sub_dirs[0])
     else:
         model_type = {None: 'Anomalytický', True: 'Viactriedny', False: 'Binárny'}
         print('{0} model s číslom {1} nebol nájdený!'.format(model_type[is_cat_multiclass], model_number))
@@ -161,13 +162,14 @@ def plot_confusion_matrix(y, y_pred, model_number, is_cat_multiclass, path):
     plt.close()
 
 
-def pretty_print_detected_attacks(prob, is_multiclass):
+def pretty_print_detected_attacks(prob, is_multiclass, is_random_forest):
     if is_multiclass:
         classes = get_attack_classes()
-        res_list = list(Counter(np.argmax(prob, axis=-1)).items())
+        keys = np.argmax(prob, axis=-1) if not is_random_forest else prob
+        res_list = list(Counter(keys).items())
         res_list.sort(key=lambda a: a[1], reverse=True)
         res = [(classes[x[0]], x[1]) for x in res_list]
-        
+            
         print(bcolors.BOLD + 'Detegované kategórie útokov:' + bcolors.ENDC)
         for x in res:
             if x[0] == 'Normal':

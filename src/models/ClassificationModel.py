@@ -140,7 +140,7 @@ class ClassificationModel:
 
         self.calculate_metrics(y, prob, on_test_set, anomaly_count)
         if not on_test_set:
-            pretty_print_detected_attacks(prob, self.is_multiclass)
+            pretty_print_detected_attacks(prob, self.is_multiclass, self.model_name == 'rf')
 
     def calculate_metrics_across_windows(self):
         self.calculate_metrics(self.all_windows_y, np.array(self.all_windows_prob), False, 'all')
