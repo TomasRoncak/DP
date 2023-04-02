@@ -2,7 +2,6 @@ import os
 import sys
 
 import numpy as np
-
 import wandb
 
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
@@ -16,12 +15,14 @@ from keras.layers import (GRU, LSTM, Conv1D, Dense, Dropout, Flatten,
                           MaxPooling1D)
 from keras.losses import BinaryCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Sequential
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 
 import constants as const
 from models.functions import (get_attack_classes, get_callbacks, get_optimizer,
                               load_best_model, plot_confusion_matrix,
-                              plot_roc_auc, pretty_print_detected_attacks)
+                              plot_roc_auc, pretty_print_detected_attacks,
+                              save_rf_model)
 
 absl.logging.set_verbosity(absl.logging.ERROR) # ignore warning ('Found untraced functions such as ...')
 
@@ -82,11 +83,11 @@ class ClassificationModel:
             model.add(MaxPooling1D(pool_size=2))
             model.add(LSTM(blocks))
             model.add(Dropout(dropout))
-        # elif self.model_name == 'rf':
-        #     model = RandomForestClassifier(n_estimators = 200, n_jobs=-1, random_state=0, bootstrap=True)
-        #     model.fit(self.trainX, self.trainY)
-        #     save_rf_model(model, self.is_multiclass, self.model_number, self.model_name)
-        #     return
+        elif self.model_name == 'rf':
+            model = RandomForestClassifier(n_estimators = 200, n_jobs=-1, random_state=0, bootstrap=True)
+            model.fit(self.data_handler.trainX, self.data_handler.trainY)
+            save_rf_model(model, self.is_multiclass, self.model_number, self.model_name)
+            return
         else:
             raise Exception('Nepodporovaný typ modelu !')
         
@@ -129,7 +130,10 @@ class ClassificationModel:
             self.data_handler.handle_test_data(anomaly_detection_time, anomaly_count)
         x, y = self.data_handler.testX, self.data_handler.testY
         
-        prob = self.model.predict(x, verbose=0)
+        if self.model_name == 'rf':
+            prob = self.model.predict(x)
+        else:
+            prob = self.model.predict(x, verbose=0)
 
         self.all_windows_y.extend(y)
         self.all_windows_prob.extend(prob.tolist())

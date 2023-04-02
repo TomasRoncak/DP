@@ -1,9 +1,9 @@
+import datetime
 import sys
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import datetime
-
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 
@@ -11,8 +11,8 @@ sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/')
 sys.path.insert(0, '/Users/tomasroncak/Documents/diplomova_praca/src/data/')
 
 import constants as const
-
 from models.functions import WARNING_TEXT_RED
+
 
 class ClassificationDataHandler:
     def __init__(self, model_name, is_multiclass, on_test_set, attack_categories):
